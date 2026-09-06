@@ -76,6 +76,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             webView.scrollView.alwaysBounceVertical = true
             webView.scrollView.alwaysBounceHorizontal = false
 
+            // The web view's scroll indicator is the one scrollbar CSS cannot
+            // reach — it belongs to the underlying UIScrollView. A real iOS
+            // screen doesn't park a bar down its right edge, and leaving it on
+            // was what made scrolling read as a web page. Bouncing stays, so
+            // the top and bottom of a list are still felt rather than seen.
+            webView.scrollView.showsVerticalScrollIndicator = false
+            webView.scrollView.showsHorizontalScrollIndicator = false
+
             // Enable native iOS swipe-to-go-back gesture.
             // React Router uses history.pushState so WKWebView tracks those entries;
             // swiping back fires a popstate event that React Router responds to.

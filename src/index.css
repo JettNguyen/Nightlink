@@ -89,6 +89,27 @@ html[data-native-platform='ios'] body {
   background-color: var(--background);
 }
 
+/* Scrollbars are a pointer affordance. On touch the content already tracks your
+   finger, and iOS itself only ever flashes a transient indicator — so a bar
+   sitting in the gutter is the single loudest tell that this is a web page
+   inside an app. The native build hides every one of them: the document, inner
+   overflow panes, modal bodies, textareas. The web build keeps them, where with
+   a mouse the bar is the only cue that there is more below.
+   The main document's indicator is drawn by WKWebView's own UIScrollView rather
+   than by CSS, so it is turned off natively in AppDelegate.swift. */
+html[data-native-platform='ios'],
+html[data-native-platform='ios'] * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html[data-native-platform='ios']::-webkit-scrollbar,
+html[data-native-platform='ios'] *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 html.no-overscroll,
 html.no-overscroll body {
   overscroll-behavior: none !important;
