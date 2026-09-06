@@ -51,7 +51,11 @@
 
 .terms-gate-check {
   display: flex;
-  align-items: flex-start;
+  /* Centred, not flex-start. The old 16px box was nudged down with a margin to
+     sit level with the first line of text, which is the usual trick when the
+     box is smaller than the line box. At 24px it no longer is, so the text
+     block gets centred against the box and the nudge goes away. */
+  align-items: center;
   gap: 0.65rem;
   font-size: var(--fs-sm);
   color: var(--text-secondary);
@@ -65,7 +69,6 @@
 }
 
 .terms-gate-check input[type='checkbox'] {
-  margin-top: 0.35rem;
   flex-shrink: 0;
   /* Was 16px. 24px is the WCAG 2.5.8 minimum, and it matters here because people
      aim at the box even though the whole label works. */

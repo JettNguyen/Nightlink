@@ -194,7 +194,9 @@ html[data-native-platform='ios'] .auth-page {
 
 .auth-policy-check {
   display: flex;
-  align-items: flex-start;
+  /* See TermsGate.css: centred against the box now that it is 24px, rather than
+     flex-start with a margin nudging a smaller box onto the first line. */
+  align-items: center;
   gap: 0.55rem;
   color: var(--text-secondary);
   font-size: var(--fs-sm);
@@ -207,7 +209,6 @@ html[data-native-platform='ios'] .auth-page {
 /* These were browser default, roughly 13px, which is half the WCAG 2.5.8
    minimum and well under what a thumb expects to hit. */
 .auth-policy-check input[type='checkbox'] {
-  margin-top: 0.3rem;
   flex-shrink: 0;
   width: 24px;
   height: 24px;
