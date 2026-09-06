@@ -20,7 +20,18 @@
 .legal-page {
   max-width: 860px;
   margin: 0 auto;
-  padding: calc(88px + env(safe-area-inset-top) + 0.75rem) 1.25rem 3rem;
+  /* This page renders in two different shells. Normally it sits inside
+     `.app-main--with-nav`, which has already cleared both the fixed header and
+     the status bar. But the terms gate renders it bare — no `.app-main` at all —
+     and so does a signed-out visit, and there nothing above it has paid for the
+     inset. Assume the bare case and pay it here; the rule below hands it back
+     when the shell has already covered it. Without the inset the back button
+     sits under the clock on every device that has one. */
+  padding: calc(env(safe-area-inset-top) + 0.75rem) 1.25rem 3rem;
+}
+
+.app-main--with-nav .legal-page {
+  padding-top: 0.75rem;
 }
 
 .legal-card {
@@ -57,11 +68,4 @@
   margin: 0;
   font-size: var(--fs-sm);
   color: var(--text-secondary);
-}
-
-@media (max-width: 768px) {
-  /* Mobile nav is sticky and in normal flow, so no fixed-nav offset needed. */
-  .legal-page {
-    padding-top: 0.75rem;
-  }
 }
