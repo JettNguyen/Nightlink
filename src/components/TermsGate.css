@@ -57,26 +57,24 @@
   color: var(--text-secondary);
   line-height: 1.5;
   cursor: pointer;
+  /* The label toggles the box, so the row is the real target. Holding it to 44px
+     gives the shorter of the two consents a full-height target instead of one
+     line of text. */
+  min-height: 44px;
+  padding: 0.25rem 0;
 }
 
 .terms-gate-check input[type='checkbox'] {
-  margin-top: 0.15rem;
+  margin-top: 0.35rem;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  /* Was 16px. 24px is the WCAG 2.5.8 minimum, and it matters here because people
+     aim at the box even though the whole label works. */
+  width: 24px;
+  height: 24px;
   accent-color: var(--primary);
   cursor: pointer;
 }
 
-.terms-gate-check a {
-  color: var(--primary);
-  text-decoration: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .terms-gate-check a:hover {
-    text-decoration: underline;
-  }
-}
 
 .terms-gate-btn {
   width: 100%;

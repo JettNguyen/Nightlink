@@ -199,15 +199,20 @@ html[data-native-platform='ios'] .auth-page {
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   line-height: 1.45;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.25rem 0;
 }
 
-.auth-policy-check input {
-  margin-top: 0.15rem;
-}
-
-.auth-policy-check a {
-  color: var(--primary);
-  text-decoration: underline;
+/* These were browser default, roughly 13px, which is half the WCAG 2.5.8
+   minimum and well under what a thumb expects to hit. */
+.auth-policy-check input[type='checkbox'] {
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  accent-color: var(--primary);
+  cursor: pointer;
 }
 
 .auth-forgot-link {
@@ -283,8 +288,6 @@ html[data-native-platform='ios'] .auth-page {
 }
 
 .auth-legal-links a {
-  color: var(--primary);
-  text-decoration: underline;
   padding: 0.5rem 0.25rem;
   min-height: 44px;
   display: inline-flex;

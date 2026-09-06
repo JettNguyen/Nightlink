@@ -10,6 +10,9 @@
   --safe-area-inset-top: env(safe-area-inset-top);
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
   --primary: #c9a7f0;
+  /* Links only. Brighter than --primary so it separates from body copy without
+     losing ground against the background: 10.94:1, up from 9.48:1. */
+  --link: #d9b3ff;
   --primary-strong: #9d6fd4;
   --accent: #e8c87a;
   --background: #0d0d11;
@@ -17,7 +20,12 @@
   --surface: rgba(255, 255, 255, 0.04);
   --surface-muted: rgba(255, 255, 255, 0.02);
   --text: #eeeafa;
-  --text-secondary: #cdbded;
+  /* Secondary text used to be #cdbded, a 20% saturated purple. That sat only
+     10 saturation points off --primary, so a link inside a sentence read as
+     "slightly more purple" rather than as a link. Neutralising it widens that
+     gap to 23 points and lets purple mean interactive across the whole app. It
+     also lifts headings off body copy, 1.50:1 to 1.72:1. */
+  --text-secondary: #b9b6c4;
   --border: rgba(255, 255, 255, 0.07);
   --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
   --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.28);
@@ -276,6 +284,28 @@ html[data-native-platform='ios'] [data-nav-direction='tab'] .insights-page {
   transform: translate(-50%, -50%);
 }
 
+/* Same idea for controls that are already wide enough and only short: a feed
+   tab is 34px tall and a toggle 28px, so the overlay grows the height and
+   leaves the width alone. The toggles are the ones that matter, since only the
+   switch itself is the target here, not the settings row around it. */
+.feed-tab,
+.toggle-switch,
+.profile-toggle-switch {
+  position: relative;
+}
+
+.feed-tab::after,
+.toggle-switch::after,
+.profile-toggle-switch::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
 .btn-loading {
   display: inline-flex;
   align-items: center;
@@ -325,6 +355,25 @@ input, textarea, select {
 a {
   text-decoration: none;
   color: inherit;
+}
+
+/* Links sitting inside a sentence. Colour cannot carry these on its own here:
+   clearing 3:1 against body copy would need a link brighter than white or dark
+   enough to fail against the background, so the underline is what actually does
+   the work. It is always on, because a hover-only underline never fires on a
+   phone, which is where all of these are read. Defined once and nowhere else,
+   so no component stylesheet can win the cascade and take it back off. */
+.terms-gate-check a,
+.auth-policy-check a,
+.auth-legal-links a,
+.home-footer a,
+.settings-footnote a,
+.legal-card a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgba(217, 179, 255, 0.5);
 }
 
 .container {

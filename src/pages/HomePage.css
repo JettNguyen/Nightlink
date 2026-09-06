@@ -170,11 +170,6 @@
   color: var(--text-secondary);
 }
 
-.home-footer a {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .home-feature-card {
     animation: none;
