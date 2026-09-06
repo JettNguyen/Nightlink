@@ -98,6 +98,15 @@
   font-weight: 600;
   padding: 0.55rem 0.9rem;
   min-height: 40px;
+  /* These buttons carried no radius of their own and borrowed their rounded
+     ends from the group's `overflow: hidden`. That holds only while the button
+     is flush with the clip: the press scale pulls it inward, the clip stops
+     covering the corners, and the selected segment flashes a sharp-cornered
+     square. Rounding the button itself means the shape is its own and survives
+     the transform. 12px group radius less its 1px border is 11px, and all four
+     corners get it so the pressed segment reads as a pill lifting out of the
+     track the way an iOS segmented control does. */
+  border-radius: 11px;
 }
 
 .view-toggle-btn.active {
