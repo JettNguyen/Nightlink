@@ -5,7 +5,7 @@ import './TermsGate.css';
 
 // Bump TERMS_VERSION whenever the Terms or Privacy Policy are updated.
 // Users whose stored version doesn't match will be shown the gate again.
-export const TERMS_VERSION = 'v2';
+export const TERMS_VERSION = 'v3';
 export const TERMS_KEY = `nightlink_terms_${TERMS_VERSION}`;
 
 // localStorage throws outright in some privacy modes. Failing closed here just
