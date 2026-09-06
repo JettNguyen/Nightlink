@@ -22,7 +22,7 @@ function Navigation({ user, activityPreview }) {
   const iosLastScrollYRef = useRef(0);
   const iosHeaderCompactRef = useRef(false);
 
-  // Tab root paths — back button never shows on these
+  // Tab root paths, where the back button never shows
   const TAB_PATHS = new Set(['/journal', '/feed', '/search', '/activity', '/profile']);
 
   // Show back button only when on a non-tab page that was navigated to via router push.

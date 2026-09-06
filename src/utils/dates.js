@@ -1,7 +1,7 @@
 /**
  * Dream date utilities.
  *
- * Dream dates are CALENDAR DATES — the user picks "May 12" and we display
+ * Dream dates are CALENDAR DATES. The user picks "May 12" and we display
  * "May 12" everywhere, regardless of timezone.
  *
  * Storage convention: noon UTC on the selected calendar date
@@ -52,7 +52,7 @@ export const parseDateInputValue = (value) => {
   const month = Number(match[2]);  // 1-indexed from the string
   const day   = Number(match[3]);
 
-  // Store as noon UTC — safe calendar-date anchor for all timezones
+  // Store as noon UTC, a safe calendar-date anchor for all timezones
   const stored = new Date(`${match[1]}-${match[2]}-${match[3]}T12:00:00.000Z`);
 
   // Sanity check: UTC date components should match what we asked for

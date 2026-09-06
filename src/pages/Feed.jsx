@@ -70,7 +70,7 @@ export default function Feed({ user }) {
   const [feedMenuOpenDreamId, setFeedMenuOpenDreamId] = useState(null);
   const customEmojiInputRef = useRef(null);
   const userSummariesRef = useRef(userSummaries);
-  // viewerSettings only drives persistViewerSafetySettings — no render dependency
+  // viewerSettings only drives persistViewerSafetySettings, so no render dependency
   const viewerSettingsRef = useRef({});
   const navigate = useNavigate();
   const defaultReaction = '💙';
@@ -144,7 +144,7 @@ export default function Feed({ user }) {
     setLoading(true);
     setError('');
     let cancelled = false;
-    // Anonymous dreams excluded from Following — a small following list would reveal
+    // Anonymous dreams excluded from Following, because a small following list would reveal
     // the author. They appear in For You only where the pool is large enough.
     const FEED_VISIBILITIES = new Set(['public', 'followers', 'mutuals']);
     const followingSet = new Set(followingIds);
@@ -161,7 +161,7 @@ export default function Feed({ user }) {
         setLoading(false);
       });
 
-    // Server-side filter when following ≤50 — surgical state updates, no full re-fetch.
+    // Server-side filter when following ≤50. Surgical state updates, no full re-fetch.
     const realtimeFilter = followingIds.length <= 50
       ? { filter: `user_id=in.(${followingIds.join(',')})` }
       : {};
@@ -280,8 +280,8 @@ export default function Feed({ user }) {
     const previous = viewerSettingsRef.current;
     const merged = { ...previous, ...(nextSettings || {}) };
     viewerSettingsRef.current = merged;
-    // Supabase returns the failure rather than throwing, so surface it as one
-    // — callers roll their optimistic state back on a rejection.
+    // Supabase returns the failure rather than throwing, so surface it as one.
+    // Callers roll their optimistic state back on a rejection.
     const { error: persistError } = await supabase.from('profiles').update({ settings: merged }).eq('id', viewerId);
     if (persistError) {
       viewerSettingsRef.current = previous;

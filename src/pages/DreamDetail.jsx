@@ -31,15 +31,15 @@ import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED, syncCustomerInfoToSupabase } from '../utils/purchases';
 
 const PROMPT_TEMPLATES = {
-  balanced:  "You are a thoughtful, grounded dream interpreter — no mysticism, no jargon, just honest insight. Identify 1–2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
-  coach:     "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns — name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
-  therapist: "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation — name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
-  scientist: "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content — default mode network, limbic circuits, prefrontal suppression, memory consolidation, emotional regulation — and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable — not a journal abstract.",
-  mystical:  "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear — shadow, anima/animus, trickster, death-rebirth, the void, the guide — and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
-  creative:  "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream — the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
-  director:  "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary — make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
-  comedian:  "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it — the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands — warm, specific, never punching down.",
-  astrology: "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block — moon phase and sign, the sun, and the visible planets — as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer — not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
+  balanced:  "You are a thoughtful, grounded dream interpreter. No mysticism, no jargon, just honest insight. Identify 1 or 2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
+  coach:     "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns, and name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
+  therapist: "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation. Name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
+  scientist: "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
+  mystical:  "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
+  creative:  "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream: the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
+  director:  "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary, so make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
+  comedian:  "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it, the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands: warm, specific, never punching down.",
+  astrology: "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block, meaning the moon phase and sign, the sun, and the visible planets, as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer, not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
 };
 
 const PROMPT_LABELS = {
@@ -58,12 +58,12 @@ const PROMPT_DESCRIPTIONS = {
   balanced:  'A grounded, plain-language reading. Picks out a couple of standout symbols, asks one question worth sitting with, and suggests one small thing to try today.',
   coach:     'Reads the dream for signs of stress, overload or avoidance, explains what your nervous system may be working through, and gives you one practical thing to try tonight.',
   therapist: 'Starts with how the dream likely felt, names the need or fear underneath it, and offers a gentler way to hold whatever it surfaced.',
-  scientist: 'What your brain was likely doing while this played out — memory consolidation, threat rehearsal, emotional processing — and why this particular scenario surfaced.',
-  mystical:  'Reads the dream through Jungian archetypes and threshold symbols — shadow, guide, death and rebirth — and what the psyche seems to be negotiating.',
+  scientist: 'What your brain was likely doing while this played out, from memory consolidation to threat rehearsal to emotional processing, and why this particular scenario surfaced.',
+  mystical:  'Reads the dream through Jungian archetypes and threshold symbols like shadow, guide, and death and rebirth, and what the psyche seems to be negotiating.',
   creative:  'Finds the story hiding in the dream: the wound that starts it, the roles people play, the world it belongs to, and a writing prompt pulled from its strangest detail.',
-  director:  'Pitches your dream as a film — the opening shot, the visual grammar, the question it would leave an audience with.',
+  director:  'Pitches your dream as a film: the opening shot, the visual grammar, the question it would leave an audience with.',
   comedian:  'Finds the genuinely absurd part and lands a joke on it, without losing the real feeling underneath.',
-  astrology: 'Reads the dream against the sky that night — the moon phase and sign, and whichever planets were actually saying something.',
+  astrology: 'Reads the dream against the sky that night: the moon phase and sign, and whichever planets were actually saying something.',
   custom:    'Your own instructions, exactly as you saved them in Settings.',
 };
 
@@ -659,7 +659,7 @@ export default function DreamDetail({ user }) {
         setUserSettings(data?.settings || null);
         if (data) {
           const supabaseTier = data?.subscription?.tier || 'free';
-          // RC is authoritative on iOS — prefer live RC state over potentially
+          // RC is authoritative on iOS, so prefer live RC state over potentially
           // stale Supabase data so users are never falsely shown as 'free'.
           const rcIsPro = IS_RC_SUPPORTED && isProFromCustomerInfo(rcCustomerInfo);
           const tier = supabaseTier === 'premium' || rcIsPro || accountTier === 'premium' ? 'premium' : 'free';
@@ -698,7 +698,7 @@ export default function DreamDetail({ user }) {
       if (!prev || prev.tier === 'premium') return prev;
       const tierLimit = 30;
       const used = tierLimit - prev.remainingFree;
-      // Supabase was stale — re-sync so the server sees premium too
+      // Supabase was stale, so re-sync and the server sees premium too
       if (viewerId) syncCustomerInfoToSupabase(viewerId, rcCustomerInfo);
       return { ...prev, tier: 'premium', remainingFree: Math.max(0, tierLimit - used) };
     });
@@ -781,12 +781,12 @@ export default function DreamDetail({ user }) {
           // fields onto the existing dream instead of re-running the full applyDreamData
           // flow (which re-fetches the author profile and triggers a full page re-render).
           setDream((prev) => {
-            if (!prev) return prev; // not yet loaded — let the initial fetch handle it
+            if (!prev) return prev; // not yet loaded, let the initial fetch handle it
             const updated = mapDream(row);
             return {
               ...prev,
               // Large text fields may be absent from real-time payload due to Supabase
-              // size limits — fall back to prev to avoid silently clearing content.
+              // size limits, so fall back to prev to avoid silently clearing content.
               title: updated.title || prev.title,
               content: updated.content || prev.content,
               visibility: updated.visibility || prev.visibility,
@@ -862,7 +862,7 @@ export default function DreamDetail({ user }) {
       return;
     }
 
-    // First load for this dream — initialize from server data
+    // First load for this dream, so initialize from server data
     if (reactionInitDreamIdRef.current !== dream.id) {
       reactionInitDreamIdRef.current = dream.id;
       const raw = dream.viewerReactions?.[viewerId] ?? [];
@@ -874,8 +874,8 @@ export default function DreamDetail({ user }) {
       setCustomEmojiPickerOpen(false);
       setCustomEmojiValue('');
     }
-    // Subsequent updates (realtime merges) intentionally do NOT reset snapshot —
-    // local optimistic updates from handleDreamReactionSelection are authoritative.
+    // Subsequent updates (realtime merges) intentionally do NOT reset snapshot,
+    // because local optimistic updates from handleDreamReactionSelection win.
   }, [dream, viewerId]);
 
   useEffect(() => {
@@ -1593,7 +1593,7 @@ export default function DreamDetail({ user }) {
     if (!dream || !isOwner) return;
     // A `local-` id means the dream is still an optimistic local copy whose
     // insert has not come back yet. Returning silently here left the button
-    // looking live while doing nothing at all — no request, no toast, no log.
+    // looking live while doing nothing at all: no request, no toast, no log.
     if (dream.id.startsWith('local-')) {
       setToast('This dream is still saving. Try again in a moment.');
       return;
@@ -1689,7 +1689,7 @@ export default function DreamDetail({ user }) {
           // record is stale. Re-sync RC → Supabase so the next attempt succeeds.
           if (aiQuota?.tier === 'premium' && IS_RC_SUPPORTED && rcCustomerInfo && viewerId) {
             syncCustomerInfoToSupabase(viewerId, rcCustomerInfo);
-            setToast('Subscription sync issue — your Pro status is being refreshed. Please try again in a moment.');
+            setToast('Subscription sync issue. Your Pro status is being refreshed, so please try again in a moment.');
           } else {
             setToast('That insight style is locked. Upgrade to Pro in Settings to unlock all styles and custom prompts.');
           }
@@ -1727,7 +1727,7 @@ export default function DreamDetail({ user }) {
         updates.aiInsights = sanitized.insights;
       }
 
-      // Only save connections on the first analysis — once a dream is memory-indexed,
+      // Only save connections on the first analysis, because once a dream is memory-indexed,
       // re-generations keep the original pattern recognition so counts don't drift.
       if (!dream.memoryIndexed) {
         const rawConnections = Array.isArray(payload?.connections) ? payload.connections : [];
@@ -1757,7 +1757,7 @@ export default function DreamDetail({ user }) {
         : 'Title and analysis updated.');
     } catch (err) {
       // fetch rejects with a TypeError when the request never got a response at
-      // all — no network, DNS failure, connection refused. `err.message` there
+      // all: no network, DNS failure, connection refused. `err.message` there
       // is "Failed to fetch", which tells the user nothing.
       const isNetworkFailure = err instanceof TypeError;
       const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -2120,7 +2120,7 @@ export default function DreamDetail({ user }) {
   //
   // Plainly computed, NOT useMemo: this sits below the loading/error/!dream
   // early returns, so a hook here would be skipped on the loading render and
-  // run on the next one — the hook count changes and react throws mid render.
+  // run on the next one, because the hook count changes and react throws mid render.
   // It is a handful of array operations over nine items; there is nothing to
   // memoise anyway.
   const promptOptions = (() => {
@@ -2141,8 +2141,8 @@ export default function DreamDetail({ user }) {
    * The style list plus its confirm row.
    *
    * Picking a style no longer fires the request. It selects that style and
-   * opens its description — one at a time, so the panel never becomes a wall of
-   * text — and the run only happens when the user confirms. Choosing and acting
+   * opens its description, one at a time so the panel never becomes a wall of
+   * text, and the run only happens when the user confirms. Choosing and acting
    * were the same click before, which meant reading what a style actually does
    * required running it.
    */

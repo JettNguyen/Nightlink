@@ -12,7 +12,7 @@ export const requestRefresh = () => {
  * Runs `handler` whenever a refresh is requested.
  *
  * Pull-to-refresh used to call `window.location.reload()`, which on iOS tears
- * the whole app down — blank frame, splash screen, session re-read, every
+ * the whole app down: blank frame, splash screen, session re-read, every
  * screen's state lost. Pages re-run their own fetches instead, so a pull just
  * updates the data in place the way a native refresh control does.
  */

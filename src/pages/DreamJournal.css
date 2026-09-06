@@ -150,7 +150,7 @@
 
 /* Month arrows. They were ← and → glyphs in a text button: about the size of a
    word, with the standard 0.965 button press that is far too subtle on
-   something this small. Now a 44px circle — the iOS minimum — around a centred
+   something this small. Now a 44px circle, the iOS minimum, around a centred
    svg chevron, with the chip-tier press and a colour flash so a tap reads. */
 .calendar-nav-btn {
   display: inline-flex;
@@ -223,7 +223,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* The dream marker. A night with an entry gets a lit dot rather than a count —
+/* The dream marker. A night with an entry gets a lit dot rather than a count,
    one dream a night is the norm, and the exact number is in the panel below.
    The dot keeps its slot when empty so numbers never shift between days. */
 .calendar-day::after {
@@ -266,7 +266,7 @@
   box-shadow: inset 0 0 0 1px rgba(201, 167, 240, 0.5);
 }
 
-/* After is-today on purpose — same specificity, so a selected today fills. */
+/* After is-today on purpose: same specificity, so a selected today fills. */
 .calendar-day.is-selected .calendar-day-number {
   background: var(--primary);
   color: var(--background);
@@ -275,7 +275,7 @@
 }
 
 /* Month navigation. The grid used to swap instantly, which read as a flicker
-   rather than a move — sliding it in from the side the month came from gives
+   rather than a move. Sliding it in from the side the month came from gives
    the arrows a direction. `backwards` fill so no transform is left behind.
 
    The travel and the fade are two separate animations on purpose. Running them
@@ -340,7 +340,7 @@
 
 /* Keyed on the selected date in the JSX, so picking another day replays this
    instead of silently swapping the text underneath the cursor. A fade rather
-   than a slide — the dream cards inside already travel, and stacking the two
+   than a slide, because the dream cards inside already travel, and stacking the two
    would move them twice as far as anything else on the page. */
 .calendar-day-panel-body {
   animation: fadeIn 0.2s ease-out backwards;
@@ -469,7 +469,7 @@
 
 @media (max-width: 768px) {
   .dream-ai-badge {
-    font-size: 1.75rem; /* 1.25rem × (16/14) — restores 20px at 14px base */
+    font-size: 1.75rem; /* 1.25rem × (16/14), restores 20px at 14px base */
   }
 }
 

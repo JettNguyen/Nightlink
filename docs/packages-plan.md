@@ -4,9 +4,9 @@ This repo contains reusable UI and service layers. Below is a lightweight playbo
 
 ## Target Packages
 
-1. **@nightlink/reactions** – emoji picker, popover, long-press orchestration.
-2. **@nightlink/activity-hooks** – Firestore hooks for recent activity + presence.
-3. **@nightlink/theme-tokens** – CSS variables + typography ramps.
+1. **@nightlink/reactions**: emoji picker, popover, long-press orchestration.
+2. **@nightlink/activity-hooks**: Firestore hooks for recent activity + presence.
+3. **@nightlink/theme-tokens**: CSS variables + typography ramps.
 
 ## Repo Structure
 

@@ -182,7 +182,7 @@ export default function Connections({ user }) {
   }, [navigate]);
 
   // Loaded whenever you are on your own connections page, not just while the
-  // Requests tab is open — otherwise the tab always reads "Requests 0" and
+  // Requests tab is open, because otherwise the tab always reads "Requests 0" and
   // pending requests stay invisible.
   useEffect(() => {
     if (!viewingOwnProfile) {
@@ -290,7 +290,7 @@ export default function Connections({ user }) {
   }, [user?.uid, viewingOwnProfile]);
 
   if (profileNotFound) return <div className="page-container">We could not find that dreamer.</div>;
-  // A handle still being resolved has no target id yet — keep the loader up
+  // A handle still being resolved has no target id yet, so keep the loader up
   // rather than flashing "Connections unavailable." on the very first paint.
   if (profileLoading || !targetUserId || !userData) {
     if (!targetUserId && !routeHandle) return <div className="page-container">Connections unavailable.</div>;

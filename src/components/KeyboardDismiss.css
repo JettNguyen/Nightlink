@@ -21,7 +21,7 @@ html[data-native-platform='ios'].keyboard-open .keyboard-dismiss {
   border-radius: 999px;
   /* Filled rather than another dark translucent pill. It sits over whatever the
      user is writing on an all-dark UI, so a tinted surface with light text read
-     as one more piece of chrome — the one control that has to be findable
+     as one more piece of chrome, the one control that has to be findable
      without looking for it is the one that should not blend in. */
   border: none;
   background: linear-gradient(135deg, #c9a7f0, #9d6fd4);

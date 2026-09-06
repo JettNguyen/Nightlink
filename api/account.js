@@ -30,7 +30,7 @@ const verifyCaller = async (req, expectedUid) => {
 // It must never downgrade: a paying Stripe or RevenueCat subscriber is not on
 // that list, and this runs on every app start. Returning 'free' for them used
 // to overwrite a legitimately paid tier. Revoking access belongs to the payment
-// providers — the Stripe `customer.subscription.deleted` webhook and the
+// providers, namely the Stripe `customer.subscription.deleted` webhook and the
 // RevenueCat customer-info sync, both of which write the tier directly.
 const isComped = (profileEmail, envPremiumEmails) => {
   const premiumEmails = (envPremiumEmails || '')

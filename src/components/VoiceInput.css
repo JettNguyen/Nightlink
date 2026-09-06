@@ -1,5 +1,5 @@
 /* Voice dictation control. Sits inside the bottom-right of a textarea, so the
-   idle state is deliberately quiet — a single mic glyph — and only expands into
+   idle state is deliberately quiet, a single mic glyph, and only expands into
    the waveform bar while actually listening. */
 
 .voice-input {
@@ -197,7 +197,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  /* Purely a readout — it must never swallow a tap meant for the field. */
+  /* Purely a readout, so it must never swallow a tap meant for the field. */
   pointer-events: none;
   animation: voiceCaptionIn 180ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
@@ -257,7 +257,7 @@
 }
 
 /* The bars are a readout of the user's own voice, not decoration, so they keep
-   moving under reduced motion — only the ambient pulse and slide are dropped. */
+   moving under reduced motion, and only the ambient pulse and slide are dropped. */
 @media (prefers-reduced-motion: reduce) {
   .voice-input-btn.is-recording { animation: none; }
   .voice-input-live { animation: none; }

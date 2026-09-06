@@ -54,7 +54,7 @@ const parseMemory = (text) => {
   return sections;
 };
 
-// Render inline markdown — handles **bold** only (memory format uses nothing else)
+// Render inline markdown. Handles **bold** only (memory format uses nothing else)
 const renderInline = (text) => {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
@@ -134,7 +134,7 @@ export default function DreamInsights({ user }) {
     load();
   }, [user?.uid]);
 
-  // RevenueCat customer info can land after the initial load — without this a
+  // RevenueCat customer info can land after the initial load, and without this a
   // Pro subscriber who opens Insights directly stays stuck behind the gate.
   useEffect(() => {
     if (IS_RC_SUPPORTED && isProFromCustomerInfo(rcCustomerInfo)) setIsPro(true);
@@ -156,7 +156,7 @@ export default function DreamInsights({ user }) {
         <div className="insights-gate">
           <div className="insights-gate-icon">◈</div>
           <h2>Dream Pattern Intelligence</h2>
-          <p>Pro members build a private memory file across every dream they analyze. Over time, the AI surfaces recurring symbols, emotional patterns, and life themes — giving you a living map of your inner world.</p>
+          <p>Pro members build a private memory file across every dream they analyze. Over time, the AI surfaces recurring symbols, emotional patterns, and life themes, giving you a living map of your inner world.</p>
           <p className="insights-gate-sub">Upgrade to Pro to unlock this feature.</p>
           <button type="button" className="primary-btn" onClick={() => navigate('/settings')}>
             Go to Settings

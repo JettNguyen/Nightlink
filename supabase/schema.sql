@@ -1,5 +1,5 @@
 -- ============================================================
--- Nightlink — Supabase PostgreSQL Schema
+-- Nightlink: Supabase PostgreSQL Schema
 -- Run this in the Supabase SQL editor (Dashboard → SQL editor)
 -- ============================================================
 
@@ -287,7 +287,7 @@ drop function if exists public.accept_follow_request(uuid);
 drop function if exists public.decline_follow_request(uuid);
 
 -- Atomically toggle a single emoji reaction for a user.
--- viewer_reactions stores { userId: [emoji, ...] } — an array so users can
+-- viewer_reactions stores { userId: [emoji, ...] }, an array so users can
 -- simultaneously hold a heart AND a custom emoji reaction.
 -- Legacy single-string values are transparently migrated on first touch.
 -- Pass p_emoji = null to clear ALL reactions for the user.
@@ -742,7 +742,7 @@ end;
 $$;
 
 -- ============================================================
--- REALTIME — enable on tables that need live updates
+-- REALTIME: enable on tables that need live updates
 -- (Run these in Supabase Dashboard → Database → Replication)
 -- alter publication supabase_realtime add table public.dreams;
 -- alter publication supabase_realtime add table public.comments;
@@ -750,7 +750,7 @@ $$;
 -- alter publication supabase_realtime add table public.profiles;
 
 -- ============================================================
--- STORAGE — avatars bucket
+-- STORAGE: avatars bucket
 -- Create this bucket manually in Supabase Dashboard → Storage,
 -- then run the RLS policies below in the SQL editor.
 --

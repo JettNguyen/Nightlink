@@ -43,14 +43,14 @@ const resolveAccountEndpoint = () => {
 const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
 
 // Every full-screen overlay in the app. Pull-to-refresh reloads the page, so it
-// has to stand down whenever one of these is up — otherwise dragging on a
+// has to stand down whenever one of these is up, because otherwise dragging on a
 // confirm sheet or the photo cropper throws away what the user was doing.
 const MODAL_SELECTOR = [
   '.report-modal-backdrop',
   '.modal-overlay',
   '.confirm-modal-backdrop',
   '.crop-modal-backdrop',
-  // Only matches while a recording is actually in flight — reloading the page
+  // Only matches while a recording is actually in flight. Reloading the page
   // mid-dictation would throw the audio away.
   '.voice-input.is-recording',
 ].join(', ');
@@ -62,7 +62,7 @@ const MODAL_SELECTOR = [
  * but reads as free from the profile row alone. The response was being thrown
  * away, so a comped user was shown "upgrade to Pro" until their first
  * generation came back and corrected it. Returns null when the answer is
- * unknown — offline, failed, or not signed in — which callers treat as "do not
+ * unknown, whether offline, failed, or not signed in, which callers treat as "do not
  * claim anything about this account yet".
  */
 const syncSubscriptionTier = async (session) => {
@@ -81,7 +81,7 @@ const syncSubscriptionTier = async (session) => {
     if (payload?.tier === 'free') return 'free';
     return null;
   } catch {
-    // Non-critical — silently ignore network errors on startup
+    // Non-critical, so silently ignore network errors on startup
     return null;
   }
 };
@@ -96,7 +96,7 @@ const DreamInsights = lazy(() => import('./pages/DreamInsights'));
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
-// Tab roots cross-fade instead of sliding — matching how a native tab bar behaves.
+// Tab roots cross-fade instead of sliding, matching how a native tab bar behaves.
 const TAB_ROOT_PATHS = new Set(['/journal', '/feed', '/search', '/activity', '/profile']);
 
 function ProtectedRoute({ user, children }) {
@@ -249,7 +249,7 @@ function AppContent({ user, loading, ready }) {
         setDistanceSafely(0);
         return;
       }
-      // Cancel if the page has scrolled down — user is scrolling, not pulling.
+      // Cancel if the page has scrolled down, since the user is scrolling and not pulling.
       // Use > 4 to tolerate iOS sub-pixel scroll jitter without false cancels.
       if (window.scrollY > 4) {
         pullActiveRef.current = false;
@@ -263,7 +263,7 @@ function AppContent({ user, loading, ready }) {
         return;
       }
 
-      // Dead zone: first GRAPHIC_DEAD_ZONE px of drag are invisible — no graphic,
+      // Dead zone: first GRAPHIC_DEAD_ZONE px of drag are invisible: no graphic,
       // no haptic. This matches how Twitter/Instagram handle accidental micro-pulls.
       const past = rawDelta - GRAPHIC_DEAD_ZONE;
       if (past <= 0) {
@@ -288,7 +288,7 @@ function AppContent({ user, loading, ready }) {
 
     const onTouchEnd = () => {
       if (!pullActiveRef.current) return;
-      // Use the raw distance tracked via pullReadyRef — more reliable than
+      // Use the raw distance tracked via pullReadyRef, which is more reliable than
       // checking pullDistanceRef which holds the dampened visual value.
       const shouldRefresh = pullReadyRef.current;
       pullActiveRef.current = false;
@@ -396,7 +396,7 @@ function AppContent({ user, loading, ready }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Authenticated but hasn't accepted terms yet — gate everything except /terms and /privacy
+  // Authenticated but hasn't accepted terms yet, so gate everything except /terms and /privacy
   if (user && !termsAccepted) {
     return (
       <div className="app">

@@ -19,7 +19,7 @@
  */
 
 const SCROLL_THRESHOLD = 6;  // px of movement before treating as scroll
-const MIN_HOLD_MS = 80;       // ms — taps faster than this are never scrolls
+const MIN_HOLD_MS = 80;       // ms; taps faster than this are never scrolls
 
 export function initIosTapFix() {
   if (document.documentElement.dataset.nativePlatform !== 'ios') {

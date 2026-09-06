@@ -175,7 +175,7 @@ export default function useActivityPreview(viewerId, options = {}) {
     let debounceTimer = null;
     const handleDreamChange = (payload) => {
       if (realtimeFilter.filter) {
-        // Server already filtered to followed users — fire immediately.
+        // Server already filtered to followed users, so fire immediately.
         fetchFollowingFeed();
         return;
       }

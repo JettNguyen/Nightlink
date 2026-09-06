@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 /* global require, __dirname, process */
-// dev-server.js — local API shim for /api endpoints used by the frontend
+// dev-server.js: local API shim for /api endpoints used by the frontend
 // Loads .env.local if present and starts an Express server that delegates
 // requests to handlers in the `api/` folder.
 

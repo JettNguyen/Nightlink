@@ -22,7 +22,7 @@
   margin: 0 auto;
   /* This page renders in two different shells. Normally it sits inside
      `.app-main--with-nav`, which has already cleared both the fixed header and
-     the status bar. But the terms gate renders it bare — no `.app-main` at all —
+     the status bar. But the terms gate renders it bare, with no `.app-main` at all,
      and so does a signed-out visit, and there nothing above it has paid for the
      inset. Assume the bare case and pay it here; the rule below hands it back
      when the shell has already covered it. Without the inset the back button

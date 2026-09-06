@@ -8,7 +8,7 @@ import './KeyboardDismiss.css';
 /**
  * A Done control that sits just above the keyboard on iOS.
  *
- * The keyboard plugin hides WebKit's form accessory bar — the grey strip that
+ * The keyboard plugin hides WebKit's form accessory bar, the grey strip that
  * normally carries Done. That is the right call visually, but it leaves a
  * textarea with no way out at all, because Return inserts a newline there
  * rather than submitting.
@@ -26,7 +26,7 @@ export default function KeyboardDismiss() {
     if (active && typeof active.blur === 'function') active.blur();
     if (Capacitor.isNativePlatform()) {
       Keyboard.hide().catch(() => {
-        // Already closing, or the plugin is unavailable — the blur covers it.
+        // Already closing, or the plugin is unavailable, and the blur covers it.
       });
     }
   };

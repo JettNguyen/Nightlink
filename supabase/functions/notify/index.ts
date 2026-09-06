@@ -1,5 +1,5 @@
 /**
- * notify — sends a push notification for a single activity event.
+ * notify: sends a push notification for a single activity event.
  *
  * Called by the client via supabase.functions.invoke('notify', { body: { targetUserId, payload } }).
  * The Supabase JS client automatically attaches the caller's JWT, which we verify here.

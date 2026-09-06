@@ -6,18 +6,18 @@
 // body parsing makes fragile.
 //
 // Required env vars:
-//   OPENAI_API_KEY            — same key the analysis endpoint uses
-//   SUPABASE_URL              — project URL
-//   SUPABASE_SERVICE_ROLE_KEY — service role key (never exposed to the client)
+//   OPENAI_API_KEY:             same key the analysis endpoint uses
+//   SUPABASE_URL:               project URL
+//   SUPABASE_SERVICE_ROLE_KEY: service role key (never exposed to the client)
 // Optional:
-//   OPENAI_TRANSCRIBE_MODEL   — defaults to gpt-4o-mini-transcribe
+//   OPENAI_TRANSCRIBE_MODEL:    defaults to gpt-4o-mini-transcribe
 
 const { createClient } = require('@supabase/supabase-js');
 
 const TRANSCRIBE_URL = 'https://api.openai.com/v1/audio/transcriptions';
 const DEFAULT_MODEL = 'gpt-4o-mini-transcribe';
 
-// Base64 inflates ~33%, so this caps decoded audio near 3.5 MB — roughly a
+// Base64 inflates ~33%, so this caps decoded audio near 3.5 MB, roughly a
 // minute of speech at any bitrate a browser will realistically produce.
 const MAX_BASE64_LENGTH = 5_000_000;
 
@@ -34,7 +34,7 @@ const EXTENSION_MIME = {
 
 // Per-user throttle. Every request costs real money upstream, and unlike the
 // analysis endpoint there is no credit quota in front of this one. In-memory so
-// it is per serverless instance rather than global — enough to stop a runaway
+// it is per serverless instance rather than global, which is enough to stop a runaway
 // client or a naive script, not a substitute for platform rate limiting.
 const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 const RATE_LIMIT_MAX = 20;

@@ -9,7 +9,7 @@ export default defineConfig([
   {
     // `ios/` holds the native project plus the web bundle Capacitor copies into
     // it, so linting it just re-reports thousands of errors from generated and
-    // vendored code — and it was failing CI.
+    // vendored code, and it was failing CI.
     ignores: ["dist/**", "ios/**", "**/*.min.js", "dev-dist/**"],
   },
   {

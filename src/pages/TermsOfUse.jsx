@@ -50,8 +50,8 @@ export default function TermsOfUse() {
           </p>
           <p>
             To run the service, you grant us a worldwide, non-exclusive, royalty-free licence to host, store,
-            reproduce, and display your content — and to send it to the providers listed in our Privacy
-            Policy — solely so that we can operate and improve Nightlink for you. If you choose to share a
+            reproduce, and display your content, and to send it to the providers listed in our Privacy
+            Policy, solely so that we can operate and improve Nightlink for you. If you choose to share a
             dream publicly, that licence extends to displaying it to other users through the feed, profiles,
             and search. This licence ends when you delete the content or your account, except for copies that
             remain in routine backups for a short period.
@@ -66,7 +66,7 @@ export default function TermsOfUse() {
           <h2>5. AI insights and limitations</h2>
           <p>
             AI insights are informational only and are not medical, psychiatric, legal, or professional advice.
-            AI output is generated automatically and may be inaccurate, incomplete, or unexpected — do not rely
+            AI output is generated automatically and may be inaccurate, incomplete, or unexpected. Do not rely
             on it as fact. Do not rely on Nightlink for emergency or crisis support. If you are in crisis,
             contact your local emergency services.
           </p>
@@ -82,7 +82,7 @@ export default function TermsOfUse() {
           <p>
             Subscriptions renew automatically at the end of each period unless you cancel at least 24 hours
             before it ends. You can manage or cancel a subscription in the Subscriptions section of your Apple
-            Account settings — deleting the app does not cancel it. Payment is charged to your Apple Account at
+            Account settings. Deleting the app does not cancel it. Payment is charged to your Apple Account at
             confirmation of purchase, and again at each renewal.
           </p>
           <p>
@@ -137,7 +137,7 @@ export default function TermsOfUse() {
             Nightlink is provided &quot;as is&quot; and &quot;as available&quot;, without warranties of any
             kind, whether express or implied, including any implied warranty of merchantability, fitness for a
             particular purpose, or non-infringement. We do not warrant that the service will be uninterrupted,
-            error-free, or secure, or that your content will always be preserved — please keep your own copies
+            error-free, or secure, or that your content will always be preserved, so please keep your own copies
             of anything you cannot afford to lose. Some jurisdictions do not allow the exclusion of implied
             warranties, so parts of this section may not apply to you.
           </p>
@@ -157,8 +157,8 @@ export default function TermsOfUse() {
         <section>
           <h2>12. Indemnity</h2>
           <p>
-            You agree to indemnify and hold us harmless from any claim, loss, or demand — including reasonable
-            legal fees — brought by a third party and arising out of the content you post or your breach of
+            You agree to indemnify and hold us harmless from any claim, loss, or demand, including reasonable
+            legal fees, brought by a third party and arising out of the content you post or your breach of
             these terms.
           </p>
         </section>

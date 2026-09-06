@@ -7,7 +7,7 @@ const EXIT_MS = 180;
 
 export default function Toast({ message, onDismiss, duration = 3000 }) {
   // The toast used to unmount the moment `message` cleared, so it had no chance
-  // to animate out — it just blinked off. It keeps rendering the last message
+  // to animate out, so it just blinked off. It keeps rendering the last message
   // through the exit animation instead.
   const [shown, setShown] = useState({ text: message || '', phase: message ? 'in' : 'hidden' });
 

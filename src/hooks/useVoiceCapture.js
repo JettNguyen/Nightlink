@@ -92,7 +92,7 @@ const MIC_DENIED = 'Microphone access was denied. Enable it for Nightlink in you
  *   never leaves the phone.
  * - `upload` records with `MediaRecorder` and posts to `/api/transcribe`. This
  *   is what the web build uses, and what iOS falls back to if the recogniser is
- *   unavailable — deliberately not the Web Speech API, which does not exist in
+ *   unavailable. Deliberately not the Web Speech API, which does not exist in
  *   the WKWebView Capacitor runs.
  *
  * `analyserRef` (upload) and `levelRef` (live) both expose live amplitude so a
@@ -226,7 +226,7 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
         }),
         NativeSpeech.addListener('error', ({ message }) => {
           // Never throw away words the user already said over a mid-recording
-          // fault — keep them and only surface the error when there is nothing.
+          // fault, so keep them and only surface the error when there is nothing.
           if (interimRef.current.trim()) { settleLive(interimRef.current); return; }
           clearTimers();
           detachNativeListeners();

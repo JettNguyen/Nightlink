@@ -475,7 +475,7 @@ export default function Profile({ user }) {
   }, [taggedDreams, targetUserId, viewerId, viewerCanSeeTaggedDream]);
 
   if (profileNotFound) return <div className="page-container">We could not find that dreamer.</div>;
-  // A handle still being resolved has no target id yet — keep the skeleton up
+  // A handle still being resolved has no target id yet, so keep the skeleton up
   // rather than flashing "Profile unavailable." on the very first paint.
   if (profileLoading || !targetUserId || !userData) {
     if (!targetUserId && !routeHandle) return <div className="page-container">Profile unavailable.</div>;

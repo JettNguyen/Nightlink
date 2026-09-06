@@ -239,7 +239,7 @@
 
 /* Was a `›` glyph rotated 90deg to point down. Flex centres a glyph's inline
    box, not its ink, and `›` sits high in its box with uneven side bearings, so
-   it never sat in the middle of the circle — and rotating moved that offset to
+   it never sat in the middle of the circle, and rotating moved that offset to
    a different edge, which is why it looked wrong both open and closed. An svg
    chevron is centred in its own viewBox, so it lands dead centre and stays
    there when the 180deg flip points it back up. */
@@ -1016,7 +1016,7 @@
 
    It stays inline rather than becoming an overlay on purpose: `.detail-card`
    has both a backdrop-filter and a `both`-filled animation, and either one
-   makes it the containing block for `position: fixed` descendants — a fixed
+   makes it the containing block for `position: fixed` descendants, so a fixed
    overlay in here would size itself against the card, not the viewport. */
 .prompt-selector-modal {
   display: block;
@@ -1053,7 +1053,7 @@
 /* Sits in the flow rather than hanging off the button. Absolutely positioned it
    did not extend the page's scrollable area, so when the button was near the
    bottom the last options were below everything you could ever scroll to.
-   Inline it pushes the page down and the list is always reachable — and it now
+   Inline it pushes the page down and the list is always reachable, and it now
    matches the first-analysis picker, which is the same choice in the same
    place. */
 .prompt-selector-panel {
@@ -1161,8 +1161,8 @@
   margin-top: 0.4rem;
 }
 
-/* The chosen style. This is a real selected state now — something is picked and
-   nothing has run yet — so it is allowed to look selected. */
+/* The chosen style. This is a real selected state now. Something is picked and
+   nothing has run yet, so it is allowed to look selected. */
 .prompt-option-btn.is-selected {
   border-color: var(--primary);
   background: rgba(201, 167, 240, 0.12);
@@ -1217,7 +1217,7 @@
    reads as the top of the list rather than as whichever cell it happened to
    land in. The tint is what marks it; the tag is what stops the tint being
    read as "already chosen", which is the trap the old separate button fell
-   into — it looked selected while being the one thing not yet picked. */
+   into, so it looked selected while being the one thing not yet picked. */
 .prompt-option-btn.current-prompt {
   border-color: rgba(255, 255, 255, 0.18);
 }
@@ -1293,7 +1293,7 @@
 }
 
 @media (max-width: 768px) {
-  /* Nav is sticky on mobile — it occupies flow space, no top padding needed */
+  /* Nav is sticky on mobile, so it occupies flow space and needs no top padding */
   .dream-detail-page {
     padding-top: 0.75rem;
   }
@@ -1400,7 +1400,7 @@
 }
 
 /* Generation placeholder. A button that only changes its label leaves the rest
-   of the page looking exactly as it did, which is what reads as frozen — this
+   of the page looking exactly as it did, which is what reads as frozen. This
    puts the movement where the answer is going to appear. */
 .analysis-pending {
   display: flex;

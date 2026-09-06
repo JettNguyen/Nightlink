@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const Astronomy = require('astronomy-engine');
 
 // Vercel is free to freeze the instance the moment the response is sent, which
-// killed the dream memory update mid-flight most of the time — it starts a
+// killed the dream memory update mid-flight most of the time, because it starts a
 // second OpenAI call that takes longer than the response it trails. waitUntil
 // keeps the instance alive until that work lands. Absent locally, where the
 // express dev server stays up on its own.
@@ -51,48 +51,48 @@ const SAFE_AI_TITLE_FALLBACK = 'Reflective Dream';
 const SAFE_AI_THEMES_FALLBACK = 'Some details were removed from this analysis as they fall outside what the AI can discuss. Use this as a general reflection only. AI output may be inaccurate and is not medical, mental health, legal, or safety advice.';
 
 // Shared base: output contract, length, safety, and speculative-language rules.
-// All style deltas inherit this — never repeat format instructions inside a delta.
+// All style deltas inherit this, so never repeat format instructions inside a delta.
 const BASE_PROMPT = `You are a dream analysis assistant on NightLink, an 18+ dream journaling app.
 Analyze the dream through your assigned lens and return ONLY minified JSON: {"title":"string","themes":"string","connections":[]}
 
-- "title": a poetic, evocative 2–4 word phrase that names this specific dream (never generic)
+- "title": a poetic, evocative 2 to 4 word phrase that names this specific dream (never generic)
 - "themes": your full analysis in your assigned voice
-- "connections": array of short strings (under 15 words each) for patterns explicitly recorded in the dreamer's memory file that also appear in this dream. A contrast counts as a connection when both halves are grounded — e.g. "water recurs, but this is the first time it turns violent". Only cite a connection if the memory states it — do not infer, guess, or hallucinate recurring themes. Return [] if no memory context was provided or no overlap exists.
+- "connections": array of short strings (under 15 words each) for patterns explicitly recorded in the dreamer's memory file that also appear in this dream. A contrast counts as a connection when both halves are grounded, for example "water recurs, but this is the first time it turns violent". Only cite a connection if the memory states it, and do not infer, guess, or hallucinate recurring themes. Return [] if no memory context was provided or no overlap exists.
 - Use speculative language ("may suggest", "could reflect", "seems to")
 - Engage thoughtfully with mature content as it naturally appears in dreams; never encourage self-harm or glorify real-world violence
 - If the dream touches on self-harm or suicidal themes, respond with warm, grounded support`;
 
-// Per-style persona and interpretive methodology — no format instructions here.
+// Per-style persona and interpretive methodology, with no format instructions here.
 const STYLE_DELTAS = {
   balanced:
-    "You are a thoughtful, grounded dream interpreter — no mysticism, no jargon, just honest insight. Identify 1-2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
+    "You are a thoughtful, grounded dream interpreter. No mysticism, no jargon, just honest insight. Identify 1-2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
 
   coach:
-    "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns — name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
+    "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns, and name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
 
   therapist:
-    "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation — name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
+    "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation. Name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
 
   scientist:
-    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content — default mode network, limbic circuits, prefrontal suppression, memory consolidation, emotional regulation — and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable — not a journal abstract.",
+    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
 
   mystical:
-    "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear — shadow, anima/animus, trickster, death-rebirth, the void, the guide — and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
+    "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
 
   creative:
-    "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream — the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
+    "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream: the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
 
   director:
-    "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary — make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
+    "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary, so make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
 
   comedian:
-    "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it — the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands — warm, specific, never punching down.",
+    "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it, the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands: warm, specific, never punching down.",
 
   astrology:
-    "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block — moon phase and sign, the sun, and the visible planets — as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer — not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
+    "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block, meaning the moon phase and sign, the sun, and the visible planets, as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer, not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
 };
 
-// Per-style temperature — higher for expressive/generative styles, lower for analytical ones.
+// Per-style temperature: higher for expressive/generative styles, lower for analytical ones.
 const STYLE_TEMPERATURE = {
   balanced:  0.70,
   coach:     0.60,
@@ -105,7 +105,7 @@ const STYLE_TEMPERATURE = {
   astrology: 0.75,
 };
 
-// Per-style token budget — astrology needs more room to cover every planet.
+// Per-style token budget. Astrology needs more room to cover every planet.
 const STYLE_MAX_TOKENS = {
   balanced:  650,
   coach:     650,
@@ -262,7 +262,7 @@ const checkAndIncrementQuotaFallback = async (uid, tier) => {
     .eq('id', uid);
 
   if (updateError) {
-    // Log but don't hard-fail — if ai_usage column is missing the request still goes through
+    // Log but don't hard-fail, because if ai_usage column is missing the request still goes through
     console.error('Fallback quota update failed:', updateError.message);
   }
 
@@ -304,7 +304,7 @@ const getUserTier = async (uid) => {
   return 'free';
 };
 
-// Reverse a quota increment when the AI call fails — no charge on error
+// Reverse a quota increment when the AI call fails, so there is no charge on error
 const refundQuota = async (uid, usedCredit) => {
   try {
     const admin = getSupabaseAdmin();
@@ -352,8 +352,8 @@ const isDreamMemoryIndexed = async (uid, dreamId) => {
   return data ? !!data.memory_indexed : true;
 };
 
-// Rewrites the memory file from the current one. Returns whether it persisted —
-// the caller must not mark the dream indexed unless it did, or the dream is lost
+// Rewrites the memory file from the current one. Returns whether it persisted.
+// The caller must not mark the dream indexed unless it did, or the dream is lost
 // from the memory permanently.
 const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) => {
   const systemPrompt = `You maintain a private dream memory file for a single user. After each analyzed dream, update the file by merging in new patterns, symbols, and themes.
@@ -376,13 +376,13 @@ Rules:
 - Note the direction a pattern is moving, not just that it exists (e.g. "water: ~8 times; still and calm in early entries, turbulent recently")
 - Record pairings that keep co-occurring (e.g. "the house appears with the absent father in most entries")
 - Under "Shifts over time", record changes worth telling the dreamer about: a symbol that has inverted, an emotion that has cooled, a recurring figure that has stopped appearing
-- Under "Open threads", record what keeps arriving unresolved — a chase never resolved, a door never opened, a conversation never finished
-- Relative sequencing only ("early entries", "recently", "the last few") — never dates, months, or dream IDs
-- Merge new information into existing entries — never duplicate
+- Under "Open threads", record what keeps arriving unresolved, such as a chase never resolved, a door never opened, or a conversation never finished
+- Relative sequencing only ("early entries", "recently", "the last few"), never dates, months, or dream IDs
+- Merge new information into existing entries, never duplicate
 - Add new entries only when genuinely novel
 - Never drop an entry that has occurred 3 or more times; consolidate wording instead
 - When nearing the length limit, trim the rarest single-occurrence entries first
-- Never include raw dream text — only synthesized patterns and observations
+- Never include raw dream text, only synthesized patterns and observations
 - Never speculate about diagnoses, medical conditions, or the dreamer's safety
 
 Return ONLY the updated memory file. No preamble or explanation.`;
@@ -393,7 +393,7 @@ Return ONLY the updated memory file. No preamble or explanation.`;
   const currentMemory = await getDreamMemory(uid).catch(() => null);
 
   const userContent = [
-    `Current memory:\n${currentMemory || '(empty — this is the first entry)'}`,
+    `Current memory:\n${currentMemory || '(empty, this is the first entry)'}`,
     `---`,
     `New dream title: ${aiTitle}`,
     `Dream content: ${dreamText.slice(0, 2000)}`,
@@ -452,9 +452,9 @@ const buildSystemPrompt = (styleDelta, contextBlock) => {
     parts.push(`${contextBlock}
 
 MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly:
-- In your "themes" text, reference a memory pattern only if it genuinely appears in this dream — e.g. "Water has come up in your dreams before; here it shifts from still to rushing..." Never fabricate a connection that isn't supported by the memory file.
+- In your "themes" text, reference a memory pattern only if it genuinely appears in this dream, for example "Water has come up in your dreams before; here it shifts from still to rushing..." Never fabricate a connection that isn't supported by the memory file.
 - Populate the "connections" array ONLY with patterns that are (a) explicitly listed in the memory file AND (b) clearly present in this dream. If a symbol from this dream is not in the memory file, do not claim it recurs. Return [] if nothing overlaps.
-- Say the thing the dreamer is least likely to have noticed themselves: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion that is missing where the memory says it usually sits. A grounded contrast or absence is a connection — both halves just have to be real.
+- Say the thing the dreamer is least likely to have noticed themselves: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion that is missing where the memory says it usually sits. A grounded contrast or absence is a connection, and both halves just have to be real.
 - Accuracy matters more than fullness. Fewer real connections are better than more invented ones.`);
   }
   return parts.join('\n\n');
@@ -541,7 +541,7 @@ module.exports = async function handler(req, res) {
   body = body || {};
 
   // `isMemoryIndexed` is still accepted in the body for older clients but is
-  // deliberately ignored — indexing is decided from the row itself.
+  // deliberately ignored, because indexing is decided from the row itself.
   const { dreamText, idToken, dreamId, customPrompt, promptStyle, dreamDate } = body;
   if (!dreamText || typeof dreamText !== 'string') return res.status(400).json({ error: 'Missing dreamText' });
   if (!idToken) return res.status(401).json({ error: 'Authentication required.' });
@@ -632,7 +632,7 @@ module.exports = async function handler(req, res) {
     try {
       currentMemory = await getDreamMemory(uid);
       if (currentMemory) {
-        contextBlock = `[Dream memory — this dreamer's recurring symbols, patterns, and themes]\n${currentMemory}`;
+        contextBlock = `[Dream memory: this dreamer's recurring symbols, patterns, and themes]\n${currentMemory}`;
       }
     } catch (e) { console.error('Dream memory fetch failed:', e.message); }
   }

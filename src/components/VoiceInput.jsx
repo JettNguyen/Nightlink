@@ -30,7 +30,7 @@ const readHintSeen = () => {
  * Mic button that dictates into a text field.
  *
  * The waveform is driven straight from the audio layer inside a rAF loop and
- * written to the bars as inline transforms — keeping 60fps amplitude out of
+ * written to the bars as inline transforms, keeping 60fps amplitude out of
  * React state, which would otherwise re-render the whole composer every frame.
  * The two capture engines feed it differently: the upload path has a Web Audio
  * analyser to read a spectrum from, while the native path can only hand back a
@@ -75,7 +75,7 @@ export default function VoiceInput({ onTranscript, onNotice, disabled, label }) 
   const isLive = mode === 'live';
 
   // Press-and-hold bookkeeping. People reach for a mic button expecting a
-  // walkie-talkie, so a hold that is released has to end the recording — but a
+  // walkie-talkie, so a hold that is released has to end the recording, but a
   // quick tap still has to leave it running, or one-handed use is impossible.
   const pressStartedAtRef = useRef(0);
   const pressOpenedRecordingRef = useRef(false);
@@ -124,7 +124,7 @@ export default function VoiceInput({ onTranscript, onNotice, disabled, label }) 
       for (let i = 0; i < half; i += 1) {
         const bin = Math.floor((i / half) * usable);
         const raw = analyser ? spectrum[bin] / 255 : 0;
-        // Ease upward fast and fall away slowly — reads as speech, not noise.
+        // Ease upward fast and fall away slowly, which reads as speech, not noise.
         const previous = levelsRef.current[i];
         const next = raw > previous ? raw : previous * 0.82 + raw * 0.18;
         levelsRef.current[i] = next;
@@ -207,7 +207,7 @@ export default function VoiceInput({ onTranscript, onNotice, disabled, label }) 
   };
 
   // Pointer events do not fire for Enter/Space on a focused button, and a
-  // keyboard-driven click reports a detail of 0 — so this handles only those.
+  // keyboard-driven click reports a detail of 0, so this handles only those.
   const handleKeyboardClick = (event) => {
     if (event.detail !== 0) return;
     if (disabled || isBusy) return;

@@ -19,11 +19,11 @@ export default function setupKeyboard() {
 
   const listen = (event, handler) => {
     Keyboard.addListener(event, handler).catch(() => {
-      // Plugin unavailable — the app just keeps the plain web behaviour.
+      // Plugin unavailable, so the app just keeps the plain web behaviour.
     });
   };
 
-  // The plugin reports 0 for the bare QuickType bar, which resizes nothing —
+  // The plugin reports 0 for the bare QuickType bar, which resizes nothing,
   // treating that as "open" would hide the tab bar for no reason.
   listen('keyboardWillShow', (info) => setOpen((info?.keyboardHeight || 0) > 0));
   listen('keyboardWillHide', () => setOpen(false));

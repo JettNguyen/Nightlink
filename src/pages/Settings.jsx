@@ -187,7 +187,7 @@ export default function Settings({ user }) {
   const uid = user?.uid || null;
   const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
-  // Merge Supabase tier with live RC state — RC is authoritative on iOS.
+  // Merge Supabase tier with live RC state, since RC is authoritative on iOS.
   // Using the most-permissive value means UI unlocks immediately after a
   // purchase without waiting for the Supabase real-time event to arrive.
   const supabaseTier = profile?.subscription?.tier === 'premium' ? 'premium' : 'free';

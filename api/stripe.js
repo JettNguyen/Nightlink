@@ -1,12 +1,12 @@
-// Stripe integration — web payments for AI credit packs and Premium subscriptions.
+// Stripe integration for web payments on AI credit packs and Premium subscriptions.
 //
 // Required env vars (Vercel dashboard):
-//   STRIPE_SECRET_KEY        — your Stripe secret key (sk_live_... or sk_test_...)
-//   STRIPE_WEBHOOK_SECRET    — from `stripe listen` or the Stripe dashboard
-//   SUPABASE_URL             — your Supabase project URL
-//   SUPABASE_SERVICE_ROLE_KEY — service role key (never expose on the client)
+//   STRIPE_SECRET_KEY:         your Stripe secret key (sk_live_... or sk_test_...)
+//   STRIPE_WEBHOOK_SECRET:     from `stripe listen` or the Stripe dashboard
+//   SUPABASE_URL:              your Supabase project URL
+//   SUPABASE_SERVICE_ROLE_KEY: service role key (never expose on the client)
 //
-// RevenueCat (iOS) posts to /api/revenuecat — add that endpoint when you build
+// RevenueCat (iOS) posts to /api/revenuecat, so add that endpoint when you build
 // the iOS app. Both payment paths converge on the same Supabase profile updates below.
 
 const Stripe = require('stripe');
@@ -77,7 +77,7 @@ const handleCreateCheckout = async (req, res) => {
     client_reference_id: uid,
     // `client_reference_id` only lives on the checkout session. Later
     // subscription events (notably customer.subscription.deleted) carry the
-    // subscription object instead, so stamp the uid onto it here — without this
+    // subscription object instead, so stamp the uid onto it here, because without this
     // a cancellation has no user to downgrade and silently does nothing.
     metadata: { uid },
     ...(mode === 'subscription' ? { subscription_data: { metadata: { uid } } } : {}),
@@ -124,7 +124,7 @@ const handleWebhook = async (req, res) => {
         break;
       }
       case 'customer.subscription.deleted': {
-        // Subscription cancelled — downgrade to free
+        // Subscription cancelled, so downgrade to free
         if (uid) {
           await setPremiumTier(uid, 'free');
           console.log(`Downgraded ${uid} to free`);

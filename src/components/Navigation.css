@@ -478,7 +478,7 @@
 
 /* `resize: 'native'` shrinks the web view, which would leave this fixed bar
    perched on top of the keyboard. A real UITabBar is covered by the keyboard,
-   so slide it away instead — and give the text the room back. */
+   so slide it away instead, and give the text the room back. */
 html.keyboard-open .nav-ios-tabbar {
   transform: translateZ(0) translateY(100%);
   opacity: 0;

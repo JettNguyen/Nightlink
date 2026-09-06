@@ -30,7 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Do NOT call enableWebViewBounceIfNeeded here — this fires for any
+        // Do NOT call enableWebViewBounceIfNeeded here, because this fires for any
         // interruption (system alerts, iOS 26 Liquid Glass overlays, etc.) and
         // the 0.35 s delayed timer was causing a blank-box flash on in-app navigation.
     }
@@ -77,7 +77,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             webView.scrollView.alwaysBounceHorizontal = false
 
             // The web view's scroll indicator is the one scrollbar CSS cannot
-            // reach — it belongs to the underlying UIScrollView. A real iOS
+            // reach, because it belongs to the underlying UIScrollView. A real iOS
             // screen doesn't park a bar down its right edge, and leaving it on
             // was what made scrolling read as a web page. Bouncing stays, so
             // the top and bottom of a list are still felt rather than seen.

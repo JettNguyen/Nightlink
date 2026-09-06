@@ -64,9 +64,9 @@
 
 ## CI/CD Flow
 
-1. **GitHub Actions** – Lint + multi-node builds (18/20/22) per push.
-2. **CodeQL** – Security scanning for JavaScript/TypeScript.
-3. **Deploy** – Vercel hooks (GH Pages workflow available for static fallback).
+1. **GitHub Actions**: Lint + multi-node builds (18/20/22) per push.
+2. **CodeQL**: Security scanning for JavaScript/TypeScript.
+3. **Deploy**: Vercel hooks (GH Pages workflow available for static fallback).
 
 ## License
 

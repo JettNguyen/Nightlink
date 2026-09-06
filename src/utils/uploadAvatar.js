@@ -31,7 +31,7 @@ export const uploadAvatar = async ({ userId, blob }) => {
  * Remove a user's avatar photo and clear profiles.photo_url.
  */
 export const removeAvatar = async ({ userId }) => {
-  // Fire-and-forget the storage delete — the profile update is authoritative
+  // Fire-and-forget the storage delete, since the profile update is authoritative
   await supabase.storage.from('avatars').remove([`${userId}/avatar.jpg`]).catch(() => {});
 
   const { error } = await supabase

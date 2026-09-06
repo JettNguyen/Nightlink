@@ -1122,7 +1122,7 @@
 
 @media (max-width: 768px) {
   .profile-ai-badge {
-    font-size: 1.25rem; /* 0.7rem × (16/14) — restores 11px at 14px base */
+    font-size: 1.25rem; /* 0.7rem × (16/14), restores 11px at 14px base */
   }
 }
 

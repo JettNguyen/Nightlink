@@ -2,7 +2,7 @@
  * RevenueCat SDK wrapper for Nightlink.
  *
  * Only active on iOS native (Capacitor). All functions are safe to import on
- * web — they simply no-op or return sensible defaults when IS_RC_SUPPORTED is
+ * web, so they simply no-op or return sensible defaults when IS_RC_SUPPORTED is
  * false, so callers don't need to guard every call site.
  */
 
@@ -28,7 +28,7 @@ export const CREDITS_PER_PACK = 10;
 export const RC_API_KEY =
   import.meta.env.VITE_REVENUECAT_IOS_API_KEY || 'test_rGlzaAAgFfXRiyYnJQZivprjPEX';
 
-/** True only on native iOS — the only platform where IAP is available. */
+/** True only on native iOS, the only platform where IAP is available. */
 export const IS_RC_SUPPORTED =
   Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
@@ -41,7 +41,7 @@ export const isProFromCustomerInfo = (customerInfo) =>
 
 /**
  * Configure the RC SDK with the current user's ID.
- * Safe to call multiple times — RC de-dupes if already configured with the
+ * Safe to call multiple times, since RC de-dupes if already configured with the
  * same user.
  */
 export const configurePurchases = async (appUserID) => {
@@ -80,7 +80,7 @@ export const purchasePackage = async (aPackage) => {
 
 /**
  * Restore previous App Store purchases for the current user.
- * Required by App Store guidelines — must be accessible in the UI.
+ * Required by App Store guidelines, so it must be accessible in the UI.
  */
 export const restorePurchases = async () => {
   const { customerInfo } = await Purchases.restorePurchases();
@@ -103,7 +103,7 @@ export const presentPaywallIfNeeded = () =>
 export const presentPaywall = () => RevenueCatUI.presentPaywall();
 
 /**
- * Present the RC Customer Center — a pre-built sheet where subscribers can
+ * Present the RC Customer Center, a pre-built sheet where subscribers can
  * cancel, request refunds, and view purchase history.
  * Show this when the user already has an active subscription.
  */

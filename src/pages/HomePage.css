@@ -104,7 +104,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   /* Stagger off the card's own index so the three arrive in reading order
-     rather than all at once. `backwards` fill — never `both` — so no transform
+     rather than all at once. `backwards` fill, never `both`, so no transform
      is left on the card afterwards. */
   animation: slideInUp 0.32s ease-out backwards;
   animation-delay: calc(0.06s * var(--card-index, 0) + 0.08s);

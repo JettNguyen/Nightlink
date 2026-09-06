@@ -371,7 +371,7 @@ html[data-native-platform='ios'] .auth-page {
   flex-shrink: 0;
 }
 
-/* Apple Sign In — black pill per Apple HIG */
+/* Apple Sign In: black pill per Apple HIG */
 .auth-apple-btn {
   padding: 0.95rem 1rem;
   background: #000;

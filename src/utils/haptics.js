@@ -19,7 +19,7 @@ const triggerImpact = (style = ImpactStyle.Light) => run(() => Haptics.impact({ 
 export const triggerLightHaptic = () => triggerImpact(ImpactStyle.Light);
 /** Committing something: saving, posting, completing a pull-to-refresh. */
 export const triggerMediumHaptic = () => triggerImpact(ImpactStyle.Medium);
-/** Rare, weighty moments — deleting, or a destructive confirm landing. */
+/** Rare, weighty moments: deleting, or a destructive confirm landing. */
 export const triggerHeavyHaptic = () => triggerImpact(ImpactStyle.Heavy);
 
 /**
@@ -31,5 +31,5 @@ export const triggerSuccessHaptic = () => run(() => Haptics.notification({ type:
 export const triggerWarningHaptic = () => run(() => Haptics.notification({ type: NotificationType.Warning }));
 export const triggerErrorHaptic = () => run(() => Haptics.notification({ type: NotificationType.Error }));
 
-/** Moving between discrete options — tabs, segmented controls, chips, toggles. */
+/** Moving between discrete options: tabs, segmented controls, chips, toggles. */
 export const triggerSelectionHaptic = () => run(() => Haptics.selectionChanged());

@@ -34,7 +34,7 @@
   --success: #2cd44e;
   --app-background-gradient: linear-gradient(180deg, #0d0d11 0%, #110f1c 55%, #0d0d11 100%);
 
-  /* Type scale. One step per role — if two things are the same size they are
+  /* Type scale. One step per role. If two things are the same size they are
      meant to read as the same rank. Anything not on this scale was drift.
      Note the root shrinks to 14px under 768px, so every step scales with it.
 
@@ -48,7 +48,7 @@
      2xl    page titles, h1
      3xl    display
 
-     Sizing a glyph, avatar or emoji is not typography — those keep their own
+     Sizing a glyph, avatar or emoji is not typography, so those keep their own
      font-size values and are deliberately off this scale. */
   --fs-micro: 0.7rem;
   --fs-xs: 0.78rem;
@@ -98,7 +98,7 @@ html[data-native-platform='ios'] body {
 }
 
 /* Scrollbars are a pointer affordance. On touch the content already tracks your
-   finger, and iOS itself only ever flashes a transient indicator — so a bar
+   finger, and iOS itself only ever flashes a transient indicator, so a bar
    sitting in the gutter is the single loudest tell that this is a web page
    inside an app. The native build hides every one of them: the document, inner
    overflow panes, modal bodies, textareas. The web build keeps them, where with
@@ -131,7 +131,7 @@ h1 {
 }
 
 /* Headings carried no font-size at all, so any heading without a page specific
-   rule fell through to the browser default — 2em/1.5em/1.17em, in em, which
+   rule fell through to the browser default of 2em/1.5em/1.17em, in em, which
    compounds with whatever it is nested in. That was the main reason the same
    rank of heading came out different sizes on different pages. */
 h1 { font-size: var(--fs-2xl); }
@@ -199,7 +199,7 @@ p {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Page entrance. `backwards` fill only — a lingering `transform` on a page root
+/* Page entrance. `backwards` fill only, because a lingering `transform` on a page root
    would make it the containing block for every `position: fixed` modal and
    toast inside it, so the transform must be gone once the animation ends. */
 @keyframes pageEnter {
@@ -214,7 +214,7 @@ p {
 }
 
 /* iOS: replace the vertical fade with a directional slide, so a push reads as
-   coming from the right and a back gesture as returning from the left — the
+   coming from the right and a back gesture as returning from the left. It is the
    single strongest cue that this is an app rather than a page. The curve is
    UIKit's navigation ease. Tabs keep the plain fade. */
 @keyframes pageEnterForward {
@@ -313,7 +313,7 @@ html[data-native-platform='ios'] [data-nav-direction='tab'] .insights-page {
   gap: 0.5em;
 }
 
-/* Reduced motion slows the spinner rather than stopping it — a frozen ring is
+/* Reduced motion slows the spinner rather than stopping it, because a frozen ring is
    exactly the "is this broken?" signal it exists to prevent. */
 @media (prefers-reduced-motion: reduce) {
   .inline-spinner { animation-duration: 2.4s; }
@@ -399,7 +399,7 @@ html:not([data-native-platform='ios']) .app-main {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* The keyboard hides the tab bar, so stop holding space for it — otherwise the
+/* The keyboard hides the tab bar, so stop holding space for it, because otherwise the
    last line of a long entry sits behind a gap that no longer has anything in it. */
 html[data-native-platform='ios'].keyboard-open .app-main {
   padding-bottom: 0;
@@ -1021,7 +1021,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
  *   1. Kill all transitions so mid-flight hover animations can't linger.
  *   2. Strip only the visual "highlight" properties (filter, transform,
  *      box-shadow) that change on hover/active. Intentionally leave
- *      background-color and color alone — resetting those causes cards to
+ *      background-color and color alone, and resetting those causes cards to
  *      flash transparent which looks worse.
  *   3. Restore semantic .active states (selected chips, pills) which are
  *      driven by JS state, not pointer events.
@@ -1102,11 +1102,11 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 /* ── Interaction feedback ────────────────────────────────────────────────────
  * Two separate concerns, deliberately kept apart:
  *
- *   Press  — applies on every device. `-webkit-tap-highlight-color` is cleared
+ *   Press: applies on every device. `-webkit-tap-highlight-color` is cleared
  *            globally above, so without these a tap on a phone gives no
  *            feedback at all. The transition lives inside the `:active` rule so
  *            the press reads instantly and the release snaps back.
- *   Hover  — gated behind `hover: hover` + `pointer: fine`. Ungated `:hover`
+ *   Hover: gated behind `hover: hover` + `pointer: fine`. Ungated `:hover`
  *            sticks to whatever a finger last touched until something else is
  *            tapped, which is what `iosTapFix.js` exists to paper over.
  * ------------------------------------------------------------------------- */
@@ -1137,7 +1137,7 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
   transition: transform 80ms ease;
 }
 
-/* Cards are large, so they take a much smaller scale — anything more reads as
+/* Cards are large, so they take a much smaller scale, since anything more reads as
    the whole page lurching rather than the card acknowledging the tap. */
 .card-shell:active,
 .feed-card:active,
@@ -1317,7 +1317,7 @@ button:disabled:active {
 
 /* ── Native touch behaviour (iOS shell only) ─────────────────────────────────
  * Without these, a long press anywhere pops WebKit's Copy / Look Up / Share
- * callout and drags start selecting UI text — the clearest tell that an app is
+ * callout and drags start selecting UI text, the clearest tell that an app is
  * a web view. Chrome is locked down; anything the user might genuinely want to
  * copy is opted back in below, and text entry is restored explicitly because
  * inheriting `user-select: none` into a field breaks selection in WKWebView.
@@ -1337,7 +1337,7 @@ html[data-native-platform='ios'] [contenteditable='true'] {
   user-select: text;
 }
 
-/* Real content — a dream, a comment, an analysis — stays long-pressable so it
+/* Real content, meaning a dream, a comment or an analysis, stays long-pressable so it
    can be copied, the way selectable text behaves in a native app. */
 html[data-native-platform='ios'] .detail-body,
 html[data-native-platform='ios'] .detail-insight,
@@ -1354,7 +1354,7 @@ html[data-native-platform='ios'] .legal-page {
 }
 
 /* ── Modal motion ────────────────────────────────────────────────────────────
- * Nothing in the app animated on open — sheets and dialogs simply appeared,
+ * Nothing in the app animated on open. Sheets and dialogs simply appeared,
  * which is the other big "web view" tell after the long-press callout. The
  * class names are shared across the three stylesheets that define report
  * modals, so styling them once here covers every caller.
@@ -1426,7 +1426,7 @@ html[data-native-platform='ios'] .legal-page {
 
 /* ---------------------------------------------------------------------------
  * Popovers. These appeared fully formed the instant they mounted, which is the
- * most jarring version of the problem — they arrive right under the finger that
+ * most jarring version of the problem, because they arrive right under the finger that
  * asked for them. Growing them a little out of their anchor corner ties the
  * panel to the control that opened it.
  * `backwards` fill again, for the same containing-block reason as the modals.

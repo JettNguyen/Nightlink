@@ -94,7 +94,7 @@ export default function AuthPage() {
     const name = username.trim();
     if (!name) { setError('Choose a username.'); setLoading(false); return; }
     if (!USERNAME_RE.test(name)) {
-      setError('3–20 chars: letters, numbers, underscores.');
+      setError('3 to 20 chars: letters, numbers, underscores.');
       setLoading(false);
       return;
     }
@@ -124,10 +124,10 @@ export default function AuthPage() {
       if (signUpErr) throw signUpErr;
 
       const uid = authData.user?.id;
-      if (!uid) throw new Error('Signup failed — no user ID returned.');
+      if (!uid) throw new Error('Signup failed: no user ID returned.');
 
       // Create profile row only when a session is immediately available.
-      // When email confirmation is required, authData.session is null — we
+      // When email confirmation is required, authData.session is null, so we
       // cannot insert without an auth token. In that case App.jsx's
       // ensureProfile runs automatically after the user confirms and signs in.
       if (authData.session) {
@@ -162,7 +162,7 @@ export default function AuthPage() {
     try {
       const { error: err } = await supabase.auth.resetPasswordForEmail(addr);
       if (err) throw err;
-      setForgotStatus('Reset email sent — check your inbox.');
+      setForgotStatus('Reset email sent. Check your inbox.');
     } catch (err) {
       setError(friendlyMsg(err));
     }
@@ -353,7 +353,7 @@ export default function AuthPage() {
       if (err) throw err;
       // onAuthStateChange in App.jsx fires → ensureProfile provisions the row
     } catch (err) {
-      // User cancelled the sheet — don't show an error
+      // User cancelled the sheet, so don't show an error
       const msg = err?.message || '';
       if (!msg.includes('cancelled') && !msg.includes('canceled') && !msg.includes('dismiss')) {
         setError(friendlyMsg(err));

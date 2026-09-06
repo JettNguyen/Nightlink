@@ -1,5 +1,5 @@
 /**
- * daily-reminders — sends the morning dream-logging reminder to users
+ * daily-reminders: sends the morning dream-logging reminder to users
  * for whom it is currently 9 AM in their local timezone.
  *
  * Intended to be called once per hour by pg_cron. Secured with the
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       }).formatToParts(now);
       localHour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '-1', 10);
     } catch {
-      continue; // Invalid timezone string — skip.
+      continue; // Invalid timezone string, so skip.
     }
 
     const reminderHour = typeof settings.reminderHour === 'number'

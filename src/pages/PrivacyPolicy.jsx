@@ -70,19 +70,19 @@ export default function PrivacyPolicy() {
           </p>
           <ul>
             <li>
-              <strong>Performance of a contract</strong> — to give you the account, journal, social features,
+              <strong>Performance of a contract:</strong> to give you the account, journal, social features,
               and purchases you signed up for.
             </li>
             <li>
-              <strong>Legitimate interests</strong> — to keep the service secure, prevent abuse, review safety
+              <strong>Legitimate interests:</strong> to keep the service secure, prevent abuse, review safety
               reports, and fix errors, balanced against your rights.
             </li>
             <li>
-              <strong>Consent</strong> — for microphone access and push notifications, which your device asks
+              <strong>Consent:</strong> for microphone access and push notifications, which your device asks
               you to grant and which you can withdraw at any time in iOS Settings.
             </li>
             <li>
-              <strong>Legal obligation</strong> — where we are required to retain or disclose data by law.
+              <strong>Legal obligation:</strong> where we are required to retain or disclose data by law.
             </li>
           </ul>
         </section>
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
           <p>
             AI output can be wrong, incomplete, or unexpected. Insights are informational only and are not
             medical, psychiatric, or professional advice. Please do not include highly sensitive personal
-            information — about yourself or anyone else — in text you submit for analysis.
+            information in text you submit for analysis, whether it concerns you or someone else.
           </p>
           <p>
             AI tools were also used to help write and review the software that runs Nightlink. Those
@@ -117,12 +117,12 @@ export default function PrivacyPolicy() {
             Nightlink uses third-party service providers to operate the app:
           </p>
           <ul>
-            <li><strong>Supabase</strong> — authentication, database, and file storage.</li>
-            <li><strong>Vercel</strong> — hosting for the website and backend endpoints.</li>
-            <li><strong>OpenAI</strong> — AI insight generation and speech transcription.</li>
-            <li><strong>RevenueCat and Apple</strong> — in-app purchase and subscription entitlement processing.</li>
-            <li><strong>Stripe</strong> — payment processing for purchases made on the web.</li>
-            <li><strong>Apple Push Notification service</strong> and our notification delivery provider — sending push notifications.</li>
+            <li><strong>Supabase:</strong> authentication, database, and file storage.</li>
+            <li><strong>Vercel:</strong> hosting for the website and backend endpoints.</li>
+            <li><strong>OpenAI:</strong> AI insight generation and speech transcription.</li>
+            <li><strong>RevenueCat and Apple:</strong> in-app purchase and subscription entitlement processing.</li>
+            <li><strong>Stripe:</strong> payment processing for purchases made on the web.</li>
+            <li><strong>Apple Push Notification service</strong> and our notification delivery provider, for sending push notifications.</li>
           </ul>
           <p>
             These providers process data only on our instructions and only as needed to run the app. We also

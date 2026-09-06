@@ -115,7 +115,7 @@ export default function EditProfile({ user }) {
     const usernameChanged = nextNormalized !== (userData.username || '').toLowerCase();
 
     if (!USERNAME_RE.test(nextUsername)) {
-      setUsernameError('3–20 chars: letters, numbers, underscores.');
+      setUsernameError('3 to 20 chars: letters, numbers, underscores.');
       return;
     }
 
@@ -216,7 +216,7 @@ export default function EditProfile({ user }) {
             aria-describedby="ep-username-hint"
           />
           <p id="ep-username-hint" className={usernameError ? 'photo-upload-error' : 'page-subtitle'}>
-            {usernameError || '3–20 characters: letters, numbers, and underscores.'}
+            {usernameError || '3 to 20 characters: letters, numbers, and underscores.'}
           </p>
         </div>
         {userData?.email && (

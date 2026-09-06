@@ -8,7 +8,7 @@ import Speech
 /// The web build records audio and posts it to `/api/transcribe`, which cannot
 /// show anything until the user stops talking. `SFSpeechRecognizer` streams
 /// partial results instead, so words land in the UI as they are spoken, costs
-/// nothing per use, and — when the locale has an on-device model — never sends
+/// nothing per use, and when the locale has an on-device model it never sends
 /// audio off the phone.
 ///
 /// This is written as a local plugin rather than pulling in
@@ -188,7 +188,7 @@ public class NativeSpeechPlugin: CAPPlugin, CAPBridgedPlugin {
                     DispatchQueue.main.async {
                         // A cancelled task and "no speech detected" both surface
                         // as errors even though neither is a failure the user
-                        // needs to see — settle with whatever was heard.
+                        // needs to see, so settle with whatever was heard.
                         if self.isBenign(error) {
                             self.finish(with: self.transcript)
                         } else {
@@ -276,7 +276,7 @@ public class NativeSpeechPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         // RMS maps to a tiny slice of 0...1 linearly, so convert to decibels and
-        // stretch the top 50 dB across the meter — that is the range speech
+        // stretch the top 50 dB across the meter, since that is the range speech
         // actually moves through.
         let rms = sqrtf(sum / Float(frames))
         let decibels = 20 * log10f(max(rms, 1e-7))
