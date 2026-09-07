@@ -718,7 +718,7 @@ export default function Feed({ user }) {
   };
 
   return (
-    <div className="page-container feed-page">
+    <div className="page-container stream-page feed-page">
       <div className="page-header feed-header">
         <div className="feed-header-top">
           <h1>Feed</h1>

@@ -1,16 +1,3 @@
-/* The page runs edge to edge so the tab bar and the post dividers can. Every
-   direct child except the header and the stream keeps the old gutter as a
-   margin instead. */
-.feed-page {
-  padding-left: 0;
-  padding-right: 0;
-  gap: 0;
-}
-
-.feed-page > *:not(.feed-list):not(.feed-header) {
-  margin: 1rem 1.25rem 0;
-}
-
 .feed-header {
   display: flex;
   flex-direction: column;
@@ -35,68 +22,6 @@
 }
 
 /* ── Feed tabs ─────────────────────────────────────────────────────────────── */
-/* Underline tabs rather than a pill inside a bordered track. Two containers
-   were doing the work of one selected state; the bar under the active tab says
-   the same thing with no box at all, and it spans the full width so it reads as
-   the top of the stream rather than a control floating above it. */
-.feed-tabs {
-  display: flex;
-  gap: 1.5rem;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  padding: 0 1.25rem;
-  width: 100%;
-  animation: fadeIn 0.22s ease-out 0.05s both;
-}
-
-.feed-tab {
-  /* Content width, not flex: 1. Half width tabs pushed the labels away from the
-     heading they belong under and left the underline stranded in the middle of
-     a large empty button. */
-  flex: 0 0 auto;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  padding: 0.6rem 0.1rem;
-  border-radius: 0;
-  cursor: pointer;
-  transition: background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 44px;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.feed-tab.active {
-  background: none;
-  color: var(--text);
-}
-
-/* ::before, because ::after is the 44px touch overlay from index.css. The bar
-   spans the tab, and the tab is now the width of its label, so it reads as
-   underlining the word rather than sitting under it at an arbitrary length. */
-.feed-tab.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2.5px;
-  border-radius: 2px 2px 0 0;
-  background: var(--primary);
-}
-@media (hover: hover) and (pointer: fine) {
-  .feed-tab:not(.active):hover {
-    color: var(--text);
-  }
-}
 
 .feed-tab-count {
   font-size: var(--fs-micro);

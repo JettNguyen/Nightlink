@@ -562,35 +562,35 @@ export default function DreamJournal({ user }) {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container stream-page">
       <div className="page-header journal-header">
-        <div>
-          <h1>Dream Journal</h1>
-          <p className="page-subtitle">Your own personal dream archive.</p>
-        </div>
-        <div className="action-group">
-          <div className="view-toggle" role="tablist" aria-label="Dream journal view mode">
-            <button
-              type="button"
-              className={viewMode === 'list' ? 'view-toggle-btn active' : 'view-toggle-btn'}
-              role="tab"
-              aria-selected={viewMode === 'list'}
-              onClick={showListView}
-            >
-              List
-            </button>
-            <button
-              type="button"
-              className={viewMode === 'calendar' ? 'view-toggle-btn active' : 'view-toggle-btn'}
-              role="tab"
-              aria-selected={viewMode === 'calendar'}
-              onClick={showCalendarView}
-            >
-              Calendar
-            </button>
+        <div className="journal-header-top">
+          <div>
+            <h1>Dream Journal</h1>
+            <p className="page-subtitle">Your own personal dream archive.</p>
           </div>
           <button type="button" onClick={openNewDream} className="primary-btn">
             + New Dream
+          </button>
+        </div>
+        <div className="view-toggle" role="tablist" aria-label="Dream journal view mode">
+          <button
+            type="button"
+            className={viewMode === 'list' ? 'view-toggle-btn active' : 'view-toggle-btn'}
+            role="tab"
+            aria-selected={viewMode === 'list'}
+            onClick={showListView}
+          >
+            List
+          </button>
+          <button
+            type="button"
+            className={viewMode === 'calendar' ? 'view-toggle-btn active' : 'view-toggle-btn'}
+            role="tab"
+            aria-selected={viewMode === 'calendar'}
+            onClick={showCalendarView}
+          >
+            Calendar
           </button>
         </div>
       </div>

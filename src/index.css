@@ -659,6 +659,118 @@ html[data-native-platform='ios'] .profile-ai-badge {
   flex-shrink: 0;
 }
 
+/* A page whose main content is a stream runs edge to edge, so the tab bar and
+   the row dividers can reach both sides. The gutter moves onto each row. Direct
+   children that are not the stream keep the old gutter as a margin, so headers,
+   banners and empty states stay inset. */
+.stream-page {
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+}
+
+.stream-page > *:not(.feed-list):not(.dreams-list):not(.page-header) {
+  margin: 1rem 1.25rem 0;
+}
+
+.stream-page > .page-header {
+  margin: 0;
+}
+
+/* ── Tab bars ──────────────────────────────────────────────────────────────────
+ * One pattern for every set of tabs in the app. They were four different
+ * controls doing the same job: a pill inside a bordered track on the feed, a
+ * segmented control on the journal, a rounded box on the profile, and a grid of
+ * outlined buttons on connections. An underline says "you are here" without any
+ * of them, and the tabs sit at their label width so the bar lines up with the
+ * heading above rather than stretching across the screen.
+ *
+ * Listed by page selector rather than a shared class so the markup does not
+ * have to change on five pages. New tab sets should use `.tab-bar`.
+ * --------------------------------------------------------------------------- */
+.tab-bar,
+.feed-tabs,
+.view-toggle,
+.dream-tab-group,
+.connections-tab-group {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0 1.25rem;
+  margin: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  overflow: visible;
+  grid-template-columns: none;
+}
+
+.tab-bar-btn,
+.feed-tab,
+.view-toggle-btn,
+.dream-tab,
+.connections-tab {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.6rem 0.1rem;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  width: auto;
+}
+
+.tab-bar-btn.active,
+.feed-tab.active,
+.view-toggle-btn.active,
+.dream-tab.active,
+.connections-tab.active {
+  color: var(--text);
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* ::before, because ::after is the 44px touch overlay. The bar spans the tab,
+   and the tab is the width of its label, so it underlines the word. */
+.tab-bar-btn.active::before,
+.feed-tab.active::before,
+.view-toggle-btn.active::before,
+.dream-tab.active::before,
+.connections-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2.5px;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab-bar-btn:not(.active):hover,
+  .feed-tab:not(.active):hover,
+  .view-toggle-btn:not(.active):hover,
+  .dream-tab:not(.active):hover,
+  .connections-tab:not(.active):hover {
+    color: var(--text);
+    background: none;
+  }
+}
+
 /* Who a dream was shared with. Small enough not to compete with the name it
    sits beside, and the only thing in a post allowed a fill, because the colour
    is the information here rather than decoration. */
@@ -1198,10 +1310,6 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 .reaction-chip:active,
 .emoji-option:active,
 .visibility-chip:active,
-.feed-tab:active,
-.dream-tab:active,
-.connections-tab:active,
-.view-toggle-btn:active,
 .filter-toggle .chip:active,
 .reaction-button:active,
 .comment-heart-btn:active,

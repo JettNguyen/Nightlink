@@ -49,10 +49,12 @@
   border-color: var(--primary);
 }
 
+/* Same stream as the feed: one column, hairline separated, gutter on the row
+   rather than on the page. It was a responsive tile grid, which is why the
+   journal read as a dashboard of the same card repeated. */
 .dreams-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .dreams-year-header {
@@ -83,49 +85,17 @@
   background: var(--border);
 }
 
-.view-toggle {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.view-toggle-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  padding: 0.55rem 0.9rem;
-  min-height: 40px;
-  /* These buttons carried no radius of their own and borrowed their rounded
-     ends from the group's `overflow: hidden`. That holds only while the button
-     is flush with the clip: the press scale pulls it inward, the clip stops
-     covering the corners, and the selected segment flashes a sharp-cornered
-     square. Rounding the button itself means the shape is its own and survives
-     the transform. 12px group radius less its 1px border is 11px, and all four
-     corners get it so the pressed segment reads as a pill lifting out of the
-     track the way an iOS segmented control does. */
-  border-radius: 11px;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.view-toggle-btn.active {
-  background: rgba(201, 167, 240, 0.18);
-  color: var(--text);
-}
-
 .journal-calendar-shell {
   display: grid;
   gap: 1rem;
 }
 
 .journal-calendar {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
-  padding: 1rem;
-  box-shadow: var(--shadow-light);
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0.5rem 0.25rem 1rem;
+  box-shadow: none;
   /* Left to fill the page the columns stretch to ~150px and the month reads as
      a row of letterboxes. Capping it keeps the cells close to square. */
   width: 100%;
@@ -369,13 +339,6 @@
 
 .dreams-list.calendar-dreams-list {
   margin-top: 0.25rem;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 501px) {
-  .dreams-list.calendar-dreams-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (min-width: 1001px) {
@@ -385,25 +348,27 @@
 }
 
 .dream-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid var(--border);
-  padding: 1.2rem;
-  box-shadow: var(--shadow-light);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.9rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  border-radius: 16px;
-  transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-  overflow: hidden;
+  gap: 0.3rem;
+  transition: background-color 0.18s ease;
   isolation: isolate;
   cursor: pointer;
   position: relative;
 }
+
+.dream-card:last-child {
+  border-bottom: none;
+}
 @media (hover: hover) and (pointer: fine) {
   .dream-card:hover {
-    box-shadow: var(--shadow-soft);
-    border-color: rgba(201, 167, 240, 0.4);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    background-color: rgba(255, 255, 255, 0.022);
   }
 }
 
@@ -427,10 +392,6 @@
 .dream-tag-count {
   font-size: var(--fs-xs);
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  padding: 0.2rem 0.6rem;
-  border-radius: 100px;
 }
 
 /* meta row: date + visibility + AI badge */
@@ -443,23 +404,24 @@
   overflow: hidden;
 }
 
+/* Same badge as the feed, off the same tokens. */
 .dream-vis-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: 100px;
-  border: 1px solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--text-secondary);
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: none;
+  font-size: var(--fs-micro);
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.dream-vis--public    { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
-.dream-vis--followers { color: #c9a7f0; border-color: rgba(201, 167, 240, 0.3); }
-.dream-vis--mutuals   { color: #f2a8b8; border-color: rgba(242, 168, 184, 0.3); }
-.dream-vis--anonymous { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
-.dream-vis--private   { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+.dream-vis--public    { color: var(--vis-public);    background: var(--vis-public-soft); }
+.dream-vis--followers { color: var(--vis-followers); background: var(--vis-followers-soft); }
+.dream-vis--mutuals   { color: var(--vis-mutuals);   background: var(--vis-mutuals-soft); }
+.dream-vis--anonymous { color: var(--vis-anonymous); background: var(--vis-anonymous-soft); }
+.dream-vis--private   { color: var(--vis-private);   background: var(--vis-private-soft); }
 
 .dream-ai-badge {
   font-size: 1.25rem;
@@ -490,10 +452,12 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--text);
-  font-size: var(--fs-md);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  margin: 0.1rem 0 0.15rem;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   line-clamp: 2;
@@ -956,7 +920,21 @@
 }
 
 .journal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
   animation: fadeIn 0.22s ease-out;
+}
+
+/* Title and the new dream button keep the page gutter; the tab bar underneath
+   runs to both edges so its rule lines up with the row dividers below it. */
+.journal-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.25rem 0.85rem;
 }
 
 .journal-header h1 {
@@ -1013,20 +991,6 @@
 }
 
 @media (max-width: 640px) {
-  .view-toggle {
-    width: 100%;
-  }
-
-  .view-toggle-btn {
-    flex: 1;
-    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-  .dreams-list {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-
   .calendar-day,
   .calendar-spacer {
     min-height: 46px;

@@ -25,28 +25,17 @@
 /* Mirrors dreams-list: repeat(auto-fill, minmax(280px, 1fr)).               */
 /* 2 columns need ≥560px of grid width (~600px screen); 3 need ~860px.       */
 
+/* Mirrors .dreams-list: one hairline separated column, not a tile grid. */
 .sk-journal-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-}
-
-@media (min-width: 600px) {
-  .sk-journal-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 860px) {
-  .sk-journal-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  display: flex;
+  flex-direction: column;
 }
 
 .sk-journal-card {
-  border: 1px solid var(--border);
-  border-radius: 16px;   /* matches .dream-card */
-  padding: 1.2rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.9rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;          /* matches .dream-card gap */
