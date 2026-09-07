@@ -584,9 +584,15 @@ export default function Feed({ user }) {
       counts: dream.reactionCounts || {},
       viewerReactions: Array.isArray(rawR) ? rawR : (rawR ? [rawR] : []),
     };
-    // The button below shows the viewer's own custom emoji, so the summary row
-    // has to leave that one out or the same reaction is rendered twice.
     const viewerCustomEmoji = reactionSnapshot.viewerReactions?.find((e) => e !== defaultReaction) || null;
+    // Same row the dream detail page draws: one chip per emoji with its count,
+    // yours ringed. The feed used to show only your own emoji, on the picker
+    // trigger, so a post everyone had reacted to looked unreacted to until you
+    // opened it.
+    const emojiReactionEntries = Object.entries(reactionSnapshot.counts || {})
+      .filter(([emoji, count]) => typeof emoji === 'string' && emoji.trim().length
+        && emoji !== defaultReaction && count > 0)
+      .sort((a, b) => b[1] - a[1]);
 
     const handleCardKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -656,17 +662,28 @@ export default function Feed({ user }) {
               <FontAwesomeIcon icon={faHeart} className="reaction-icon" />
               <span className="reaction-count">{reactionSnapshot.counts?.[defaultReaction] || 0}</span>
             </button>
-            <button type="button" className={`reaction-button${viewerCustomEmoji ? ' active' : ' custom-emoji-trigger'}`} onClick={(e) => openCustomReactionPicker(e, dream)} aria-label="Add emoji reaction">
-              {viewerCustomEmoji ? (
-                <>
-                  <span className="reaction-emoji-text" aria-hidden="true">{viewerCustomEmoji}</span>
-                  <span className="reaction-count">{reactionSnapshot.counts?.[viewerCustomEmoji] || 0}</span>
-                </>
-              ) : <FontAwesomeIcon icon={faPlus} className="reaction-icon" />}
-            </button>
-            <button type="button" className="reaction-button" onClick={(e) => { e.stopPropagation(); openDreamDetail(); }} aria-label="Comments">
+            <button type="button" className="reaction-button reaction-button--comment" onClick={(e) => { e.stopPropagation(); openDreamDetail(); }} aria-label="Comments">
               <FontAwesomeIcon icon={faComment} className="reaction-icon" />
               <span className="reaction-count">{dream.commentCount || 0}</span>
+            </button>
+            {emojiReactionEntries.map(([emoji, count]) => {
+              const reacted = reactionSnapshot.viewerReactions?.includes(emoji);
+              return (
+                <button
+                  key={emoji}
+                  type="button"
+                  className={`reaction-button reaction-button--emoji${reacted ? ' active' : ''}`}
+                  onClick={(e) => handleReactionClick(e, dream, emoji)}
+                  aria-pressed={Boolean(reacted)}
+                  aria-label={reacted ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
+                >
+                  <span className="reaction-emoji-text" aria-hidden="true">{emoji}</span>
+                  <span className="reaction-count">{count}</span>
+                </button>
+              );
+            })}
+            <button type="button" className="reaction-button custom-emoji-trigger" onClick={(e) => openCustomReactionPicker(e, dream)} aria-label="Add emoji reaction">
+              <FontAwesomeIcon icon={faPlus} className="reaction-icon" />
             </button>
           </div>
           {customReactionTarget === dream.id && (
@@ -691,8 +708,8 @@ export default function Feed({ user }) {
                 <button type="submit" className="primary-btn" disabled={!filterEmojiInput(customReactionValue)}>Add</button>
                 <button type="button" className="ghost-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeCustomReactionPicker(); }}>Cancel</button>
               </form>
-              {reactionSnapshot.viewerReactions?.some((e) => e !== defaultReaction) && (
-                <button type="button" className="emoji-clear-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleReactionClick(e, dream, reactionSnapshot.viewerReactions.find((e2) => e2 !== defaultReaction)); closeCustomReactionPicker(); }}>
+              {viewerCustomEmoji && (
+                <button type="button" className="emoji-clear-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleReactionClick(e, dream, viewerCustomEmoji); closeCustomReactionPicker(); }}>
                   Clear emoji reaction
                 </button>
               )}
