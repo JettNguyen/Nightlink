@@ -285,32 +285,14 @@
 
 /* Bare icons with counts, the way every feed does it. The bordered chip made
    three reactions read as a row of buttons rather than as a footer. */
+/* The negative margins pay back the first button's padding and absorb the row's
+   own height, so a 44px target does not push the post's bottom edge down. */
 .feed-reactions {
-  margin-top: 0.5rem;
-  margin-left: -0.35rem;
+  margin: 0.15rem 0 -0.4rem -0.7rem;
 }
 
 .feed-reactions .reaction-button {
-  border: none;
-  background: none;
-  padding: 0.35rem;
-  margin-right: 1.1rem;
-  color: var(--text-secondary);
-  font-size: var(--fs-sm);
-  gap: 0.4rem;
-}
-
-.feed-reactions .reaction-button.custom-emoji-trigger {
-  border: none;
-  opacity: 1;
-}
-
-.feed-reactions .reaction-button.active {
-  color: var(--primary);
-}
-
-.feed-reactions .reaction-icon {
-  font-size: 0.95rem;
+  margin-right: 0.5rem;
 }
 
 /* ── Empty + discovery states ──────────────────────────────────────────────── */

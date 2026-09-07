@@ -868,20 +868,80 @@ html[data-native-platform='ios'] .profile-ai-badge {
   stroke-width: 38;
 }
 
-/* Icon-sized controls, so the target is an overlay rather than 44px of visible
-   padding. Height only: a wider one would reach into the chip beside it. */
-.reaction-button {
-  position: relative;
+/* The row and its buttons were defined in Activity.css, which is a route chunk
+   that the feed and the dream detail page do not load, so on a cold start they
+   were falling back to the browser's own button box and only matched the design
+   once you had visited the notifications tab. Shared, so one definition covers
+   every surface that draws a reaction.
+
+   44px in both directions, per Apple's minimum: these are icon-sized controls
+   sitting next to each other, and the old 0.2rem of padding gave them a target
+   about half that. */
+.activity-reactions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.reaction-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 44px;
-  transform: translate(-50%, -50%);
+.reaction-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.reaction-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 0.7rem;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reaction-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reaction-button.active {
+  color: var(--primary);
+}
+
+.reaction-icon {
+  font-size: 1.15rem;
+  color: inherit;
+}
+
+.reaction-emoji-text {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.reaction-count {
+  font-size: var(--fs-sm);
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reaction-button:hover:not(:disabled) {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .reaction-button.active:hover:not(:disabled) {
+    color: var(--primary);
+  }
 }
 
 /* ── Overflow menu ────────────────────────────────────────────────────────────

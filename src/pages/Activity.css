@@ -206,66 +206,6 @@
   color: var(--text);
 }
 
-.activity-reactions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.reaction-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.reaction-button {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text);
-  padding: 0.2rem 0.6rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: pointer;
-  font-size: var(--fs-base);
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.reaction-button.custom-emoji-trigger {
-  border-style: dashed;
-  opacity: 0.85;
-}
-
-.reaction-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.reaction-icon {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  transition: color 0.2s ease;
-}
-
-.reaction-count {
-  font-size: var(--fs-xs);
-  color: var(--text-secondary);
-}
-
-.reaction-button.active {
-  border-color: rgba(201, 167, 240, 0.65);
-  background: rgba(201, 167, 240, 0.12);
-  color: var(--primary);
-}
-
-.reaction-button.active .reaction-icon {
-  color: var(--primary);
-}
-
 .activity-dot {
   width: 0.5rem;
   height: 0.5rem;
@@ -275,16 +215,6 @@
   margin-bottom: 0.3rem;
 }
 
-
-.clear-reaction {
-  font-size: var(--fs-xs);
-  padding: 0.2rem 0.55rem;
-}
-
-.reaction-total {
-  font-size: var(--fs-sm);
-  color: var(--text-secondary);
-}
 
 /* A word-wide outlined button next to every row read as a second action of
    equal weight to the notification itself. An x is the dismiss glyph everywhere,
