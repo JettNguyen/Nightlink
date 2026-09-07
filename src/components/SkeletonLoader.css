@@ -325,6 +325,10 @@
   flex-direction: column;
 }
 
+.sk-activity-group {
+  margin: 0.75rem 1.25rem 0.6rem;
+}
+
 .sk-activity-card {
   display: flex;
   align-items: flex-start;

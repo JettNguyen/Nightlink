@@ -269,11 +269,10 @@ export function SettingsSkeleton() {
 function ActivityCardSkeleton() {
   return (
     <div className="sk-activity-card">
-      <Circle size={40} />
+      <Circle size={42} />
       <div className="sk-activity-body">
-        <S w="60%" h="0.85rem" />
-        <S w="85%" h="0.8rem" className="sk-mt-sm" />
-        <S w="45%" h="0.75rem" className="sk-mt-sm" />
+        <S w="88%" h="0.85rem" />
+        <S w="52%" h="0.8rem" className="sk-mt-sm" />
       </div>
       <S w="28px" h="28px" r={6} className="sk-activity-action" />
     </div>
@@ -283,6 +282,7 @@ function ActivityCardSkeleton() {
 export function ActivitySkeleton() {
   return (
     <div className="sk-activity-list">
+      <S w="70px" h="0.8rem" r={4} className="sk-activity-group" />
       {Array.from({ length: 5 }).map((_, i) => (
         <ActivityCardSkeleton key={i} />
       ))}
