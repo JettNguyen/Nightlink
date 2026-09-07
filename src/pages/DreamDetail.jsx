@@ -2528,6 +2528,15 @@ export default function DreamDetail({ user }) {
               <FontAwesomeIcon icon={faHeart} className="reaction-icon" />
               <span className="reaction-count">{reactionSnapshot.counts?.[DEFAULT_EMOJI] || 0}</span>
             </button>
+            <button
+              type="button"
+              className="reaction-button reaction-button--comment"
+              onClick={handleJumpToComposer}
+              aria-label="Write a comment"
+            >
+              <FontAwesomeIcon icon={faComment} className="reaction-icon" />
+              <span className="reaction-count">{comments.length}</span>
+            </button>
             {emojiReactionEntries.map(([emoji, count]) => {
               const reacted = viewerDreamReactions.includes(emoji);
               return (
@@ -2554,15 +2563,6 @@ export default function DreamDetail({ user }) {
               aria-label="Add emoji reaction"
             >
               <FontAwesomeIcon icon={faPlus} className="reaction-icon" />
-            </button>
-            <button
-              type="button"
-              className="reaction-button reaction-button--comment"
-              onClick={handleJumpToComposer}
-              aria-label="Write a comment"
-            >
-              <FontAwesomeIcon icon={faComment} className="reaction-icon" />
-              <span className="reaction-count">{comments.length}</span>
             </button>
           </div>
           {customEmojiPickerOpen && (
