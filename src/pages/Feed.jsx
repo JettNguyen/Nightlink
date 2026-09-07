@@ -721,7 +721,10 @@ export default function Feed({ user }) {
     <div className="page-container stream-page feed-page">
       <div className="page-header feed-header">
         <div className="feed-header-top">
-          <h1>Feed</h1>
+          <div>
+            <h1>Feed</h1>
+            <p className="page-subtitle">Dreams shared publicly, and by the people you follow.</p>
+          </div>
           <button type="button" className="ghost-btn" onClick={() => navigate('/search')}>Find people</button>
         </div>
         <div className="feed-tabs" role="tablist" aria-label="Feed type">

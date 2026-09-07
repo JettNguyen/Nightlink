@@ -690,7 +690,8 @@ html[data-native-platform='ios'] .profile-ai-badge {
   margin: 1rem 1.25rem 0;
 }
 
-.stream-page > .page-header {
+.stream-page > .page-header,
+.stream-page > .activity-head {
   margin: 0;
 }
 

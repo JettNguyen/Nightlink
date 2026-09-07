@@ -15,11 +15,13 @@
   align-items: stretch;
 }
 
-/* The heading needs the page gutter put back by hand: stream-page runs the page
-   edge to edge and it is each row's job to pay for its own inset. */
+/* The heading pays for its own gutter, because stream-page runs the page edge to
+   edge. index.css zeroes the stream margin on .activity-head so this is the only
+   inset applied and the h1 lines up with every other page's heading rather than
+   sitting a second gutter further in. */
 .activity-head-top {
   width: 100%;
-  padding: 0 1.25rem 0.25rem;
+  padding: 0.25rem 1.25rem 0.35rem;
 }
 
 .activity-head h1 {
