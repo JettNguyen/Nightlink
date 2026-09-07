@@ -6,14 +6,17 @@
   margin-top: 0.75rem;
 }
 
+/* This page was boxes inside boxes: a card around the dream, another around the
+   text of it, another around each section, another around every comment. Four
+   borders deep before you reach a word anyone wrote. Sections are separated by
+   rules now and the page itself is the only container. */
 .detail-card {
-  margin-top: 1.5rem;
-  padding: 2rem;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: var(--shadow-light);
-  backdrop-filter: blur(18px);
+  margin-top: 0.5rem;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -111,10 +114,10 @@
 }
 
 .detail-date-pill {
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 0.45rem 1.1rem;
-  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 999px;
+  padding: 0.2rem 0;
+  background: none;
   color: var(--text-secondary);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -193,10 +196,11 @@
 }
 
 .detail-visibility {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1.1rem 0 0;
+  background: none;
 }
 
 .detail-hint {
@@ -208,10 +212,11 @@
 .detail-audience,
 .detail-tagged,
 .detail-comments {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1.1rem 0 0;
+  background: none;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -312,13 +317,18 @@
 }
 
 .comment-card {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.8rem 0;
+  background: none;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
+}
+
+.comment-card:last-child {
+  border-bottom: none;
 }
 
 .comment-meta {
@@ -690,11 +700,12 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  padding: 1.25rem;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
-  line-height: 1.5;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  font-size: var(--fs-md);
+  line-height: 1.6;
   color: var(--text);
   white-space: pre-wrap;
 }
@@ -1270,11 +1281,12 @@
 .detail-error,
 .detail-placeholder {
   margin-top: 2rem;
-  padding: 1.25rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
+  padding: 1.25rem 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .danger-btn {
