@@ -1531,6 +1531,11 @@ export default function DreamDetail({ user }) {
     }
   };
 
+  // The composer sits above the list, so its post button only appears once
+  // there is something to post. Otherwise a button and its row would push the
+  // first comment down the screen on every dream.
+  const composerEngaged = Boolean(commentInput.trim().length || replyTarget || commentBusy);
+
   const handleReplyToComment = (entry) => {
     if (!viewerId || !entry?.id) return;
     if (entry.authorUsername) {
@@ -2727,19 +2732,6 @@ export default function DreamDetail({ user }) {
           <div className="detail-section-head">
             <p className="detail-label">Comments{commentCountLabel}</p>
           </div>
-          {commentsLoading ? (
-            <div className="loading-inline">
-              <LoadingIndicator label="Loading comments…" size="sm" align="start" />
-            </div>
-          ) : commentError ? (
-            <p className="detail-hint">{commentError}</p>
-          ) : commentThreads.length ? (
-            <div className="comments-list">
-              {commentThreads.map((entry) => renderCommentThread(entry))}
-            </div>
-          ) : (
-            <p className="detail-hint">No comments yet. Be the first to add one.</p>
-          )}
           {viewerId ? (
             <div className="comment-composer">
               {replyTarget && (
@@ -2770,20 +2762,35 @@ export default function DreamDetail({ user }) {
                   }
                 }}
               />
-              <div className="comment-composer-actions">
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={handleSubmitComment}
-                  disabled={commentBusy || !commentInput.trim()}
-                >
-                  {commentBusy ? 'Posting…' : 'Post comment'}
-                </button>
-              </div>
+              {composerEngaged && (
+                <div className="comment-composer-actions">
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={handleSubmitComment}
+                    disabled={commentBusy || !commentInput.trim()}
+                  >
+                    {commentBusy ? 'Posting…' : 'Post comment'}
+                  </button>
+                </div>
+              )}
               {commentStatus && <p className="detail-hint composer-status">{commentStatus}</p>}
             </div>
           ) : (
             <p className="detail-hint">Sign in to add your take.</p>
+          )}
+          {commentsLoading ? (
+            <div className="loading-inline">
+              <LoadingIndicator label="Loading comments…" size="sm" align="start" />
+            </div>
+          ) : commentError ? (
+            <p className="detail-hint">{commentError}</p>
+          ) : commentThreads.length ? (
+            <div className="comments-list">
+              {commentThreads.map((entry) => renderCommentThread(entry))}
+            </div>
+          ) : (
+            <p className="detail-hint">No comments yet. Be the first to add one.</p>
           )}
         </div>}
 
