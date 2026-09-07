@@ -1,8 +1,25 @@
+/* The page runs edge to edge so the tab bar and the post dividers can. Every
+   direct child except the header and the stream keeps the old gutter as a
+   margin instead. */
+.feed-page {
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+}
+
+.feed-page > *:not(.feed-list):not(.feed-header) {
+  margin: 1rem 1.25rem 0;
+}
+
 .feed-header {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0;
   animation: fadeIn 0.22s ease-out;
+}
+
+.feed-header-top {
+  padding: 0 1.25rem 0.85rem;
 }
 
 .feed-header h1 {
@@ -18,42 +35,61 @@
 }
 
 /* ── Feed tabs ─────────────────────────────────────────────────────────────── */
+/* Underline tabs rather than a pill inside a bordered track. Two containers
+   were doing the work of one selected state; the bar under the active tab says
+   the same thing with no box at all, and it spans the full width so it reads as
+   the top of the stream rather than a control floating above it. */
 .feed-tabs {
   display: flex;
-  gap: 0.2rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.28rem;
-  width: fit-content;
+  gap: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
   animation: fadeIn 0.22s ease-out 0.05s both;
 }
 
 .feed-tab {
+  flex: 1;
+  justify-content: center;
   border: none;
   background: transparent;
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   font-weight: 600;
-  padding: 0.38rem 1rem;
-  border-radius: 999px;
+  padding: 0.7rem 0.5rem;
+  border-radius: 0;
   cursor: pointer;
   transition: background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  min-height: 34px;
+  min-height: 44px;
   white-space: nowrap;
   line-height: 1;
 }
 
 .feed-tab.active {
-  background: rgba(201, 167, 240, 0.14);
-  color: var(--primary);
+  background: none;
+  color: var(--text);
+}
+
+/* ::before, because ::after is the 44px touch overlay from index.css. */
+.feed-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 52px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+  transform: translateX(-50%);
 }
 @media (hover: hover) and (pointer: fine) {
   .feed-tab:not(.active):hover {
-    background: rgba(255, 255, 255, 0.05);
     color: var(--text);
   }
 }
@@ -68,60 +104,85 @@
 }
 
 .feed-tab.active .feed-tab-count {
-  background: rgba(201, 167, 240, 0.2);
+  background: rgba(201, 167, 240, 0.18);
   color: var(--primary);
 }
 
-/* ── Feed list ─────────────────────────────────────────────────────────────── */
+/* ── The stream ────────────────────────────────────────────────────────────────
+ * A post used to announce itself six ways at once: a border, a gradient fill, a
+ * shadow, a 12px blur, a 16px radius and its own padding. None of that is how a
+ * feed reads. What separates one post from the next here is a hairline and the
+ * avatar column, and what separates title from body is type, not a box.
+ *
+ * The stream also runs to both screen edges. The page gutter moved onto the
+ * post itself, so the divider is a full width rule rather than a line floating
+ * between two margins.
+ * --------------------------------------------------------------------------- */
 .feed-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.24s ease-out 0.1s both;
 }
 
-.feed-card {
+.feed-post {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.25rem;
-  box-shadow: var(--shadow-light);
-  transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-  backdrop-filter: blur(12px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.7rem;
+  padding: 0.9rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
   animation: slideInUp 0.22s ease-out both;
+  transition: background-color 0.18s ease;
+}
+
+.feed-post:last-child {
+  border-bottom: none;
 }
 @media (hover: hover) and (pointer: fine) {
-  .feed-card:hover {
-    box-shadow: var(--shadow-soft);
-    border-color: rgba(201, 167, 240, 0.4);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  .feed-post:hover {
+    background-color: rgba(255, 255, 255, 0.022);
   }
 }
 
-.feed-card-head {
+/* The byline row. Name first, then everything else in one muted run, which is
+   the line every social app opens a post with. */
+.feed-post-head {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.65rem;
+  gap: 0.4rem;
+  min-height: 30px;
+}
+
+.feed-post-byline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding-top: 0.15rem;
+}
+
+.feed-post-meta {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
 }
 
 .feed-card-actions {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
   margin-left: auto;
-  align-self: center;
+  flex-shrink: 0;
 }
 
 .feed-card-menu-btn {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  background: none;
   color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
@@ -131,8 +192,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .feed-card-menu-btn:hover {
-    border-color: rgba(201, 167, 240, 0.38);
-    background: rgba(201, 167, 240, 0.08);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text);
   }
 }
@@ -182,21 +242,16 @@
   }
 }
 
-.feed-author-block {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
+/* Circular, and smaller. A 14px rounded square reads as an app icon; a circle
+   reads as a person, which is the whole point of the avatar column. */
 .feed-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
-  box-shadow: var(--shadow-light);
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
@@ -209,67 +264,60 @@
   height: 1.1em;
 }
 
-.feed-author-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.feed-author-name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
+/* A person's name is not a tag. It was a tinted pill, which made the author
+   read as metadata about the post rather than as the person who wrote it. */
 .feed-author-handle {
-  color: var(--primary);
-  font-size: var(--fs-xs);
+  color: var(--text);
+  font-size: var(--fs-base);
   font-weight: 600;
-  background: rgba(201, 167, 240, 0.10);
-  padding: 0.2rem 0.6rem;
-  border-radius: 100px;
-  width: fit-content;
+  background: none;
+  border: none;
+  padding: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .feed-author-handle.feed-author-link {
   text-decoration: none;
-  background: rgba(201, 167, 240, 0.18);
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .feed-author-handle.feed-author-link:hover {
-    box-shadow: 0 0 0 2px rgba(201, 167, 240, 0.2);
+    color: var(--primary);
   }
 }
 
-.feed-visibility {
-  color: var(--text-secondary);
-  font-size: var(--fs-base);
-}
-
-.feed-date {
-  color: var(--text-secondary);
-  font-size: var(--fs-base);
-  height: 38px;
-  display: flex;
-  align-items: center;
-}
-
+/* With the box gone, type has to do the separating. The title takes the app's
+   display serif so it is distinct from the body at a glance rather than by
+   being one notch larger. */
 .feed-title {
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  margin: 0.35rem 0;
+  margin: 0.15rem 0 0.2rem;
+  font-family: 'Prata', Georgia, serif;
+  font-weight: 400;
   font-size: var(--fs-md);
+  line-height: 1.25;
+  color: var(--text);
 }
 
+/* The AI reading is a second voice, so it is set off by a rule rather than by
+   being loud. It used to be primary-coloured and semibold, which made it
+   compete with the dream it was describing. */
 .feed-summary {
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  color: var(--primary);
-  font-weight: 600;
-  margin: 0.25rem 0 0.5rem;
+  margin: 0.55rem 0 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid rgba(201, 167, 240, 0.32);
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
 }
 
 .feed-content {
@@ -278,17 +326,51 @@
   overflow-wrap: anywhere;
   color: var(--text);
   line-height: 1.5;
-  margin: 0.35rem 0 0.75rem;
+  margin: 0;
 }
 
 .feed-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
 }
 
+/* Tags were bordered pills, which is three containers deep inside a post. */
+.feed-tags .tag {
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: var(--primary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+/* Bare icons with counts, the way every feed does it. The bordered chip made
+   three reactions read as a row of buttons rather than as a footer. */
 .feed-reactions {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
+  margin-left: -0.35rem;
+}
+
+.feed-reactions .reaction-button {
+  border: none;
+  background: none;
+  padding: 0.35rem;
+  margin-right: 1.1rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  gap: 0.4rem;
+}
+
+.feed-reactions .reaction-button.custom-emoji-trigger {
+  border: none;
+  opacity: 1;
+}
+
+.feed-reactions .reaction-button.active {
+  color: var(--primary);
 }
 
 .feed-reactions .reaction-icon {
@@ -296,19 +378,20 @@
 }
 
 /* ── Empty + discovery states ──────────────────────────────────────────────── */
+/* A dashed box around "nothing here yet" draws a container around an absence.
+   Centred text in open space says it without the outline. */
 .feed-empty-card {
-  border: 1px dashed var(--border);
-  border-radius: 16px;
-  padding: 1.5rem;
+  border: none;
+  border-radius: 0;
+  padding: 3rem 1.25rem;
   text-align: center;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.02);
-  margin-top: 1.5rem;
+  color: var(--text-secondary);
+  background: none;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   align-items: center;
-  box-shadow: var(--shadow-light);
   animation: fadeIn 0.24s ease-out 0.1s both;
 }
 
@@ -317,15 +400,15 @@
 }
 
 .feed-discovery-nudge {
-  margin-top: 1rem;
-  border: 1px dashed rgba(201, 167, 240, 0.25);
-  border-radius: 14px;
-  padding: 0.9rem 1.1rem;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.95rem 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(201, 167, 240, 0.03);
+  background: none;
   animation: fadeIn 0.22s ease-out both;
 }
 
@@ -353,11 +436,10 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
+/* The stream is single column at every width now, so the grid collapse that
+   used to live here has nothing left to do. A feed reading as two columns of
+   tiles on a wide screen was most of why this looked like a dashboard. */
 @media (max-width: 768px) {
-  .feed-list {
-    grid-template-columns: 1fr;
-  }
-
   .feed-card-menu {
     min-width: 184px;
   }

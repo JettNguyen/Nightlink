@@ -61,29 +61,27 @@ export function JournalSkeleton() {
   );
 }
 
-// Matches feed-card: avatar + author row + title + content + reactions
+// Matches feed-post: avatar column + byline + title + content + reactions
 
 function FeedCardSkeleton() {
   return (
     <div className="sk-feed-card">
-      <div className="sk-feed-head">
-        {/* 48×48 rounded-square avatar matching .feed-avatar */}
-        <div className="skel sk-feed-avatar" />
-        <div className="sk-feed-meta">
-          <S w="130px" h="0.88rem" />
-          <S w="72px" h="0.75rem" r={999} />
+      {/* 40px circle in the avatar column, matching .feed-avatar */}
+      <div className="skel sk-feed-avatar" />
+      <div className="sk-feed-main">
+        <div className="sk-feed-head">
+          <S w="110px" h="0.9rem" />
+          <S w="90px" h="0.78rem" />
         </div>
-        {/* date pill on the right, same height as feed-date (38px) */}
-        <div className="skel sk-feed-date" style={{ borderRadius: 8 }} />
-      </div>
-      <S w="65%" h="1.1rem" r={6} />
-      <S h="0.85rem" className="sk-mt-sm" />
-      <S w="90%" h="0.85rem" className="sk-mt-sm" />
-      <S w="60%" h="0.85rem" className="sk-mt-sm" />
-      <div className="sk-feed-footer">
-        <S w="60px" h="30px" r={999} />
-        <S w="60px" h="30px" r={999} />
-        <S w="60px" h="30px" r={999} />
+        <S w="65%" h="1.05rem" r={6} className="sk-mt-sm" />
+        <S h="0.85rem" className="sk-mt-sm" />
+        <S w="90%" h="0.85rem" className="sk-mt-sm" />
+        <S w="60%" h="0.85rem" className="sk-mt-sm" />
+        <div className="sk-feed-footer">
+          <S w="44px" h="20px" r={6} />
+          <S w="44px" h="20px" r={6} />
+          <S w="44px" h="20px" r={6} />
+        </div>
       </div>
     </div>
   );

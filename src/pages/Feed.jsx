@@ -590,28 +590,22 @@ export default function Feed({ user }) {
     };
 
     return (
-      <div key={dream.id} className="feed-card" role="button" tabIndex={0} onClick={openDreamDetail} onKeyDown={handleCardKeyDown}>
-        <div className="feed-card-head">
-          <div className="feed-author-block">
-            <AvatarDisplay
-              photoURL={avatarPhotoURL} avatarIcon={avatarIcon}
-              avatarBackground={avatarBackground} avatarColor={avatarColor}
-              className={`feed-avatar${isAnonymous ? ' feed-avatar--anon' : ''}`}
-            />
-            <div className="feed-author-meta">
-              {authorHandle && (
-                <div className="feed-author-name-row">
-                  {showProfileLink
-                    ? <button type="button" className="feed-author-handle feed-author-link" onClick={handleAuthorNavigation}>{authorHandle}</button>
-                    : <div className="feed-author-handle">{authorHandle}</div>}
-                  {!isAnonymous && <ProBadge subscription={profile?.subscription} />}
-                </div>
-              )}
-              <div className="feed-visibility">{visibilityLabel}</div>
+      <div key={dream.id} className="feed-post" role="button" tabIndex={0} onClick={openDreamDetail} onKeyDown={handleCardKeyDown}>
+        <AvatarDisplay
+          photoURL={avatarPhotoURL} avatarIcon={avatarIcon}
+          avatarBackground={avatarBackground} avatarColor={avatarColor}
+          className={`feed-avatar${isAnonymous ? ' feed-avatar--anon' : ''}`}
+        />
+        <div className="feed-post-main">
+          <div className="feed-post-head">
+            <div className="feed-post-byline">
+              {authorHandle && (showProfileLink
+                ? <button type="button" className="feed-author-handle feed-author-link" onClick={handleAuthorNavigation}>{authorHandle}</button>
+                : <span className="feed-author-handle">{authorHandle}</span>)}
+              {!isAnonymous && <ProBadge subscription={profile?.subscription} />}
+              <span className="feed-post-meta">{visibilityLabel}<span aria-hidden="true"> · </span>{dateLabel}</span>
             </div>
-          </div>
-          <div className="feed-card-actions" data-feed-menu-root="true">
-            <span className="feed-date">{dateLabel}</span>
+            <div className="feed-card-actions" data-feed-menu-root="true">
             <button
               type="button"
               className="feed-card-menu-btn"
@@ -636,8 +630,8 @@ export default function Feed({ user }) {
                 )}
               </div>
             )}
+            </div>
           </div>
-        </div>
         {(dream.title || (dream.aiGenerated && dream.aiTitle)) ? <h3 className="feed-title">{dream.title || dream.aiTitle}</h3> : null}
         <p className="feed-content">{snippet}</p>
         {dream.aiGenerated && dream.aiInsights && <p className="feed-summary">{dream.aiInsights}</p>}
@@ -711,12 +705,13 @@ export default function Feed({ user }) {
             </div>
           ) : null}
         </div>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container feed-page">
       <div className="page-header feed-header">
         <div className="feed-header-top">
           <h1>Feed</h1>

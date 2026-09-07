@@ -1145,7 +1145,6 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 /* Cards are large, so they take a much smaller scale, since anything more reads as
    the whole page lurching rather than the card acknowledging the tap. */
 .card-shell:active,
-.feed-card:active,
 .dream-card:active,
 .profile-dream-card:active,
 .tagged-dream-card:active,
@@ -1187,6 +1186,14 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
   transition: transform 70ms ease;
 }
 
+/* A stream row is the full width of the screen, so scaling it reads as the page
+   flinching. Social feeds flash the row instead, which is also the only press
+   feedback that survives having no border or shadow to change. */
+.feed-post:active {
+  background-color: rgba(255, 255, 255, 0.045);
+  transition: background-color 60ms ease-out;
+}
+
 /* Disabled controls must not look pressable. */
 .primary-btn:disabled:active,
 .secondary-btn:disabled:active,
@@ -1213,7 +1220,6 @@ button:disabled:active {
     color: var(--text);
   }
 
-  .feed-card:hover,
   .dream-card:hover,
   .profile-dream-card:hover,
   .tagged-dream-card:hover,
