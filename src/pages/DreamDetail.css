@@ -133,7 +133,8 @@
 .detail-date-pill {
   border: none;
   border-radius: 999px;
-  padding: 0.3rem 0.95rem;
+  padding: 0.4rem 0.95rem;
+  min-height: 40px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
   font-weight: 600;
@@ -142,10 +143,10 @@
   align-items: center;
   gap: 0.35rem;
   font-size: var(--fs-base);
-  margin-bottom: 5px;
 }
 
 .detail-date-pill--interactive {
+  position: relative;
   cursor: pointer;
   background: rgba(201, 167, 240, 0.05);
   color: var(--text);
@@ -156,6 +157,18 @@
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(201, 167, 240, 0.15);
   }
+}
+
+/* 44px target without making the badge itself that tall, same overlay the other
+   small controls use. */
+.detail-date-pill--interactive::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 44px;
+  transform: translateY(-50%);
 }
 
 .detail-date-edit--standalone {

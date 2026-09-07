@@ -356,7 +356,7 @@ const isDreamMemoryIndexed = async (uid, dreamId) => {
 // The caller must not mark the dream indexed unless it did, or the dream is lost
 // from the memory permanently.
 const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) => {
-  const systemPrompt = `You maintain a private dream memory file for a single user. After each analyzed dream, update the file by merging in new patterns, symbols, and themes.
+  const systemPrompt = `You maintain a private dream memory file for one dreamer, written for that dreamer to read. After each analyzed dream, update the file by merging in new patterns, symbols, and themes.
 
 Your value is in noticing what the dreamer cannot see from inside a single night: how a symbol changes over time, which figure keeps returning, what pairs with what, and what has quietly stopped appearing.
 
@@ -383,6 +383,9 @@ Rules:
 - Never drop an entry that has occurred 3 or more times; consolidate wording instead
 - When nearing the length limit, trim the rarest single-occurrence entries first
 - Never include raw dream text, only synthesized patterns and observations
+- The dreamer reads this file, so write it to them. Never refer to them in the third person and never call them "the user", "the dreamer", or by name
+- Every entry is already about them, so a possessive is redundant: write "Dad: represents a desire for emotional backing", not "User's dad: ...". Where a reference is genuinely unavoidable, use "you" or "your"
+- Apply that to entries already in the file: when merging, rewrite any third-person reference you find into this voice
 - Never speculate about diagnoses, medical conditions, or the dreamer's safety
 
 Return ONLY the updated memory file. No preamble or explanation.`;
