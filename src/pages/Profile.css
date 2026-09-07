@@ -1076,6 +1076,26 @@
   border-bottom: none;
 }
 
+/* Every other tab set is a full width bar with a track line along the bottom,
+   which is where its selected underline lands. This one sits inline on the
+   heading row with no track, so the tab shrinks to its label and hands the 44px
+   target to an overlay. Otherwise the bar hangs at the bottom of a target's
+   worth of empty space instead of under the word it belongs to. */
+.profile-dreams-head .dream-tab {
+  min-height: 0;
+  padding: 0.15rem 0.1rem 0.45rem;
+}
+
+.profile-dreams-head .dream-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
 .profile-dreams h2 {
   margin: 0;
   font-size: var(--fs-lg);

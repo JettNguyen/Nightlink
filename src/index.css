@@ -821,19 +821,17 @@ html[data-native-platform='ios'] .profile-ai-badge {
   box-shadow: none;
 }
 
-.dream-tab.active {
-  font-weight: 700;
-}
-
 /* ::before, because ::after is the 44px touch overlay. The bar spans the tab,
-   and the tab is the width of its label, so it underlines the word.
-   .dream-tab is deliberately not in this list: the profile's own dreams and
-   tagged tabs sit directly under the follower counts, where a second rule so
-   close to the first one reads as a stray line rather than a selection. Colour
-   and weight carry it there. */
+   and the tab is the width of its label, so it underlines the word. Every tab
+   set in the app selects the same way: this bar and a step up in text colour,
+   nothing else. .dream-tab was carrying a bold weight instead of the bar, from
+   when those two tabs sat directly under the follower counts and a second rule
+   that close to them read as a stray line. They live on the dreams heading row
+   now, so there is nothing for the bar to collide with. */
 .tab-bar-btn.active::before,
 .feed-tab.active::before,
 .view-toggle-btn.active::before,
+.dream-tab.active::before,
 .connections-tab.active::before {
   content: '';
   position: absolute;
