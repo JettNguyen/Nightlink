@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faPlus, faLock, faChevronDown } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
+import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
@@ -245,6 +245,8 @@ export default function DreamDetail({ user }) {
   const viewerId = user?.uid || null;
   const [authorProfile, setAuthorProfile] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [authorMenuOpen, setAuthorMenuOpen] = useState(false);
+  const authorMenuRef = useRef(null);
   const location = useLocation();
   const fromNav = location.state?.fromNav || null;
   const commentInputRef = useRef(null);
@@ -376,6 +378,13 @@ export default function DreamDetail({ user }) {
       console.error('Failed to fetch user summaries', error);
     }
   }, []);
+
+  // Comment rows store the author's name and handle but not their avatar, so
+  // the faces come from the same summary cache the reaction list uses.
+  useEffect(() => {
+    if (!comments.length) return;
+    void ensureUserSummaries(comments.map((entry) => entry.userId));
+  }, [comments, ensureUserSummaries]);
 
   const cancelModalAutoClose = useCallback(() => {
     if (hoverCloseTimeoutRef.current) {
@@ -1892,6 +1901,18 @@ export default function DreamDetail({ user }) {
 
   useEscapeKey(closePromptSelectors, promptSelectorOpen || firstAnalysisPromptSelector);
 
+  // Same dismissal rules as the feed's post menu: anywhere outside closes it.
+  useEffect(() => {
+    if (!authorMenuOpen) return undefined;
+    const closeOnOutside = (event) => {
+      if (!authorMenuRef.current?.contains(event.target)) setAuthorMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [authorMenuOpen]);
+
+  useEscapeKey(() => setAuthorMenuOpen(false), authorMenuOpen);
+
   const handleReportDream = useCallback(() => {
     if (!dream?.id || !viewerId) return;
     setReportReason('');
@@ -1958,12 +1979,22 @@ export default function DreamDetail({ user }) {
     const viewerHearted = Boolean(entry.heartUserIds?.[viewerId]);
     const heartCount = entry.heartCount || 0;
     const heartDisabled = heartingCommentIds.has(entry.id);
+    const commenter = userSummaries[entry.userId] || null;
     return (
       <div className={`comment-card${depth ? ' comment-card-reply' : ''}`}>
         <div className="comment-meta">
-          <div className="comment-meta-names">
-            <span className="comment-author">{entry.authorDisplayName || 'Dreamer'}</span>
-            {entry.authorUsername && <span className="comment-handle">@{entry.authorUsername}</span>}
+          <div className="comment-meta-identity">
+            <AvatarDisplay
+              photoURL={commenter?.photoURL || null}
+              avatarIcon={commenter?.avatarIcon}
+              avatarBackground={commenter?.avatarBackground || DEFAULT_AVATAR_BACKGROUND}
+              avatarColor={commenter?.avatarColor || DEFAULT_AVATAR_COLOR}
+              className="comment-avatar"
+            />
+            <div className="comment-meta-names">
+              <span className="comment-author">{entry.authorDisplayName || 'Dreamer'}</span>
+              {entry.authorUsername && <span className="comment-handle">@{entry.authorUsername}</span>}
+            </div>
           </div>
           <span className="comment-time">{relativeTime}</span>
         </div>
@@ -2110,6 +2141,9 @@ export default function DreamDetail({ user }) {
 
   const titleText = dream.title?.trim() || (dream.aiGenerated && dream.aiTitle) || 'Untitled dream';
   const dreamOwnerUsernameForDisplay = dream.visibility === 'anonymous' ? '' : (authorProfile?.username || '');
+  // An anonymous dream shows no author, but it still has to be reportable, so
+  // the actions row renders either way and only the identity half is gated.
+  const showAuthorIdentity = Boolean(dream.visibility !== 'anonymous' && authorProfile);
   const hasAudienceQuery = audienceQuery.trim().length > 0;
   const commentCountLabel = comments.length ? ` (${comments.length})` : '';
   const visibilitySummary = visibilityLabel(dream.visibility);
@@ -2309,30 +2343,68 @@ export default function DreamDetail({ user }) {
           </div>
         </div>
 
-        {!isOwner && dream.visibility !== 'anonymous' && authorProfile && (
+        {!isOwner && (showAuthorIdentity || viewerId) && (
           <div className="detail-author-block">
-            <button
-              type="button"
-              className="detail-author-btn"
-              onClick={() => navigate(buildProfilePath(authorProfile.username, authorProfile.id))}
-            >
-              <AvatarDisplay
-                photoURL={authorProfile.photoURL || null}
-                avatarIcon={authorProfile.avatarIcon}
-                avatarBackground={authorProfile.avatarBackground || DEFAULT_AVATAR_BACKGROUND}
-                avatarColor={authorProfile.avatarColor || DEFAULT_AVATAR_COLOR}
-                className="detail-author-avatar"
-              />
-              <div className="detail-author-meta">
-                <span className="detail-author-name">
-                  {authorProfile.displayName || 'Dreamer'}
-                  <ProBadge subscription={authorProfile.subscription} />
-                </span>
-                {authorProfile.username && (
-                  <span className="detail-author-handle">@{authorProfile.username}</span>
+            {showAuthorIdentity && (
+              <button
+                type="button"
+                className="detail-author-btn"
+                onClick={() => navigate(buildProfilePath(authorProfile.username, authorProfile.id))}
+              >
+                <AvatarDisplay
+                  photoURL={authorProfile.photoURL || null}
+                  avatarIcon={authorProfile.avatarIcon}
+                  avatarBackground={authorProfile.avatarBackground || DEFAULT_AVATAR_BACKGROUND}
+                  avatarColor={authorProfile.avatarColor || DEFAULT_AVATAR_COLOR}
+                  className="detail-author-avatar"
+                />
+                <div className="detail-author-meta">
+                  <span className="detail-author-name">
+                    {authorProfile.displayName || 'Dreamer'}
+                    <ProBadge subscription={authorProfile.subscription} />
+                  </span>
+                  {authorProfile.username && (
+                    <span className="detail-author-handle">@{authorProfile.username}</span>
+                  )}
+                </div>
+              </button>
+            )}
+            {viewerId && (
+              <div className="overflow-menu-root detail-author-menu" ref={authorMenuRef}>
+                <button
+                  type="button"
+                  className="overflow-menu-btn"
+                  aria-label="Dream actions"
+                  aria-haspopup="menu"
+                  aria-expanded={authorMenuOpen}
+                  onClick={() => setAuthorMenuOpen((open) => !open)}
+                >
+                  <FontAwesomeIcon icon={faEllipsisVertical} />
+                </button>
+                {authorMenuOpen && (
+                  <div className="overflow-menu" role="menu" aria-label="Dream actions">
+                    {showAuthorIdentity && dream.userId && (
+                      <button
+                        type="button"
+                        className="overflow-menu-item"
+                        role="menuitem"
+                        onClick={() => { setAuthorMenuOpen(false); handleBlockAuthor(); }}
+                      >
+                        Block user
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="overflow-menu-item overflow-menu-item-danger"
+                      role="menuitem"
+                      onClick={() => { setAuthorMenuOpen(false); handleReportDream(); }}
+                    >
+                      Report dream
+                    </button>
+                  </div>
                 )}
               </div>
-            </button>
+            )}
           </div>
         )}
 
@@ -2888,16 +2960,6 @@ export default function DreamDetail({ user }) {
           <button type="button" className="secondary-btn" onClick={goBack}>
             Close
           </button>
-          {!isOwner && viewerId && (
-            <>
-              <button type="button" className="ghost-btn" onClick={handleBlockAuthor}>
-                Block user
-              </button>
-              <button type="button" className="ghost-btn" onClick={handleReportDream}>
-                Report dream
-              </button>
-            </>
-          )}
           {isOwner && (
             <button
               type="button"

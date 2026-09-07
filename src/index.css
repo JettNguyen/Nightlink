@@ -815,6 +815,110 @@ html[data-native-platform='ios'] .profile-ai-badge {
   }
 }
 
+/* ── Overflow menu ────────────────────────────────────────────────────────────
+ * The three dots and its dropdown. Block and report live behind one of these on
+ * every surface that carries other people's dreams, because moderation should
+ * be reachable without sitting at the same weight as the things you came to the
+ * page to do. The feed and the profile still carry their own copies of this;
+ * new ones should use these classes.
+ * --------------------------------------------------------------------------- */
+.overflow-menu-root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 4;
+}
+
+.overflow-menu-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+/* 44px target without a 44px glyph. */
+.overflow-menu-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .overflow-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+  }
+}
+
+.overflow-menu-btn:active {
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 60ms ease-out;
+}
+
+.overflow-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  min-width: 190px;
+  padding: 0.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(10, 14, 22, 0.98);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 5;
+}
+
+.overflow-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font-weight: 600;
+  font-size: var(--fs-base);
+  min-height: 44px;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .overflow-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.overflow-menu-item:active {
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 60ms ease-out;
+}
+
+.overflow-menu-item-danger {
+  color: #ff9fb1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .overflow-menu-item-danger:hover {
+    background: rgba(255, 138, 171, 0.12);
+  }
+}
+
 /* Who a dream was shared with. Small enough not to compete with the name it
    sits beside, and the only thing in a post allowed a fill, because the colour
    is the information here rather than decoration. */

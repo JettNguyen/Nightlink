@@ -368,8 +368,27 @@
 .comment-meta {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.comment-meta-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.72rem;
 }
 
 .comment-meta-names {
@@ -682,8 +701,20 @@
   }
 }
 
+/* The poster's row also carries the actions you can take on their dream, at the
+   right end of it. They used to be two outlined buttons in the footer, level
+   with Close, which gave reporting the same weight as leaving the page. */
 .detail-author-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.65rem 0 0.1rem;
+}
+
+/* Alone in the row on an anonymous dream, where there is no author to show. */
+.detail-author-menu {
+  margin-left: auto;
 }
 
 .detail-author-btn {
