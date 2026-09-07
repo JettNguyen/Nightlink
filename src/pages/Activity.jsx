@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivitySkeleton } from '../components/SkeletonLoader';
 import { buildDreamPath, buildProfilePath } from '../utils/urlHelpers';
 import { markActivityEntryRead, removeActivityEntry } from '../services/ActivityService';
@@ -36,12 +36,6 @@ export default function Activity({ user, activityPreview }) {
       return bTime - aTime;
     })
   ), [inboxEntries]);
-
-  const notificationsSummary = useMemo(() => {
-    if (!activityEntries.length) return 'You’re all caught up';
-    if (activityEntries.length === 1) return '1 update';
-    return `Latest ${activityEntries.length} updates`;
-  }, [activityEntries.length]);
 
   const handleDreamNavigation = (ownerUsername, ownerId, dreamId) => {
     if (!dreamId) return;
@@ -167,7 +161,7 @@ export default function Activity({ user, activityPreview }) {
               disabled={clearingEntries.has(entry.id)}
               onClick={(event) => handleNotificationClear(event, entry)}
             >
-              Clear
+              <FontAwesomeIcon icon={faXmark} />
             </button>
           </div>
       </article>
@@ -184,10 +178,6 @@ export default function Activity({ user, activityPreview }) {
       </div>
 
       <section className="activity-section">
-        <div className="activity-section-head">
-          <h2>Notifications</h2>
-          <span className="activity-section-count">{notificationsSummary}</span>
-        </div>
         {inboxLoading ? (
           <ActivitySkeleton />
         ) : inboxError && activityEntries.length === 0 ? (
