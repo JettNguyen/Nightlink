@@ -499,10 +499,13 @@ export default function Profile({ user }) {
   const isTaggedTab = dreamTab === 'tagged';
   const activeDreams = isTaggedTab ? taggedDreamsForProfile : displayedDreams;
   const activeDreamsLoading = isTaggedTab ? taggedDreamsLoading : dreamsLoading;
-  const dreamSectionTitle = isTaggedTab ? (viewingOwnProfile ? 'Tagged dreams' : 'Tagged for this dreamer') : (viewingOwnProfile ? 'Your dreams' : 'Recent dreams');
+  // The tabs share a row with this heading now, so a heading that renamed itself
+  // to match the selected tab printed the same words twice. The heading names
+  // the section, the tabs carry the state, and the subtitle says what is in the
+  // list. Short, because it only gets half a row.
   const dreamSectionSubtitle = isTaggedTab
-    ? (viewingOwnProfile ? 'Anytime someone mentions you, it lands in this list.' : 'Entries that mention this dreamer and are visible to you.')
-    : (viewingOwnProfile ? 'A gallery of your latest journal entries.' : 'Only entries they have shared with you appear here.');
+    ? (viewingOwnProfile ? 'Entries that mention you.' : 'Entries that mention them.')
+    : (viewingOwnProfile ? 'Your latest entries.' : 'Only what they have shared with you.');
   const emptyPrimary = isTaggedTab ? (viewingOwnProfile ? 'Nobody has tagged you yet' : 'No tagged dreams to show') : (viewingOwnProfile ? 'No dreams yet' : 'No dreams shared with you yet');
   const emptySecondary = isTaggedTab
     ? (viewingOwnProfile ? 'When another dreamer mentions you, their entry appears here automatically.' : 'As soon as a visible tagged entry exists, it will show up in this tab.')
@@ -631,14 +634,6 @@ export default function Profile({ user }) {
             <h1>{userData.displayName || 'Dreamer'} <ProBadge subscription={userData.subscription} /></h1>
             {userData.username && <p className="profile-username">@{userData.username}</p>}
             {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
-            {viewingOwnProfile && (
-              <div className="profile-btn-row">
-                <button type="button" onClick={() => navigate('/profile/edit')} className="edit-profile-btn"><FontAwesomeIcon icon={faPencil} /><span>Edit Profile</span></button>
-                {!isNativeIOS && (
-                  <button type="button" className="settings-btn" onClick={() => navigate('/settings')}><FontAwesomeIcon icon={faGear} /><span>Settings</span></button>
-                )}
-              </div>
-            )}
             {!viewingOwnProfile && (
               <div className="follow-actions">
                 <div className="follow-actions-row follow-actions-row-primary">
@@ -658,7 +653,7 @@ export default function Profile({ user }) {
                     <span>Private profile. Follow to request access.</span>
                   </div>
                 )}
-                {isBlockedTarget && <span className="follow-note follow-note-compact">Blocked</span>}
+                {isBlockedTarget && <span className="follow-note follow-note-compact follow-note-blocked">Blocked</span>}
               </div>
             )}
           </div>
@@ -673,10 +668,19 @@ export default function Profile({ user }) {
         </button>
       </div>
 
+      {viewingOwnProfile && (
+        <div className="profile-btn-row">
+          <button type="button" onClick={() => navigate('/profile/edit')} className="edit-profile-btn"><FontAwesomeIcon icon={faPencil} /><span>Edit Profile</span></button>
+          {!isNativeIOS && (
+            <button type="button" className="settings-btn" onClick={() => navigate('/settings')}><FontAwesomeIcon icon={faGear} /><span>Settings</span></button>
+          )}
+        </div>
+      )}
+
       <div className="profile-dreams">
         <div className="profile-dreams-head">
           <div className="profile-dreams-head-top">
-            <h2>{dreamSectionTitle}</h2>
+            <h2>Dreams</h2>
             <p className="profile-dreams-subtitle">{dreamSectionSubtitle}</p>
           </div>
           <div className="dream-tab-group">
@@ -684,7 +688,7 @@ export default function Profile({ user }) {
               {viewingOwnProfile ? 'Your dreams' : 'Their dreams'}
             </button>
             <button type="button" className={isTaggedTab ? 'dream-tab active' : 'dream-tab'} onClick={() => setDreamTab('tagged')} aria-pressed={dreamTab === 'tagged'}>
-              {viewingOwnProfile ? 'Tagged' : 'Tagged dreams'}
+              Tagged
             </button>
           </div>
         </div>

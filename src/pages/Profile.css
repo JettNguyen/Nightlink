@@ -213,12 +213,18 @@
   }
 }
 
+/* Below the follower counts rather than tucked under the bio, which is where
+   every social profile puts the actions you take on your own account. It is a
+   direct child of the stream page, so only the top and bottom of the shared
+   margin need adjusting. */
 .profile-btn-row {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
 }
 
 .settings-btn {
@@ -447,16 +453,25 @@
   }
 }
 
+/* A relationship badge, so it takes the same rounded tint as the visibility
+   badges rather than reading as a sharp grey rectangle bolted to the follow
+   button. "Follows you" is a follower relationship, so it borrows that colour. */
 .follow-note {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   border: none;
-  border-radius: 0;
-  padding: 0.45rem 0;
-  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.3rem 0.62rem;
+  color: var(--vis-followers);
   font-size: var(--fs-xs);
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--vis-followers-soft);
+  white-space: nowrap;
+}
+
+.follow-note-blocked {
+  color: var(--vis-private);
+  background: var(--vis-private-soft);
 }
 
 .follow-note-compact {
@@ -956,59 +971,6 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-.dream-tab-group {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 0.25rem;
-  background: rgba(255, 255, 255, 0.04);
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 150px;
-  max-width: 100%;
-}
-
-.dream-tab {
-  border: none;
-  border-radius: 100px;
-  padding: 0.4rem 1rem;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.dream-tab.active {
-  background: rgba(201, 167, 240, 0.15);
-  color: var(--text);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
-}
-
-@media (max-width: 520px) {
-  .dream-tab-group {
-    display: flex;
-    flex-direction: column;
-    width: 150px;
-    border-radius: 20px;
-    padding: 0.5rem;
-    gap: 0.35rem;
-    align-items: stretch;
-    margin: 0 auto;
-  }
-
-  .dream-tab {
-    width: 100%;
-    text-align: center;
-    border-radius: 12px;
-  }
-
-  .dream-tab.active {
-    box-shadow: none;
-  }
-}
-
 @media (max-width: 640px) {
   .profile-dream-top {
     flex-wrap: wrap;
@@ -1130,20 +1092,33 @@
   color: var(--text-secondary);
 }
 
-/* The tab group is a full width bar, so it cannot share a row with the title
-   the way it used to. Title above with the page gutter, tabs edge to edge
-   underneath, which is the shape every other page's header takes. */
+/* The heading and the tab pair share one row. The tabs switch the list right
+   below them, so on their own line they read as a second header rather than as
+   a control belonging to the one above. The row pays the page gutter, which is
+   why the shared tab bar's own full-width padding and track line are unset
+   here: the group sizes to its two labels and sits at the right edge. */
 .profile-dreams-head {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem 0.85rem;
   margin-bottom: 0.5rem;
 }
 
 .profile-dreams-head-top {
-  width: 100%;
-  padding: 0 1.25rem 0.85rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+}
+
+.profile-dreams-head .dream-tab-group {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0;
+  gap: 1.25rem;
+  border-bottom: none;
 }
 
 .profile-dreams h2 {

@@ -118,9 +118,11 @@
 
 .sk-stat-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  min-height: 44px;
+  gap: 0.35rem;
   padding: 0.5rem 1rem;
 }
 
@@ -129,7 +131,27 @@
   margin: 0 auto 1.5rem;
 }
 
-/* Mirrors .profile-dreams-grid: hairline separated column, no tiles. */
+/* Mirrors .profile-dreams-head: the heading and the tab pair on one row. */
+.sk-profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem 0.85rem;
+}
+
+.sk-profile-head-top {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sk-profile-head-tabs {
+  display: flex;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Mirrors .profile-dream-grid: hairline separated column, no tiles. */
 .sk-profile-grid {
   display: flex;
   flex-direction: column;

@@ -101,7 +101,7 @@ FeedSkeleton.propTypes = {
   count: PropTypes.number,
 };
 
-// Header + stats + dream grid (3-col → 2-col → 1-col)
+// Header, two counts, the owner actions, then the dreams head and its stream.
 
 export function ProfilePageSkeleton() {
   return (
@@ -114,14 +114,24 @@ export function ProfilePageSkeleton() {
         <S w="180px" h="0.85rem" className="sk-mt-sm" />
       </div>
       <div className="sk-profile-stats">
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <div key={i} className="sk-stat-item">
-            <S w="40px" h="1.4rem" r={6} />
-            <S w="60px" h="0.75rem" r={4} className="sk-mt-sm" />
+            <S w="26px" h="1rem" r={6} />
+            <S w="62px" h="0.8rem" r={4} />
           </div>
         ))}
       </div>
       <S w="140px" h="38px" r={10} className="sk-profile-btn" />
+      <div className="sk-profile-head">
+        <div className="sk-profile-head-top">
+          <S w="84px" h="1.05rem" r={6} />
+          <S w="150px" h="0.8rem" r={4} className="sk-mt-sm" />
+        </div>
+        <div className="sk-profile-head-tabs">
+          <S w="82px" h="0.95rem" r={4} />
+          <S w="52px" h="0.95rem" r={4} />
+        </div>
+      </div>
       <div className="sk-profile-grid">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="sk-profile-card">

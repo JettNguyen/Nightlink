@@ -1377,7 +1377,7 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 .connections-card-main:active,
 .activity-card:active,
 .activity-card-main:active {
-  background-color: rgba(255, 255, 255, 0.045);
+  background-color: rgba(255, 255, 255, 0.08);
   transition: background-color 60ms ease-out;
 }
 

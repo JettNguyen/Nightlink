@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
 import { DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR } from '../constants/avatarOptions';
@@ -11,11 +14,17 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import Toast from '../components/Toast';
 import { triggerSelectionHaptic, triggerSuccessHaptic, triggerErrorHaptic } from '../utils/haptics';
 import './Connections.css';
+import './Legal.css';
 import { appUserPropType } from '../propTypes';
 
 const TAB_FOLLOWERS = 'followers';
 const TAB_FOLLOWING = 'following';
 const TAB_REQUESTS = 'requests';
+
+// Connections is a pushed page, not a tab, so it needs a way back. On the
+// native shell the header chevron already covers it; on the web there was no
+// way out of this page short of the browser's own back button.
+const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
 const normalizeTab = (value, allowRequests) => {
   if (value === TAB_FOLLOWING) return TAB_FOLLOWING;
@@ -303,6 +312,13 @@ export default function Connections({ user }) {
 
   return (
     <div className="page-container stream-page">
+      {!isNativeIOS && (
+        <button type="button" className="legal-back-btn" onClick={() => navigate(-1)}>
+          <FontAwesomeIcon icon={faChevronLeft} style={{ marginRight: '0.4rem' }} />
+          Back
+        </button>
+      )}
+
       <div className="connections-header">
         <h1>Connections</h1>
         <p className="page-subtitle">{tabDescription}</p>
