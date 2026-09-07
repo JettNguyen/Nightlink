@@ -361,9 +361,9 @@
 .follow-note {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 0.45rem 0.75rem;
+  border: none;
+  border-radius: 0;
+  padding: 0.45rem 0;
   color: var(--text-secondary);
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -851,12 +851,11 @@
 }
 
 .profile-dreams {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
-  box-shadow: var(--shadow-light);
-  backdrop-filter: blur(14px);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -1181,10 +1180,6 @@
 .profile-tag-count {
   font-size: var(--fs-xs);
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  padding: 0.15rem 0.55rem;
-  border-radius: 100px;
 }
 
 /* On small screens, drop the snippet to keep cards compact */
