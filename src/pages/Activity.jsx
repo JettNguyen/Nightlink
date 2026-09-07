@@ -152,11 +152,9 @@ export default function Activity({ user, activityPreview }) {
             disabled={isDisabled}
           >
             <span className="activity-card-head">
-              <span className="activity-pill-group">
-                <span className={`activity-pill ${entryType}`}>{pillLabel}</span>
-                {isUnread && <span className="activity-dot" aria-label="Unread notification" />}
-              </span>
+              <span className={`activity-pill ${entryType}`}>{pillLabel}</span>
               <span className="activity-time">{relativeTime}</span>
+              {isUnread && <span className="activity-dot" aria-label="Unread notification" />}
             </span>
             <span className="activity-title" role="text">{headline}</span>
             <span className="activity-body" role="text">{bodyText}</span>
@@ -179,7 +177,7 @@ export default function Activity({ user, activityPreview }) {
   return (
     <div className="page-container stream-page activity-page">
       <div className="activity-head">
-        <div>
+        <div className="activity-head-top">
           <h1>Activity</h1>
           <p className="activity-subtitle">Mentions, replies, and dream updates from the people you follow.</p>
         </div>
@@ -187,10 +185,8 @@ export default function Activity({ user, activityPreview }) {
 
       <section className="activity-section">
         <div className="activity-section-head">
-          <div>
-            <h2>Notifications</h2>
-            <p className="activity-subtitle">{notificationsSummary}</p>
-          </div>
+          <h2>Notifications</h2>
+          <span className="activity-section-count">{notificationsSummary}</span>
         </div>
         {inboxLoading ? (
           <ActivitySkeleton />

@@ -11,9 +11,15 @@
 
 .activity-head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* The heading needs the page gutter put back by hand: stream-page runs the page
+   edge to edge and it is each row's job to pay for its own inset. */
+.activity-head-top {
+  width: 100%;
+  padding: 0 1.25rem 0.25rem;
 }
 
 .activity-head h1 {
@@ -22,16 +28,20 @@
 
 .activity-time {
   color: var(--text-secondary);
-  margin-bottom: 0.3rem;
+  font-size: var(--fs-sm);
+  margin: 0;
 }
 
 .activity-title {
   color: var(--text);
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .activity-body {
   color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
 }
 
 .activity-subtitle {
@@ -39,21 +49,36 @@
   color: var(--text-secondary);
 }
 
+/* This was a tinted rounded card wrapped around the whole notification list, so
+   every row sat inside a box inside the page. It also meant .activity-list was
+   not a direct child of the stream page and got indented twice, leaving the row
+   dividers short of both edges. */
 .activity-section {
   font-size: var(--fs-base);
-  border-radius: 0.9rem;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  padding: 0;
+  background: none;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.5rem;
 }
 
 .activity-section-head {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.9rem;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  padding: 0.75rem 1.25rem 0;
+}
+
+.activity-section-head h2 {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.activity-section-count {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
 }
 
 .activity-section-head h2 {
@@ -82,7 +107,9 @@
 .activity-card-main {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
   background: transparent;
   border: none;
   padding: 0;
@@ -105,9 +132,9 @@
 }
 
 .activity-card-actions {
-  margin-top: auto;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .activity-card-disabled {
@@ -115,9 +142,11 @@
   opacity: 0.7;
 }
 
+/* Unread used to be a lit border and a shadow, which only worked while the row
+   was a card. A dot beside the type label is the social convention and does not
+   need a box to sit on. */
 .activity-card-unread {
-  border-color: rgba(201, 167, 240, 0.45);
-  box-shadow: 0 8px 22px rgba(4, 12, 20, 0.25);
+  background-color: rgba(201, 167, 240, 0.045);
 }
 @media (hover: hover) and (pointer: fine) {
   .activity-card:hover {
@@ -135,9 +164,9 @@
 
 .activity-card-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 .activity-pill-group {
@@ -147,11 +176,13 @@
 }
 
 .activity-pill {
-  border-radius: 100px;
-  padding: 0.2rem 0.75rem;
-  margin-bottom: 0.3rem;
-  font-size: var(--fs-xs);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  margin: 0;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
   color: var(--text-secondary);
 }
 

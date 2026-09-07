@@ -366,7 +366,7 @@
    a row with a rule under, not a pill bar floating on its own surface. */
 .profile-stats {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   padding: 0.35rem 0 0.9rem;
   margin: 0;
   width: 100%;
@@ -629,44 +629,57 @@
   color: var(--text-secondary);
 }
 
+/* Number then label on one line, sized to content and centred as a pair, rather
+   than two stacked blocks each taking half the width. */
 .stat-item {
   text-align: center;
-  border-radius: 0;
-  padding: 0.35rem 0.9rem;
-  min-height: 52px;
+  border-radius: 12px;
+  padding: 0.4rem 0.75rem;
+  min-height: 44px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
-  align-items: center;
-  flex: 1 1 0;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: 0 0 auto;
 }
 
+/* The press used to be a faint box-shadow and nothing else, on an element whose
+   background matched the page, so there was almost nothing to see. It flashes a
+   real tint now, and .stat-item carries a radius so that tint has rounded
+   corners rather than appearing as a hard rectangle behind the text. */
 .stat-button {
   background: none;
   color: inherit;
   border: none;
   cursor: pointer;
-  transition: color 0.2s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .stat-button:hover {
-    color: var(--primary);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .stat-button:hover .stat-value {
+    color: var(--text);
   }
 }
 
 .stat-button:focus-visible {
   outline: 2px solid var(--primary);
-  outline-offset: 3px;
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 
 .stat-button[aria-expanded='true'] {
-  background: rgba(201, 167, 240, 0.15);
-  border-color: rgba(201, 167, 240, 0.45);
-  box-shadow: var(--shadow-soft);
+  background: rgba(201, 167, 240, 0.14);
+  box-shadow: none;
 }
 
 .stat-button:active {
-  box-shadow: var(--shadow-light);
+  background-color: rgba(255, 255, 255, 0.085);
+  box-shadow: none;
+  transition: background-color 60ms ease-out;
 }
 
 .close-button {
@@ -758,37 +771,25 @@
 }
 
 .stat-value {
-  font-size: var(--fs-xl);
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: 0.25rem;
-  transition: color 0.2s ease;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  transition: color 0.18s ease;
 }
 
 .stat-label {
   color: var(--text-secondary);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.25px;
+  font-size: var(--fs-sm);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
+/* The old tiles needed to grow on small screens; an inline pair does not. */
 @media (max-width: 520px) {
   .profile-stats {
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .stat-item {
-    min-height: 68px;
-    padding: 0.6rem 0.5rem;
-  }
-
-  .stat-value {
-    font-size: var(--fs-lg);
-  }
-
-  .stat-label {
-    font-size: var(--fs-micro);
+    padding: 0.35rem 0 0.9rem;
+    gap: 0.35rem;
   }
 }
 
