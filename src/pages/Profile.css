@@ -1123,12 +1123,20 @@
   color: var(--text-secondary);
 }
 
+/* The tab group is a full width bar, so it cannot share a row with the title
+   the way it used to. Title above with the page gutter, tabs edge to edge
+   underneath, which is the shape every other page's header takes. */
 .profile-dreams-head {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1.25rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 0.5rem;
+}
+
+.profile-dreams-head-top {
+  width: 100%;
+  padding: 0 1.25rem 0.85rem;
 }
 
 .profile-dreams h2 {

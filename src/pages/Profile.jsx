@@ -675,7 +675,7 @@ export default function Profile({ user }) {
 
       <div className="profile-dreams">
         <div className="profile-dreams-head">
-          <div>
+          <div className="profile-dreams-head-top">
             <h2>{dreamSectionTitle}</h2>
             <p className="profile-dreams-subtitle">{dreamSectionSubtitle}</p>
           </div>

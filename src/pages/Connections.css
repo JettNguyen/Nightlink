@@ -1,4 +1,5 @@
 .connections-header {
+  padding: 0 1.25rem 0.85rem;
   margin-bottom: 0.9rem;
   animation: fadeIn 0.2s ease-out;
 }

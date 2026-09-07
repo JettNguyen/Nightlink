@@ -686,12 +686,31 @@ html[data-native-platform='ios'] .profile-ai-badge {
   gap: 0;
 }
 
-.stream-page > *:not(.feed-list):not(.dreams-list):not(.activity-list):not(.connections-list):not(.connection-list):not(.search-results):not(.activity-section):not(.search-box):not(.page-header) {
+/* Written as a base plus overrides rather than one long `:not()` chain. Every
+   `:not(.foo)` carries the specificity of its argument, so nine of them made
+   that selector (0,10,0) and it beat every attempt to opt an element out. This
+   way the default is (0,1,0) and each exemption is (0,2,0), which is the order
+   you would expect. */
+.stream-page > * {
   margin: 1rem 1.25rem 0;
 }
 
+/* Full bleed: these run to both screen edges and each row pays for its own
+   gutter, so the dividers reach the sides. Headers are here too because they
+   carry their own padded row, which keeps the tab bar underneath full width. */
+.stream-page > .feed-list,
+.stream-page > .dreams-list,
+.stream-page > .activity-list,
+.stream-page > .connections-list,
+.stream-page > .connection-list,
+.stream-page > .search-results,
+.stream-page > .activity-section,
+.stream-page > .search-box,
 .stream-page > .page-header,
-.stream-page > .activity-head {
+.stream-page > .activity-head,
+.stream-page > .connections-header,
+.stream-page > .connections-tab-group,
+.stream-page > .profile-dreams {
   margin: 0;
 }
 
