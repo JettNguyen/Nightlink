@@ -12,6 +12,95 @@
   position: relative;
 }
 
+/* Block and report used to be two outlined buttons sitting under the follow
+   button, which gave moderation the same weight as the main action on the page.
+   Behind a menu on the avatar's row it is reachable without being loud, which
+   is where every social app puts it. */
+.profile-menu-root {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  z-index: 4;
+}
+
+.profile-menu-btn {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+/* 44px target without growing the glyph, same overlay the other small round
+   controls use. */
+.profile-menu-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .profile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+  }
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  min-width: 180px;
+  padding: 0.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(10, 14, 22, 0.98);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: left;
+}
+
+.profile-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.profile-menu-item-danger {
+  color: #ff9fb1;
+}
+
+.profile-menu-item:disabled {
+  opacity: 0.5;
+}
+@media (hover: hover) and (pointer: fine) {
+  .profile-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
 .profile-avatar {
   margin-top: 25px;
   margin-bottom: 1.5rem;
@@ -1148,8 +1237,13 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  font-size: var(--fs-base);
-  margin: 0;
+  /* Same rank as the feed and journal titles. It was fs-base, which is the body
+     size, so a dream on a profile had no title, just a first line in bold. */
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  margin: 0.1rem 0 0.15rem;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1189,7 +1283,7 @@
   }
 
   .profile-dream-title {
-    font-size: var(--fs-base);
+    font-size: var(--fs-lg);
   }
 
   .profile-dream-snippet {

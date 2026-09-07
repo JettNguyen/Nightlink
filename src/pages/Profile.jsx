@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencil, faGear, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faGear, faLock, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
@@ -59,11 +59,21 @@ export default function Profile({ user }) {
   const [reportBusy, setReportBusy] = useState(false);
   const [followRequestState, setFollowRequestState] = useState('none');
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
   const viewerId = user?.uid || null;
   const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
+
+  useEffect(() => {
+    if (!profileMenuOpen || isNativeIOS) return undefined;
+    const closeOnOutside = (event) => {
+      if (!profileMenuRef.current?.contains(event.target)) setProfileMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [profileMenuOpen, isNativeIOS]);
 
   useEffect(() => {
     if (!isNativeIOS) return undefined;
@@ -569,6 +579,42 @@ export default function Profile({ user }) {
   return (
     <div className="page-container stream-page">
       <div className="profile-header">
+        {!viewingOwnProfile && (
+          <div className="profile-menu-root" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="profile-menu-btn"
+              aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((open) => !open)}
+            >
+              <FontAwesomeIcon icon={faEllipsisVertical} />
+            </button>
+            {profileMenuOpen && !isNativeIOS && (
+              <div className="profile-menu" role="menu" aria-label="Profile actions">
+                <button
+                  type="button"
+                  className="profile-menu-item"
+                  role="menuitem"
+                  disabled={isFollowActionBusy}
+                  onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
+                >
+                  {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock user' : 'Block user'}
+                </button>
+                <button
+                  type="button"
+                  className="profile-menu-item profile-menu-item-danger"
+                  role="menuitem"
+                  disabled={isFollowActionBusy}
+                  onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}
+                >
+                  Report user
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <div className="profile-avatar">
           <AvatarDisplay
             photoURL={userData.photoURL}
@@ -612,17 +658,7 @@ export default function Profile({ user }) {
                     <span>Private profile. Follow to request access.</span>
                   </div>
                 )}
-                {!isNativeIOS && (
-                  <div className="follow-actions-row follow-actions-row-secondary">
-                    <button type="button" className="moderation-action-btn" onClick={isBlockedTarget ? handleUnblockUser : handleBlockUser} disabled={isFollowActionBusy}>
-                      {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock' : 'Block'}
-                    </button>
-                    <button type="button" className="moderation-action-btn moderation-action-btn-danger" onClick={handleReportUser} disabled={isFollowActionBusy}>
-                      Report
-                    </button>
-                    {isBlockedTarget && <span className="follow-note follow-note-compact">Blocked</span>}
-                  </div>
-                )}
+                {isBlockedTarget && <span className="follow-note follow-note-compact">Blocked</span>}
               </div>
             )}
           </div>
