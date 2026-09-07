@@ -1140,24 +1140,22 @@
   margin-top: 0.2rem;
 }
 
+/* Two columns of stream rows on a wide screen, one below 769px. The old
+   breakpoint only collapsed at 380px, so every phone was reading two columns of
+   dreams side by side. Three columns is gone: a stream row that narrow has no
+   room for a title. */
 .profile-dream-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
   max-width: 960px;
   margin: 0 auto;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
   .profile-dream-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Keep 2 columns all the way down to small phones; only go 1-col on very small devices */
-@media (max-width: 380px) {
-  .profile-dream-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
   }
 }
 

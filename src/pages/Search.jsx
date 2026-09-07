@@ -115,8 +115,8 @@ export default function Search({ user }) {
         onClick={() => handleDreamNavigation(dream)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDreamNavigation(dream); } }}>
         <div className="search-dream-meta">
-          <span className="pill">{dateLabel}</span>
-          <span className={`pill search-vis--${dream.visibility === 'anonymous' ? 'anonymous' : 'public'}`}>{dream.visibility === 'anonymous' ? 'Anonymous dream' : 'Public dream'}</span>
+          <span className={`vis-badge vis-badge--${dream.visibility === 'anonymous' ? 'anonymous' : 'public'}`}>{dream.visibility === 'anonymous' ? 'Anonymous' : 'Public'}</span>
+          <span className="search-dream-date">{dateLabel}</span>
         </div>
         {title
           ? <h3>{highlightSnippet(title, lastTerm, 120)}</h3>
@@ -136,20 +136,26 @@ export default function Search({ user }) {
     <>
     <div className="page-container stream-page">
       <div className="page-header search-header">
-        <div>
+        <div className="search-header-top">
           <h1>Search</h1>
           <p className="page-subtitle">Find people and explore public dreams.</p>
         </div>
-      </div>
-      <div className="search-box card-shell">
-        <div className="filter-toggle">
-          <span className="filter-label">Filter by:</span>
+        <div className="filter-toggle" role="tablist" aria-label="Search type">
           {filters.map((option) => (
-            <button key={option.id} className={filter === option.id ? 'chip chip-active' : 'chip'} onClick={() => { if (filter !== option.id) void triggerSelectionHaptic(); setFilter(option.id); }} type="button" aria-pressed={filter === option.id}>
+            <button
+              key={option.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === option.id}
+              className={filter === option.id ? 'tab-bar-btn active' : 'tab-bar-btn'}
+              onClick={() => { if (filter !== option.id) void triggerSelectionHaptic(); setFilter(option.id); }}
+            >
               {option.label}
             </button>
           ))}
         </div>
+      </div>
+      <div className="search-box">
         <form className="search-input-wrap" onSubmit={(e) => { e.preventDefault(); runSearch(); }}>
           <input type="search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             aria-label={filter === 'people' ? 'Search people' : 'Search public dreams'}
@@ -169,7 +175,7 @@ export default function Search({ user }) {
         <div className="search-results">
           {filter === 'people' ? (
             <section className="result-section">
-              <div className="section-head"><h2>People</h2><span className="pill">{userResults.length}</span></div>
+              <div className="section-head"><h2>People</h2><span className="section-count">{userResults.length}</span></div>
               {searching ? (
                 <SearchPeopleSkeleton />
               ) : userResults.length === 0 ? (

@@ -10,19 +10,38 @@
   animation: slideInUp 0.22s ease-out 0.05s both;
 }
 
+/* Title keeps the page gutter; the filter tabs underneath run to both edges so
+   their rule lines up with the row dividers in the results. */
+.search-header-top {
+  width: 100%;
+  padding: 0 1.25rem 0.85rem;
+}
+
+.search-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* Was wrapped in .card-shell, so the search field sat in a bordered, blurred,
+   shadowed box above a second box of results. */
 .search-box {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  padding: 1rem 1.25rem 0;
   animation: fadeIn 0.24s ease-out 0.08s both;
 }
 
+/* Was a row of chips behind a "Filter by:" label, inside a card, above a second
+   card of results. It is the page's tab bar, so it is styled as one. */
 .filter-toggle {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .filter-label {
@@ -119,27 +138,43 @@
 .result-section {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.6rem;
+  padding-top: 1.25rem;
 }
 
 .section-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  padding: 0 1.25rem;
+}
+
+.section-head h2 {
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+/* A count is a number, not a pill. */
+.section-count {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
 
 .placeholder {
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
+  border: none;
+  border-radius: 0;
+  padding: 2rem 1.25rem;
+  text-align: center;
   color: var(--text-secondary);
-  background: var(--surface-muted);
+  background: none;
 }
 
 .people-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
   gap: 0.8rem;
 }
 
@@ -200,8 +235,9 @@
 }
 
 .dream-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
   gap: 1rem;
 }
 
@@ -218,6 +254,11 @@
   .search-dream-card:hover {
     background-color: rgba(255, 255, 255, 0.022);
   }
+}
+
+.search-dream-date {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
 }
 
 .search-dream-meta {
@@ -248,16 +289,20 @@
 }
 
 .dream-summary {
-  color: var(--primary);
-  margin: 0 0 0.35rem;
-  font-weight: 600;
+  margin: 0.5rem 0 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid rgba(201, 167, 240, 0.32);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .dream-snippet {
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  margin: 0 0 0.6rem;
+  margin: 0;
   color: var(--text);
   line-height: 1.5;
 }
@@ -265,7 +310,18 @@
 .dream-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
+}
+
+.dream-tags .tag {
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: var(--primary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
 }
 
 .search-results {

@@ -686,7 +686,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   gap: 0;
 }
 
-.stream-page > *:not(.feed-list):not(.dreams-list):not(.activity-list):not(.connections-list):not(.connection-list):not(.search-results):not(.page-header) {
+.stream-page > *:not(.feed-list):not(.dreams-list):not(.activity-list):not(.connections-list):not(.connection-list):not(.search-results):not(.activity-section):not(.search-box):not(.page-header) {
   margin: 1rem 1.25rem 0;
 }
 
