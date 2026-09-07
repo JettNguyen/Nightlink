@@ -84,6 +84,15 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
+  /* It is an h1, so it was inheriting Prata italic 600 and coming out as the
+     only dream title in the app set in the display serif. Same face and weight
+     as the feed and journal titles now, just at page-heading size. */
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -106,18 +115,26 @@
 
 .detail-date-block {
   padding: 0;
+  width: 100%;
   min-width: 160px;
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  align-self: flex-start;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  align-self: stretch;
+  flex-wrap: wrap;
+}
+
+.detail-edit-content-btn {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .detail-date-pill {
   border: none;
   border-radius: 999px;
-  padding: 0.2rem 0;
-  background: none;
+  padding: 0.3rem 0.95rem;
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -145,14 +162,16 @@
   justify-content: flex-end;
 }
 
+/* display, not opacity. At opacity 0 it still held its width and the pill's
+   gap, so the date sat off-centre in a badge with an empty slot beside it. On
+   touch there is no hover, so it simply never takes up room. */
 .edit-hint {
-  opacity: 0;
+  display: none;
   font-size: var(--fs-sm);
-  transition: opacity 0.16s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .detail-title-editable:hover .edit-hint, .detail-date-pill--interactive:hover .edit-hint {
-    opacity: 1;
+    display: inline;
   }
 }
 

@@ -151,7 +151,9 @@ h1 { font-size: var(--fs-2xl); }
 h2 { font-size: var(--fs-xl); }
 h3 { font-size: var(--fs-md); }
 
-.dream-title,
+/* .dream-title was in this list, which is why the journal was the one page
+   setting a dream title in the display serif. Dream titles are bold sans
+   everywhere now, so it comes out. */
 .entry-title,
 .card-title {
   font-family: 'Prata', Georgia, serif;
@@ -510,9 +512,24 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   }
 }
 
+/* This used to set `background: transparent`, which cancelled the surface the
+   shared button rule gives it. With a transparent border as well there was
+   nothing left to see: "Regenerate with different prompt" and "Find people"
+   were indistinguishable from the text around them. Stripping containers off
+   content is the point of the revamp; a control is the opposite case and has to
+   look pressable. */
 .ghost-btn {
-  background: transparent;
-  color: var(--text-secondary);
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* For buttons that sit inline with something else rather than in a button row. */
+.ghost-btn--compact {
+  padding: 0.4rem 0.85rem;
+  font-size: var(--fs-sm);
+  border-radius: 999px;
+  min-height: 34px;
 }
 
 .pill {

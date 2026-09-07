@@ -2293,6 +2293,19 @@ export default function DreamDetail({ user }) {
                 <div className="detail-date-pill">{formattedDate}</div>
               )
             ) : null}
+            {isOwner && !editingContent && (
+              <button
+                type="button"
+                className="ghost-btn ghost-btn--compact detail-edit-content-btn"
+                onClick={() => {
+                  setEditingContent(true);
+                  setContentInput(dream.content || '');
+                  setEditableTags(Array.isArray(dream.tags) ? dream.tags : []);
+                }}
+              >
+                Edit content
+              </button>
+            )}
           </div>
         </div>
 
@@ -2394,15 +2407,6 @@ export default function DreamDetail({ user }) {
                     ))}
                   </div>
                 ) : null}
-                {isOwner && (
-                  <button type="button" className="ghost-btn" style={{ marginTop: '0.5rem' }} onClick={() => {
-                    setEditingContent(true);
-                    setContentInput(dream.content || '');
-                    setEditableTags(Array.isArray(dream.tags) ? dream.tags : []);
-                  }}>
-                    Edit content
-                  </button>
-                )}
               </>
             )}
           </div>
