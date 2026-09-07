@@ -917,18 +917,21 @@ html[data-native-platform='ios'] .profile-ai-badge {
   color: var(--primary);
 }
 
+/* Sized to the target rather than a size the target had to be padded out to.
+   A 44px button around a 15px glyph reads as a small control with a lot of
+   space around it, and the space is invisible until you hover it. */
 .reaction-icon {
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   color: inherit;
 }
 
 .reaction-emoji-text {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   line-height: 1;
 }
 
 .reaction-count {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-base);
   color: inherit;
   font-variant-numeric: tabular-nums;
 }
