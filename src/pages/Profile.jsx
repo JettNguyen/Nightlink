@@ -608,8 +608,8 @@ export default function Profile({ user }) {
                 </div>
                 {isLockedProfileView && (
                   <div className="profile-lock-note" role="status" aria-live="polite">
-                    <FontAwesomeIcon icon={faLock} />
-                    <span>This is a private profile. Follow approval is required for full access.</span>
+                    <FontAwesomeIcon icon={faLock} aria-hidden="true" />
+                    <span>Private profile. Follow to request access.</span>
                   </div>
                 )}
                 {!isNativeIOS && (

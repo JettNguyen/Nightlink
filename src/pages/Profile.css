@@ -375,15 +375,35 @@
   font-weight: 600;
 }
 
+/* A status notice, not a paragraph. It used to be a full-width flex row, which
+   meant justify-content had nothing to centre: the span stretched the line to
+   the edges and left the lock pinned to the screen edge with a sentence of
+   unstyled body text beside it, reading as part of the bio. Sizing the box to
+   its content and giving it a surface makes it read as a state the profile is
+   in. */
 .profile-lock-note {
-  margin-top: 0.25rem;
-  display: inline-flex;
+  margin: 0.6rem auto 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  width: 100%;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
   color: var(--text-secondary);
   font-size: var(--fs-sm);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.profile-lock-note svg {
+  flex-shrink: 0;
+  font-size: 0.9em;
+  color: var(--primary);
+  opacity: 0.85;
 }
 
 .moderation-action-btn {
