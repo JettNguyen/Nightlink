@@ -581,6 +581,9 @@ export default function Feed({ user }) {
       counts: dream.reactionCounts || {},
       viewerReactions: Array.isArray(rawR) ? rawR : (rawR ? [rawR] : []),
     };
+    // The button below shows the viewer's own custom emoji, so the summary row
+    // has to leave that one out or the same reaction is rendered twice.
+    const viewerCustomEmoji = reactionSnapshot.viewerReactions?.find((e) => e !== defaultReaction) || null;
 
     const handleCardKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -649,14 +652,14 @@ export default function Feed({ user }) {
               <FontAwesomeIcon icon={faHeart} className="reaction-icon" />
               <span className="reaction-count">{reactionSnapshot.counts?.[defaultReaction] || 0}</span>
             </button>
-            {(() => {
-              const customEmoji = reactionSnapshot.viewerReactions?.find((e) => e !== defaultReaction) || null;
-              return (
-                <button type="button" className={`reaction-button${customEmoji ? ' active' : ' custom-emoji-trigger'}`} onClick={(e) => openCustomReactionPicker(e, dream)} aria-label="Add emoji reaction">
-                  {customEmoji ? <span className="reaction-emoji-text" aria-hidden="true">{customEmoji}</span> : <FontAwesomeIcon icon={faPlus} className="reaction-icon" />}
-                </button>
-              );
-            })()}
+            <button type="button" className={`reaction-button${viewerCustomEmoji ? ' active' : ' custom-emoji-trigger'}`} onClick={(e) => openCustomReactionPicker(e, dream)} aria-label="Add emoji reaction">
+              {viewerCustomEmoji ? (
+                <>
+                  <span className="reaction-emoji-text" aria-hidden="true">{viewerCustomEmoji}</span>
+                  <span className="reaction-count">{reactionSnapshot.counts?.[viewerCustomEmoji] || 0}</span>
+                </>
+              ) : <FontAwesomeIcon icon={faPlus} className="reaction-icon" />}
+            </button>
             <button type="button" className="reaction-button" onClick={(e) => { e.stopPropagation(); openDreamDetail(); }} aria-label="Comments">
               <FontAwesomeIcon icon={faComment} className="reaction-icon" />
               <span className="reaction-count">{dream.commentCount || 0}</span>
@@ -691,10 +694,10 @@ export default function Feed({ user }) {
               )}
             </div>
           )}
-          {Object.entries(reactionSnapshot.counts || {}).some(([e, c]) => c > 0 && e !== defaultReaction) ? (
+          {Object.entries(reactionSnapshot.counts || {}).some(([e, c]) => c > 0 && e !== defaultReaction && e !== viewerCustomEmoji) ? (
             <div className="reaction-summary">
               {Object.entries(reactionSnapshot.counts || {})
-                .filter(([emoji, count]) => count > 0 && emoji !== defaultReaction)
+                .filter(([emoji, count]) => count > 0 && emoji !== defaultReaction && emoji !== viewerCustomEmoji)
                 .sort(([, a], [, b]) => b - a)
                 .map(([emoji, count]) => (
                   <span key={emoji} className="reaction-summary-item">

@@ -41,25 +41,28 @@
    the top of the stream rather than a control floating above it. */
 .feed-tabs {
   display: flex;
-  gap: 0;
+  gap: 1.5rem;
   background: none;
   border: none;
   border-bottom: 1px solid var(--border);
   border-radius: 0;
-  padding: 0;
+  padding: 0 1.25rem;
   width: 100%;
   animation: fadeIn 0.22s ease-out 0.05s both;
 }
 
 .feed-tab {
-  flex: 1;
+  /* Content width, not flex: 1. Half width tabs pushed the labels away from the
+     heading they belong under and left the underline stranded in the middle of
+     a large empty button. */
+  flex: 0 0 auto;
   justify-content: center;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: 600;
-  padding: 0.7rem 0.5rem;
+  padding: 0.6rem 0.1rem;
   border-radius: 0;
   cursor: pointer;
   transition: background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -76,17 +79,18 @@
   color: var(--text);
 }
 
-/* ::before, because ::after is the 44px touch overlay from index.css. */
+/* ::before, because ::after is the 44px touch overlay from index.css. The bar
+   spans the tab, and the tab is now the width of its label, so it reads as
+   underlining the word rather than sitting under it at an arbitrary length. */
 .feed-tab.active::before {
   content: '';
   position: absolute;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: -1px;
-  width: 52px;
-  height: 2px;
+  height: 2.5px;
   border-radius: 2px 2px 0 0;
   background: var(--primary);
-  transform: translateX(-50%);
 }
 @media (hover: hover) and (pointer: fine) {
   .feed-tab:not(.active):hover {
@@ -296,11 +300,16 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
-  margin: 0.15rem 0 0.2rem;
+  /* A serif at 1.1rem against a sans at 0.95rem is only a 1.16 ratio, which the
+     eye reads as the same rank in a different face rather than as a heading.
+     At lg it is 1.37, and the extra space underneath stops the title and the
+     first line of the dream running together as one block. */
+  margin: 0.3rem 0 0.4rem;
   font-family: 'Prata', Georgia, serif;
   font-weight: 400;
-  font-size: var(--fs-md);
-  line-height: 1.25;
+  font-size: var(--fs-lg);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 
