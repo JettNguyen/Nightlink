@@ -567,7 +567,7 @@ export default function Profile({ user }) {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container stream-page">
       <div className="profile-header">
         <div className="profile-avatar">
           <AvatarDisplay

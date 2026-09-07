@@ -302,7 +302,7 @@ export default function Connections({ user }) {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container stream-page">
       <div className="connections-header">
         <h1>Connections</h1>
         <p className="page-subtitle">{tabDescription}</p>

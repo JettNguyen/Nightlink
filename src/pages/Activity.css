@@ -61,20 +61,21 @@
 }
 
 .activity-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .activity-card {
   display: flex;
-  border: 1px solid var(--border);
-  border-radius: 0.9rem;
-  padding: 0.9rem;
-  background: var(--surface);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0.9rem 1.25rem;
   flex-direction: column;
-  gap: 0.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  gap: 0.45rem;
+  transition: background-color 0.18s ease;
   position: relative;
 }
 
@@ -120,8 +121,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .activity-card:hover {
-    box-shadow: var(--shadow-soft);
-    border-color: rgba(201, 167, 240, 0.5);
+    background-color: rgba(255, 255, 255, 0.022);
   }
 }
 

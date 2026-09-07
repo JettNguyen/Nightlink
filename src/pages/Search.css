@@ -147,11 +147,13 @@
   display: flex;
   gap: 0.9rem;
   align-items: center;
-  padding: 0.9rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, outline 0.2s ease;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0.9rem 1.25rem;
+  transition: background-color 0.18s ease;
   cursor: pointer;
 }
 .person-card:focus-visible {
@@ -163,9 +165,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .person-card:hover {
-    box-shadow: var(--shadow-light);
-    border-color: rgba(201, 167, 240, 0.5);
-    background: rgba(201, 167, 240, 0.06);
+    background-color: rgba(255, 255, 255, 0.022);
   }
 }
 
@@ -206,18 +206,17 @@
 }
 
 .search-dream-card {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.035);
-  box-shadow: var(--shadow-light);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.16s ease;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0.9rem 1.25rem;
+  transition: background-color 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .search-dream-card:hover {
-    box-shadow: var(--shadow-soft);
-    border-color: rgba(201, 167, 240, 0.45);
-    background: rgba(201, 167, 240, 0.05);
+    background-color: rgba(255, 255, 255, 0.022);
   }
 }
 

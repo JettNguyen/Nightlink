@@ -177,7 +177,7 @@ export default function Activity({ user, activityPreview }) {
   };
 
   return (
-    <div className="page-container activity-page">
+    <div className="page-container stream-page activity-page">
       <div className="activity-head">
         <div>
           <h1>Activity</h1>

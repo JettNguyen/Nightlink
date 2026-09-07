@@ -669,7 +669,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   gap: 0;
 }
 
-.stream-page > *:not(.feed-list):not(.dreams-list):not(.page-header) {
+.stream-page > *:not(.feed-list):not(.dreams-list):not(.activity-list):not(.connections-list):not(.connection-list):not(.search-results):not(.page-header) {
   margin: 1rem 1.25rem 0;
 }
 
@@ -1291,15 +1291,6 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 /* Cards are large, so they take a much smaller scale, since anything more reads as
    the whole page lurching rather than the card acknowledging the tap. */
 .card-shell:active,
-.dream-card:active,
-.profile-dream-card:active,
-.tagged-dream-card:active,
-.search-dream-card:active,
-.person-card:active,
-.connections-card:active,
-.connections-card-main:active,
-.activity-card-main:active,
-.audience-result:active,
 .stat-button:active {
   transform: scale(0.99);
   transition: transform 80ms ease;
@@ -1331,7 +1322,17 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
 /* A stream row is the full width of the screen, so scaling it reads as the page
    flinching. Social feeds flash the row instead, which is also the only press
    feedback that survives having no border or shadow to change. */
-.feed-post:active {
+.feed-post:active,
+.dream-card:active,
+.profile-dream-card:active,
+.tagged-dream-card:active,
+.search-dream-card:active,
+.person-card:active,
+.connection-card:active,
+.connections-card:active,
+.connections-card-main:active,
+.activity-card:active,
+.activity-card-main:active {
   background-color: rgba(255, 255, 255, 0.045);
   transition: background-color 60ms ease-out;
 }
