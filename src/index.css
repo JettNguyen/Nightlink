@@ -862,6 +862,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
  * own path, so the app does not carry a second icon set for one state.
  * --------------------------------------------------------------------------- */
 .reaction-button--heart:not(.active) .reaction-icon path,
+.reaction-button--comment .reaction-icon path,
 .comment-heart-btn:not(.active) svg path {
   fill: none;
   stroke: currentColor;
@@ -947,6 +948,22 @@ html[data-native-platform='ios'] .profile-ai-badge {
 
   .reaction-button.active:hover:not(:disabled) {
     color: var(--primary);
+  }
+}
+
+/* An emoji is already full colour, so `color` cannot say whether you are in on
+   a reaction: the count beside it was the only thing changing. A tinted pill
+   with a ring says it the way every reaction chip does. After the hover block
+   on purpose, so hovering a chip you have reacted to does not wash the tint
+   back out. */
+.reaction-button--emoji.active {
+  background: rgba(201, 167, 240, 0.16);
+  box-shadow: inset 0 0 0 1.5px rgba(201, 167, 240, 0.6);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reaction-button--emoji.active:hover:not(:disabled) {
+    background: rgba(201, 167, 240, 0.24);
   }
 }
 
