@@ -389,6 +389,32 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
   text-decoration-color: rgba(217, 179, 255, 0.5);
+  transition: color 0.18s ease, text-decoration-color 0.18s ease, opacity 0.18s ease;
+}
+
+/* A link is the one control in the app you can tap without anything moving, so
+   it needs a press of its own: the underline fills in and the whole thing dims
+   for as long as the finger is down. */
+@media (hover: hover) and (pointer: fine) {
+  .terms-gate-check a:hover,
+  .auth-policy-check a:hover,
+  .auth-legal-links a:hover,
+  .home-footer a:hover,
+  .settings-footnote a:hover,
+  .legal-card a:hover {
+    text-decoration-color: var(--link);
+  }
+}
+
+.terms-gate-check a:active,
+.auth-policy-check a:active,
+.auth-legal-links a:active,
+.home-footer a:active,
+.settings-footnote a:active,
+.legal-card a:active {
+  opacity: 0.65;
+  text-decoration-color: var(--link);
+  transition: opacity 60ms ease-out, text-decoration-color 60ms ease-out;
 }
 
 .container {
@@ -542,7 +568,7 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   font-size: var(--fs-base);
   border: 1px solid var(--border);
   line-height: 1;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: border-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pill-active {
@@ -767,6 +793,21 @@ html[data-native-platform='ios'] .profile-ai-badge {
   white-space: nowrap;
   cursor: pointer;
   width: auto;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tabs had no press state at all, so tapping one did nothing until the list
+   underneath changed. There is no border or background here to move, so the
+   press is the label itself: it lights to full white and takes the same small
+   scale the other label-sized controls take. */
+.tab-bar-btn:active,
+.feed-tab:active,
+.view-toggle-btn:active,
+.dream-tab:active,
+.connections-tab:active {
+  color: var(--text);
+  transform: scale(0.94);
+  transition: transform 70ms ease, color 70ms ease;
 }
 
 .tab-bar-btn.active,
@@ -813,6 +854,34 @@ html[data-native-platform='ios'] .profile-ai-badge {
     color: var(--text);
     background: none;
   }
+}
+
+/* ── Reactions ────────────────────────────────────────────────────────────────
+ * The heart is an outline until you press it and a fill afterwards, which is
+ * what a heart means everywhere else. It is drawn by stroking the solid glyph's
+ * own path, so the app does not carry a second icon set for one state.
+ * --------------------------------------------------------------------------- */
+.reaction-button--heart:not(.active) .reaction-icon path,
+.comment-heart-btn:not(.active) svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 38;
+}
+
+/* Icon-sized controls, so the target is an overlay rather than 44px of visible
+   padding. Height only: a wider one would reach into the chip beside it. */
+.reaction-button {
+  position: relative;
+}
+
+.reaction-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 /* ── Overflow menu ────────────────────────────────────────────────────────────

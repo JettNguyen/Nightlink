@@ -188,7 +188,7 @@
   background: none;
   box-shadow: none;
   padding: 0.9rem 1.25rem;
-  transition: background-color 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
   cursor: pointer;
 }
 .person-card:focus-visible {
@@ -248,7 +248,7 @@
   background: none;
   box-shadow: none;
   padding: 0.9rem 1.25rem;
-  transition: background-color 0.18s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .search-dream-card:hover {

@@ -43,7 +43,7 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   box-shadow: var(--shadow-light);
-  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .detail-back-btn:hover {
@@ -110,7 +110,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease;
 }
 
 .detail-date-block {
@@ -150,7 +150,7 @@
   cursor: pointer;
   background: rgba(201, 167, 240, 0.05);
   color: var(--text);
-  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .detail-date-pill--interactive:hover {
@@ -275,7 +275,12 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-share-toggle:hover {
+    opacity: 0.82;
+  }
 }
 
 /* Was a `›` glyph rotated 90deg to point down. Flex centres a glyph's inline
@@ -347,7 +352,7 @@
   font-size: var(--fs-base);
   cursor: pointer;
   padding: 0.15rem 0;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease;
 }
 
 .comment-card {
@@ -454,12 +459,21 @@
 .comment-heart-btn svg {
   color: inherit;
 }
+@media (hover: hover) and (pointer: fine) {
+  .comment-heart-btn:hover:not(:disabled) {
+    border-color: rgba(201, 167, 240, 0.45);
+    color: var(--text);
+  }
+
+  .comment-heart-btn.active:hover:not(:disabled) {
+    color: var(--primary);
+  }
+}
 
 .comment-heart-btn.active {
   border-color: rgba(201, 167, 240, 0.65);
   background: rgba(201, 167, 240, 0.12);
   color: var(--primary);
-  box-shadow: 0 0 12px rgba(56, 132, 255, 0.35);
 }
 
 .comment-heart-btn.active svg {
@@ -491,7 +505,7 @@
   font-size: var(--fs-sm);
   cursor: pointer;
   text-decoration: underline;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .comment-reply-btn:hover:not(:disabled) {
@@ -520,6 +534,30 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Was a bare <button>, so it picked up no hover, no press and none of the
+   button classes' transitions. */
+.reply-cancel-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+  transition: color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .reply-cancel-btn:hover {
+    color: var(--text);
+  }
+}
+
+.reply-cancel-btn:active {
+  color: var(--text);
+  transform: scale(0.94);
+  transition: transform 70ms ease, color 70ms ease;
 }
 
 .reply-context {
@@ -647,7 +685,7 @@
   flex-direction: column;
   gap: 0.12rem;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1), border-color 0.15s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .tag-suggestion-item:hover {
@@ -727,7 +765,12 @@
   cursor: pointer;
   text-align: left;
   color: inherit;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-author-btn:hover {
+    opacity: 0.8;
+  }
 }
 
 .detail-author-avatar {
@@ -781,8 +824,51 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Same bare row as the feed: no pills, no borders, the count beside the glyph.
+   The negative margin pays back the first chip's padding so the heart lines up
+   with the text above it rather than sitting a few pixels in. */
 .detail-reactions .reaction-buttons {
   flex-wrap: wrap;
+  gap: 0.15rem;
+  margin-left: -0.5rem;
+}
+
+.detail-reactions .reaction-button {
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  min-height: 40px;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  gap: 0.4rem;
+}
+
+.detail-reactions .reaction-button.active {
+  color: var(--primary);
+  background: none;
+  border: none;
+}
+
+.detail-reactions .reaction-button.custom-emoji-trigger {
+  border: none;
+  opacity: 1;
+}
+
+.detail-reactions .reaction-emoji-text {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .detail-reactions .reaction-button:hover:not(:disabled) {
+    color: var(--text);
+    background: none;
+  }
+
+  .detail-reactions .reaction-button.active:hover:not(:disabled) {
+    color: var(--primary);
+  }
 }
 
 .detail-reactions .reaction-icon {
@@ -928,7 +1014,12 @@
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-tag-remove:hover {
+    color: var(--text);
+  }
 }
 
 .detail-edit-actions {

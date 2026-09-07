@@ -73,14 +73,25 @@
 .home-cta-primary {
   background: linear-gradient(120deg, #9d6fd4, #c9a7f0);
   color: #f4fbff;
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: filter 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .home-cta-secondary {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text);
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background-color 0.18s ease, border-color 0.18s ease, filter 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-cta-primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .home-cta-secondary:hover {
+    background: rgba(255, 255, 255, 0.13);
+    border-color: rgba(201, 167, 240, 0.45);
+  }
 }
 
 .home-section {

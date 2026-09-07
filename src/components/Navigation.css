@@ -38,7 +38,7 @@
   font-weight: bold;
   color: var(--text);
   letter-spacing: -0.02em;
-  transition: color 0.2s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 0.2s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
   transform: translateZ(0) scale(1);
   transform-origin: left center;
   will-change: transform;

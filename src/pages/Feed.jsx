@@ -649,7 +649,7 @@ export default function Feed({ user }) {
           <div className="reaction-buttons">
             <button
               type="button"
-              className={`reaction-button${reactionSnapshot.viewerReactions?.includes(defaultReaction) ? ' active' : ''}`}
+              className={`reaction-button reaction-button--heart${reactionSnapshot.viewerReactions?.includes(defaultReaction) ? ' active' : ''}`}
               onClick={(e) => handleReactionClick(e, dream, defaultReaction)}
               aria-label="React with a heart"
             >

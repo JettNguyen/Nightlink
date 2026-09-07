@@ -601,10 +601,10 @@ export default function Profile({ user }) {
           </div>
 
           {!viewingOwnProfile && (
-            <div className="profile-menu-root" ref={profileMenuRef}>
+            <div className="overflow-menu-root profile-menu-root" ref={profileMenuRef}>
               <button
                 type="button"
-                className="profile-menu-btn"
+                className="overflow-menu-btn"
                 aria-label="More actions"
                 aria-haspopup="menu"
                 aria-expanded={profileMenuOpen}
@@ -613,10 +613,10 @@ export default function Profile({ user }) {
                 <FontAwesomeIcon icon={faEllipsisVertical} />
               </button>
               {profileMenuOpen && !isNativeIOS && (
-                <div className="profile-menu" role="menu" aria-label="Profile actions">
+                <div className="overflow-menu" role="menu" aria-label="Profile actions">
                   <button
                     type="button"
-                    className="profile-menu-item"
+                    className="overflow-menu-item"
                     role="menuitem"
                     disabled={isFollowActionBusy}
                     onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
@@ -625,7 +625,7 @@ export default function Profile({ user }) {
                   </button>
                   <button
                     type="button"
-                    className="profile-menu-item profile-menu-item-danger"
+                    className="overflow-menu-item overflow-menu-item-danger"
                     role="menuitem"
                     disabled={isFollowActionBusy}
                     onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}

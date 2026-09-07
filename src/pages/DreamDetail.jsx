@@ -339,9 +339,20 @@ export default function DreamDetail({ user }) {
     Object.values(reactionSnapshot.counts || {}).reduce((sum, value) => sum + (value || 0), 0)
   ), [reactionSnapshot]);
 
-  const reactionEntries = useMemo(() => (
+  const viewerDreamReactions = useMemo(() => (
+    reactionSnapshot.viewerReactions || []
+  ), [reactionSnapshot]);
+
+  const viewerHeartedDream = viewerDreamReactions.includes(DEFAULT_EMOJI);
+
+  // One chip per emoji, counts included, the viewer's own marked as reacted.
+  // The row used to show the viewer's emoji on the picker trigger with no count
+  // and then list every emoji again underneath, so your own reaction appeared
+  // twice and only the second copy was counted.
+  const emojiReactionEntries = useMemo(() => (
     Object.entries(reactionSnapshot.counts || {})
-      .filter(([emoji, count]) => typeof emoji === 'string' && emoji.trim().length && count > 0)
+      .filter(([emoji, count]) => typeof emoji === 'string' && emoji.trim().length
+        && emoji !== DEFAULT_EMOJI && count > 0)
       .sort((a, b) => b[1] - a[1])
   ), [reactionSnapshot]);
 
@@ -2487,31 +2498,44 @@ export default function DreamDetail({ user }) {
           <div className="reaction-buttons">
             <button
               type="button"
-              className={`reaction-button${reactionSnapshot.viewerReactions?.includes(DEFAULT_EMOJI) ? ' active' : ''}`}
+              className={`reaction-button reaction-button--heart${viewerHeartedDream ? ' active' : ''}`}
               onClick={(event) => {
                 if (consumeSuppressedClick(event)) return;
                 handleDreamReactionSelection(DEFAULT_EMOJI);
               }}
-              aria-label="React with a heart"
+              aria-pressed={viewerHeartedDream}
+              aria-label={viewerHeartedDream ? 'Remove your heart' : 'React with a heart'}
             >
               <FontAwesomeIcon icon={faHeart} className="reaction-icon" />
               <span className="reaction-count">{reactionSnapshot.counts?.[DEFAULT_EMOJI] || 0}</span>
             </button>
-            {(() => {
-              const customEmoji = reactionSnapshot.viewerReactions?.find((e) => e !== DEFAULT_EMOJI) || null;
+            {emojiReactionEntries.map(([emoji, count]) => {
+              const reacted = viewerDreamReactions.includes(emoji);
               return (
                 <button
+                  key={emoji}
                   type="button"
-                  className={`reaction-button${customEmoji ? ' active' : ' custom-emoji-trigger'}`}
-                  onClick={openCustomEmojiPicker}
-                  aria-label="Add emoji reaction"
+                  className={`reaction-button reaction-button--emoji${reacted ? ' active' : ''}`}
+                  onClick={(event) => {
+                    if (consumeSuppressedClick(event)) return;
+                    handleDreamReactionSelection(emoji);
+                  }}
+                  aria-pressed={reacted}
+                  aria-label={reacted ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
                 >
-                  {customEmoji
-                    ? <span className="reaction-emoji-text" aria-hidden="true">{customEmoji}</span>
-                    : <FontAwesomeIcon icon={faPlus} className="reaction-icon" />}
+                  <span className="reaction-emoji-text" aria-hidden="true">{emoji}</span>
+                  <span className="reaction-count">{count}</span>
                 </button>
               );
-            })()}
+            })}
+            <button
+              type="button"
+              className="reaction-button custom-emoji-trigger"
+              onClick={openCustomEmojiPicker}
+              aria-label="Add emoji reaction"
+            >
+              <FontAwesomeIcon icon={faPlus} className="reaction-icon" />
+            </button>
           </div>
           {customEmojiPickerOpen && (
             <div className="custom-emoji-popover">
@@ -2556,19 +2580,6 @@ export default function DreamDetail({ user }) {
               )}
             </div>
           )}
-          {Object.entries(reactionSnapshot.counts || {}).some(([e, c]) => c > 0 && e !== DEFAULT_EMOJI) ? (
-            <div className="reaction-summary">
-              {Object.entries(reactionSnapshot.counts || {})
-                .filter(([emoji, count]) => count > 0 && emoji !== DEFAULT_EMOJI)
-                .sort(([, a], [, b]) => b - a)
-                .map(([emoji, count]) => (
-                  <span key={emoji} className="reaction-summary-item">
-                    <span aria-hidden="true">{emoji}</span>
-                    <span className="reaction-count">{count}</span>
-                  </span>
-                ))}
-            </div>
-          ) : null}
         </div>}
 
 
@@ -2736,7 +2747,7 @@ export default function DreamDetail({ user }) {
                   <span>
                     Replying to {replyTarget.authorUsername ? `@${replyTarget.authorUsername}` : replyTarget.authorDisplayName}
                   </span>
-                  <button type="button" onClick={clearReplyTarget}>
+                  <button type="button" className="reply-cancel-btn" onClick={clearReplyTarget}>
                     Cancel
                   </button>
                 </div>

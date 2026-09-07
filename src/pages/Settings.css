@@ -411,7 +411,7 @@ html[data-native-platform='ios'] .settings-save-bar {
   font-weight: 600;
   color: var(--primary);
   text-decoration: none;
-  transition: opacity 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .memory-patterns-link:hover {
