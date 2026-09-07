@@ -19,7 +19,7 @@
 .profile-identity {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1rem;
 }
 
 /* Block and report used to be two outlined buttons sitting under the follow
@@ -43,8 +43,8 @@
 
 /* Scoped, because .avatar-circle is also the edit profile photo preview. */
 .profile-avatar .avatar-circle {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   margin: 0;
 }
 
@@ -92,15 +92,15 @@
   font-family: inherit;
   font-style: normal;
   font-weight: 700;
-  font-size: var(--fs-xl);
-  line-height: 1.2;
-  margin: 0 0 0.15rem;
+  font-size: var(--fs-2xl);
+  line-height: 1.15;
+  margin: 0 0 0.2rem;
   overflow-wrap: anywhere;
 }
 
 .profile-username {
   color: var(--text-secondary);
-  font-size: var(--fs-base);
+  font-size: var(--fs-md);
   margin: 0;
 }
 

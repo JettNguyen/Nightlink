@@ -590,7 +590,7 @@ export default function Profile({ user }) {
               avatarBackground={displayAvatarBackground}
               avatarColor={displayAvatarColor}
               className="avatar-circle"
-              style={{ fontSize: '1.8rem' }}
+              style={{ fontSize: '2.2rem' }}
               aria-label="Profile avatar"
             />
           </div>
