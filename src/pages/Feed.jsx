@@ -558,10 +558,13 @@ export default function Feed({ user }) {
     const avatarPhotoURL = isAnonymous ? null : (profile?.photoURL || null);
     const dateLabel = dream.createdAt ? formatDreamDate(dream.createdAt) : 'Just now';
     const snippet = dream.content ? (dream.content.length > 240 ? `${dream.content.slice(0, 240)}…` : dream.content) : 'No entry text yet.';
-    const visibilityLabel = dream.visibility === 'anonymous' ? 'Anonymous dream'
-      : dream.visibility === 'followers' ? 'Followers only'
-      : dream.visibility === 'mutuals' ? 'Mutuals only'
-      : 'Public dream';
+    // Short enough to sit in a badge next to the name. The badge carries the
+    // audience in colour, so the word does not have to say "dream" or "only".
+    const visibility = dream.visibility || 'public';
+    const visibilityLabel = visibility === 'anonymous' ? 'Anonymous'
+      : visibility === 'followers' ? 'Followers'
+      : visibility === 'mutuals' ? 'Mutuals'
+      : 'Public';
     const showProfileLink = !isAnonymous && Boolean(dream.userId);
     const isOwnerDream = Boolean(viewerId && dream.userId === viewerId);
     const isMenuOpen = feedMenuOpenDreamId === dream.id;
@@ -606,7 +609,8 @@ export default function Feed({ user }) {
                 ? <button type="button" className="feed-author-handle feed-author-link" onClick={handleAuthorNavigation}>{authorHandle}</button>
                 : <span className="feed-author-handle">{authorHandle}</span>)}
               {!isAnonymous && <ProBadge subscription={profile?.subscription} />}
-              <span className="feed-post-meta">{visibilityLabel}<span aria-hidden="true"> · </span>{dateLabel}</span>
+              <span className={`vis-badge vis-badge--${visibility}`}>{visibilityLabel}</span>
+              <span className="feed-post-meta">{dateLabel}</span>
             </div>
             <div className="feed-card-actions" data-feed-menu-root="true">
             <button

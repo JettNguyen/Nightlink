@@ -32,6 +32,19 @@
   --glow-primary: 0 0 50px rgba(157, 111, 212, 0.22);
   --error: #ff5050;
   --success: #2cd44e;
+
+  /* Dream visibility. One colour per audience, used by the feed badge and the
+     profile pill, which were carrying the same five hex values separately. */
+  --vis-public: #34d399;
+  --vis-public-soft: rgba(52, 211, 153, 0.13);
+  --vis-followers: #c9a7f0;
+  --vis-followers-soft: rgba(201, 167, 240, 0.14);
+  --vis-mutuals: #f2a8b8;
+  --vis-mutuals-soft: rgba(242, 168, 184, 0.13);
+  --vis-anonymous: #f59e0b;
+  --vis-anonymous-soft: rgba(245, 158, 11, 0.13);
+  --vis-private: #f87171;
+  --vis-private-soft: rgba(248, 113, 113, 0.13);
   --app-background-gradient: linear-gradient(180deg, #0d0d11 0%, #110f1c 55%, #0d0d11 100%);
 
   /* Type scale. One step per role. If two things are the same size they are
@@ -645,6 +658,27 @@ html[data-native-platform='ios'] .profile-ai-badge {
   line-height: 1;
   flex-shrink: 0;
 }
+
+/* Who a dream was shared with. Small enough not to compete with the name it
+   sits beside, and the only thing in a post allowed a fill, because the colour
+   is the information here rather than decoration. */
+.vis-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vis-badge--public    { color: var(--vis-public);    background: var(--vis-public-soft); }
+.vis-badge--followers { color: var(--vis-followers); background: var(--vis-followers-soft); }
+.vis-badge--mutuals   { color: var(--vis-mutuals);   background: var(--vis-mutuals-soft); }
+.vis-badge--anonymous { color: var(--vis-anonymous); background: var(--vis-anonymous-soft); }
+.vis-badge--private   { color: var(--vis-private);   background: var(--vis-private-soft); }
 
 .tag,
 .chip {

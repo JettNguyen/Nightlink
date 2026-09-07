@@ -1129,11 +1129,11 @@
   flex-shrink: 0;
 }
 
-.profile-vis--public    { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
-.profile-vis--followers { color: #c9a7f0; border-color: rgba(201, 167, 240, 0.3); }
-.profile-vis--mutuals   { color: #f2a8b8; border-color: rgba(242, 168, 184, 0.3); }
-.profile-vis--anonymous { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
-.profile-vis--private   { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+.profile-vis--public    { color: var(--vis-public);    border-color: var(--vis-public-soft); }
+.profile-vis--followers { color: var(--vis-followers); border-color: var(--vis-followers-soft); }
+.profile-vis--mutuals   { color: var(--vis-mutuals);   border-color: var(--vis-mutuals-soft); }
+.profile-vis--anonymous { color: var(--vis-anonymous); border-color: var(--vis-anonymous-soft); }
+.profile-vis--private   { color: var(--vis-private);   border-color: var(--vis-private-soft); }
 
 .profile-ai-badge {
   font-size: 1rem;

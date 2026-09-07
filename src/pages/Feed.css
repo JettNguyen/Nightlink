@@ -305,11 +305,15 @@
      At lg it is 1.37, and the extra space underneath stops the title and the
      first line of the dream running together as one block. */
   margin: 0.3rem 0 0.4rem;
-  font-family: 'Prata', Georgia, serif;
-  font-weight: 400;
+  /* Not the display serif. Prata ships a single 400 weight, so asking it for
+     bold gets a browser-smeared faux bold rather than a real face. The body
+     sans has a true 700, which is what actually makes a title carry, and it is
+     what every text feed uses for a post title anyway. Size still does half the
+     work: lg over a base body is a 1.37 ratio. */
+  font-weight: 700;
   font-size: var(--fs-lg);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 
