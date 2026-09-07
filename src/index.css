@@ -925,8 +925,11 @@ html[data-native-platform='ios'] .profile-ai-badge {
   color: inherit;
 }
 
+/* Only one of these. There was a second, later copy at 1.1rem further down the
+   file, so every size set here was being thrown away and the emoji stayed
+   smaller than the icons beside it no matter what this said. */
 .reaction-emoji-text {
-  font-size: 1.75rem;
+  font-size: 1.65rem;
   line-height: 1;
 }
 
@@ -1246,11 +1249,6 @@ html[data-native-platform='ios'] .profile-ai-badge {
     background: rgba(255, 100, 100, 0.12);
     border-color: rgba(255, 100, 100, 0.45);
   }
-}
-
-.reaction-emoji-text {
-  font-size: 1.1rem;
-  line-height: 1;
 }
 
 .search-highlight {
