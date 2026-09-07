@@ -107,10 +107,14 @@ export function ProfilePageSkeleton() {
   return (
     <div className="sk-profile">
       <div className="sk-profile-header">
-        <Circle size={120} />
-        <S w="160px" h="1.4rem" r={8} className="sk-mt" />
-        <S w="100px" h="0.9rem" className="sk-mt-sm" />
-        <S w="240px" h="0.85rem" className="sk-mt-sm" />
+        <div className="sk-profile-identity">
+          <Circle size={72} />
+          <div className="sk-profile-name">
+            <S w="150px" h="1.35rem" r={8} />
+            <S w="100px" h="0.9rem" className="sk-mt-sm" />
+          </div>
+        </div>
+        <S w="240px" h="0.85rem" className="sk-mt" />
         <S w="180px" h="0.85rem" className="sk-mt-sm" />
       </div>
       <div className="sk-profile-stats">

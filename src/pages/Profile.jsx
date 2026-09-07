@@ -582,59 +582,63 @@ export default function Profile({ user }) {
   return (
     <div className="page-container stream-page">
       <div className="profile-header">
-        {!viewingOwnProfile && (
-          <div className="profile-menu-root" ref={profileMenuRef}>
-            <button
-              type="button"
-              className="profile-menu-btn"
-              aria-label="More actions"
-              aria-haspopup="menu"
-              aria-expanded={profileMenuOpen}
-              onClick={() => setProfileMenuOpen((open) => !open)}
-            >
-              <FontAwesomeIcon icon={faEllipsisVertical} />
-            </button>
-            {profileMenuOpen && !isNativeIOS && (
-              <div className="profile-menu" role="menu" aria-label="Profile actions">
-                <button
-                  type="button"
-                  className="profile-menu-item"
-                  role="menuitem"
-                  disabled={isFollowActionBusy}
-                  onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
-                >
-                  {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock user' : 'Block user'}
-                </button>
-                <button
-                  type="button"
-                  className="profile-menu-item profile-menu-item-danger"
-                  role="menuitem"
-                  disabled={isFollowActionBusy}
-                  onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}
-                >
-                  Report user
-                </button>
-              </div>
-            )}
+        <div className="profile-identity">
+          <div className="profile-avatar">
+            <AvatarDisplay
+              photoURL={userData.photoURL}
+              avatarIcon={displayAvatarIconId}
+              avatarBackground={displayAvatarBackground}
+              avatarColor={displayAvatarColor}
+              className="avatar-circle"
+              style={{ fontSize: '1.8rem' }}
+              aria-label="Profile avatar"
+            />
           </div>
-        )}
-        <div className="profile-avatar">
-          <AvatarDisplay
-            photoURL={userData.photoURL}
-            avatarIcon={displayAvatarIconId}
-            avatarBackground={displayAvatarBackground}
-            avatarColor={displayAvatarColor}
-            className="avatar-circle"
-            style={{ fontSize: '2.4rem' }}
-            aria-label="Profile avatar"
-          />
-        </div>
 
-        <div className="profile-info">
+          <div className="profile-info">
             <h1>{userData.displayName || 'Dreamer'} <ProBadge subscription={userData.subscription} /></h1>
             {userData.username && <p className="profile-username">@{userData.username}</p>}
-            {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
           </div>
+
+          {!viewingOwnProfile && (
+            <div className="profile-menu-root" ref={profileMenuRef}>
+              <button
+                type="button"
+                className="profile-menu-btn"
+                aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
+                onClick={() => setProfileMenuOpen((open) => !open)}
+              >
+                <FontAwesomeIcon icon={faEllipsisVertical} />
+              </button>
+              {profileMenuOpen && !isNativeIOS && (
+                <div className="profile-menu" role="menu" aria-label="Profile actions">
+                  <button
+                    type="button"
+                    className="profile-menu-item"
+                    role="menuitem"
+                    disabled={isFollowActionBusy}
+                    onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
+                  >
+                    {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock user' : 'Block user'}
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-menu-item profile-menu-item-danger"
+                    role="menuitem"
+                    disabled={isFollowActionBusy}
+                    onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}
+                  >
+                    Report user
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
       </div>
 
       <div className="profile-stats">
