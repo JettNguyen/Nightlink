@@ -150,7 +150,6 @@
 .profile-username {
   color: var(--text-secondary);
   font-size: var(--fs-md);
-  margin-bottom: 1rem;
 }
 
 .profile-bio {
@@ -158,7 +157,6 @@
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
   color: var(--text);
-  margin-bottom: 0.75rem;
   max-width: 520px;
   margin-left: auto;
   margin-right: auto;
@@ -386,8 +384,11 @@
   flex-wrap: wrap;
 }
 
+/* Under the follower counts, on the same line the owner sees Edit Profile on,
+   so the action you take on a profile is in one place whoever is looking. */
 .follow-actions {
-  margin-top: 1.25rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
   display: flex;
   flex-direction: column;
   align-items: center;

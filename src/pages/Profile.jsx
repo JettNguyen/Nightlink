@@ -634,28 +634,6 @@ export default function Profile({ user }) {
             <h1>{userData.displayName || 'Dreamer'} <ProBadge subscription={userData.subscription} /></h1>
             {userData.username && <p className="profile-username">@{userData.username}</p>}
             {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
-            {!viewingOwnProfile && (
-              <div className="follow-actions">
-                <div className="follow-actions-row follow-actions-row-primary">
-                  <button
-                    type="button"
-                    className={`follow-action-btn ${(isFollowingTarget || hasPendingFollowRequest) ? 'follow-action-btn-following' : 'follow-action-btn-follow'}`}
-                    onClick={(isFollowingTarget || hasPendingFollowRequest) ? handleUnfollow : handleFollow}
-                    disabled={isFollowActionBusy || isBlockedTarget}
-                  >
-                    {isFollowBusy ? 'Working…' : isFollowingTarget ? 'Following' : hasPendingFollowRequest ? 'Requested' : 'Follow'}
-                  </button>
-                  {followsYou && <span className="follow-note follow-note-compact">Follows you</span>}
-                </div>
-                {isLockedProfileView && (
-                  <div className="profile-lock-note" role="status" aria-live="polite">
-                    <FontAwesomeIcon icon={faLock} aria-hidden="true" />
-                    <span>Private profile. Follow to request access.</span>
-                  </div>
-                )}
-                {isBlockedTarget && <span className="follow-note follow-note-compact follow-note-blocked">Blocked</span>}
-              </div>
-            )}
           </div>
       </div>
 
@@ -674,6 +652,29 @@ export default function Profile({ user }) {
           {!isNativeIOS && (
             <button type="button" className="settings-btn" onClick={() => navigate('/settings')}><FontAwesomeIcon icon={faGear} /><span>Settings</span></button>
           )}
+        </div>
+      )}
+
+      {!viewingOwnProfile && (
+        <div className="follow-actions">
+          <div className="follow-actions-row follow-actions-row-primary">
+            <button
+              type="button"
+              className={`follow-action-btn ${(isFollowingTarget || hasPendingFollowRequest) ? 'follow-action-btn-following' : 'follow-action-btn-follow'}`}
+              onClick={(isFollowingTarget || hasPendingFollowRequest) ? handleUnfollow : handleFollow}
+              disabled={isFollowActionBusy || isBlockedTarget}
+            >
+              {isFollowBusy ? 'Working…' : isFollowingTarget ? 'Following' : hasPendingFollowRequest ? 'Requested' : 'Follow'}
+            </button>
+            {followsYou && <span className="follow-note follow-note-compact">Follows you</span>}
+          </div>
+          {isLockedProfileView && (
+            <div className="profile-lock-note" role="status" aria-live="polite">
+              <FontAwesomeIcon icon={faLock} aria-hidden="true" />
+              <span>Private profile. Follow to request access.</span>
+            </div>
+          )}
+          {isBlockedTarget && <span className="follow-note follow-note-compact follow-note-blocked">Blocked</span>}
         </div>
       )}
 
