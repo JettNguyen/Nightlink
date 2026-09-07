@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
+import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical, faComment } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
@@ -250,6 +250,7 @@ export default function DreamDetail({ user }) {
   const location = useLocation();
   const fromNav = location.state?.fromNav || null;
   const commentInputRef = useRef(null);
+  const commentsSectionRef = useRef(null);
   const emojiInputRef = useRef(null);
   const userSummariesRef = useRef(userSummaries);
   const reactionInsightOpenRef = useRef(false);
@@ -1531,6 +1532,19 @@ export default function DreamDetail({ user }) {
     }
   };
 
+  // The comment button in the reaction row. The composer is further down the
+  // page, so it scrolls there and takes the caret with it. preventScroll on the
+  // focus call, because the browser's own scroll-on-focus would jump straight
+  // there and cut the smooth scroll off halfway.
+  const handleJumpToComposer = useCallback(() => {
+    void triggerLightHaptic();
+    const input = commentInputRef.current;
+    const target = input || commentsSectionRef.current;
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: input ? 'center' : 'start' });
+    input?.focus({ preventScroll: true });
+  }, []);
+
   // The composer sits above the list, so its post button only appears once
   // there is something to post. Otherwise a button and its row would push the
   // first comment down the screen on every dream.
@@ -2541,6 +2555,15 @@ export default function DreamDetail({ user }) {
             >
               <FontAwesomeIcon icon={faPlus} className="reaction-icon" />
             </button>
+            <button
+              type="button"
+              className="reaction-button reaction-button--comment"
+              onClick={handleJumpToComposer}
+              aria-label="Write a comment"
+            >
+              <FontAwesomeIcon icon={faComment} className="reaction-icon" />
+              <span className="reaction-count">{comments.length}</span>
+            </button>
           </div>
           {customEmojiPickerOpen && (
             <div className="custom-emoji-popover">
@@ -2728,7 +2751,7 @@ export default function DreamDetail({ user }) {
           </div>
         ) : null}
 
-        {dream.visibility !== 'private' && <div className="detail-comments">
+        {dream.visibility !== 'private' && <div className="detail-comments" ref={commentsSectionRef}>
           <div className="detail-section-head">
             <p className="detail-label">Comments{commentCountLabel}</p>
           </div>

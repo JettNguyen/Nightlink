@@ -926,7 +926,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
 }
 
 .reaction-emoji-text {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   line-height: 1;
 }
 
@@ -1162,7 +1162,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   background: rgba(255, 255, 255, 0.05);
   width: 44px;
   height: 44px;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
