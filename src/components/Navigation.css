@@ -87,7 +87,7 @@
 }
 
 .nav-links a {
-  color: var(--text);
+  color: var(--text-secondary);
   font-weight: 600;
   transition: color 0.18s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   padding: 0.35rem 0;
@@ -108,7 +108,7 @@
 }
 
 .nav-links a.active {
-  color: var(--text);
+  color: var(--primary);
 }
 
 .navigation:not(.navigation-compact) .nav-links a:not(.active) .nav-icon {
@@ -520,13 +520,17 @@ html.keyboard-open .nav-ios-tabbar {
 }
 
 .nav-ios-tab:not(.active) {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
+/* iOS tints the selected tab with the app's accent and greys the rest. This bar
+   was separating them by brightness alone, a white icon against a dimmed grey
+   one, which is a difference you only notice by comparing two icons to each
+   other. Hue does not need the comparison: purple is the one you are on. */
 .nav-ios-tab.active {
-  color: var(--text);
+  color: var(--primary);
 }
 
 .nav-ios-tab.active .nav-icon {
-  transform: translateZ(0);
+  transform: translateZ(0) scale(1.06);
 }
