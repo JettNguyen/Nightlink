@@ -10,6 +10,7 @@
   margin-bottom: 0.75rem;
   cursor: pointer;
   min-height: 44px;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .legal-back-btn:hover {

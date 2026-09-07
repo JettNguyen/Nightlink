@@ -446,7 +446,7 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   font-weight: 600;
   letter-spacing: -0.01em;
   border: 1px solid transparent;
-  transition: filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, color 0.25s ease, opacity 0.22s ease;
+  transition: filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, color 0.25s ease, opacity 0.22s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--surface);
   color: var(--text);
   backdrop-filter: blur(10px);
@@ -512,6 +512,7 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   font-size: var(--fs-base);
   border: 1px solid var(--border);
   line-height: 1;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pill-active {
@@ -811,7 +812,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   font-weight: 600;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -899,7 +900,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   padding: 0.75rem 1rem;
   background: var(--surface);
   color: var(--text);
-  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
   text-align: left;
 }
 
@@ -1104,8 +1105,12 @@ html[data-native-platform='ios'].is-scrolling .pill-active, html[data-native-pla
  *
  *   Press: applies on every device. `-webkit-tap-highlight-color` is cleared
  *            globally above, so without these a tap on a phone gives no
- *            feedback at all. The transition lives inside the `:active` rule so
- *            the press reads instantly and the release snaps back.
+ *            feedback at all. Two durations, on purpose: the short one in each
+ *            `:active` rule drives the press, and the 160ms `transform` on the
+ *            resting rule drives the release. The release used to have no
+ *            transition at all, because the only declaration lived inside
+ *            `:active` and went away with it, so the button snapped back to
+ *            full size the instant a finger lifted.
  *   Hover: gated behind `hover: hover` + `pointer: fine`. Ungated `:hover`
  *            sticks to whatever a finger last touched until something else is
  *            tapped, which is what `iosTapFix.js` exists to paper over.

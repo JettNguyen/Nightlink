@@ -98,6 +98,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .detail-date-block {
@@ -128,7 +129,7 @@
   cursor: pointer;
   background: rgba(201, 167, 240, 0.05);
   color: var(--text);
-  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .detail-date-pill--interactive:hover {
@@ -235,6 +236,7 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Was a `›` glyph rotated 90deg to point down. Flex centres a glyph's inline
@@ -306,6 +308,7 @@
   font-size: var(--fs-base);
   cursor: pointer;
   padding: 0.15rem 0;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .comment-card {
@@ -382,7 +385,7 @@
   font-size: var(--fs-base);
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .comment-heart-btn svg {
@@ -425,6 +428,7 @@
   font-size: var(--fs-sm);
   cursor: pointer;
   text-decoration: underline;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .comment-reply-btn:hover:not(:disabled) {
@@ -580,7 +584,7 @@
   flex-direction: column;
   gap: 0.12rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .tag-suggestion-item:hover {
@@ -648,6 +652,7 @@
   cursor: pointer;
   text-align: left;
   color: inherit;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .detail-author-avatar {
@@ -747,7 +752,7 @@
   cursor: pointer;
   font-size: var(--fs-base);
   margin-right: 5px;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reaction-button.custom-emoji-trigger {
@@ -847,6 +852,7 @@
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .detail-edit-actions {
@@ -1127,7 +1133,7 @@
   color: var(--text);
   font-size: var(--fs-sm);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .prompt-option-head {
@@ -1382,7 +1388,7 @@
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
   min-height: 44px;
 }
 

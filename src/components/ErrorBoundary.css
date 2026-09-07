@@ -68,7 +68,7 @@
   font-size: var(--fs-base);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (hover: hover) and (pointer: fine) {
   .error-boundary-button:hover {
@@ -79,4 +79,5 @@
 
 .error-boundary-button:active {
   transform: translateY(0);
+  transition: transform 80ms ease-out;
 }

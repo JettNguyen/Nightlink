@@ -438,6 +438,7 @@
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nav-ios-logo-icon {
@@ -497,7 +498,7 @@ html.keyboard-open .nav-ios-tabbar {
   justify-content: flex-start;
   color: var(--text-secondary);
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nav-ios-tab .nav-icon-wrapper {
