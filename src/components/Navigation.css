@@ -519,8 +519,10 @@ html.keyboard-open .nav-ios-tabbar {
   display: none;
 }
 
+/* 0.4 put the unselected icons at 2.46:1 against the bar, under the 3:1 that
+   WCAG 1.4.11 asks of a control you are meant to be able to find and press. */
 .nav-ios-tab:not(.active) {
-  opacity: 0.4;
+  opacity: 0.52;
 }
 
 /* iOS tints the selected tab with the app's accent and greys the rest. This bar

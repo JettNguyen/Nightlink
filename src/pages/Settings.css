@@ -165,7 +165,7 @@ html[data-native-platform='ios'] .settings-save-bar {
 
 .settings-time-input {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   color: var(--text);
   padding: 0.45rem 0.65rem;
@@ -345,7 +345,7 @@ html[data-native-platform='ios'] .settings-save-bar {
   width: 100%;
   min-height: 110px;
   padding: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
@@ -473,7 +473,7 @@ html[data-native-platform='ios'] .settings-save-bar {
   width: 100%;
   padding: 0.8rem;
   border-radius: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
 }

@@ -70,9 +70,13 @@
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Near white on a light purple gradient was 2.62:1 at the light end. Dark type
+   on the same fill is 5.2:1 at the dark end and 9.5:1 at the light one, which
+   is also how the selected calendar day and every other filled purple surface
+   in the app reads. */
 .home-cta-primary {
   background: linear-gradient(120deg, #9d6fd4, #c9a7f0);
-  color: #f4fbff;
+  color: #120d24;
   transition: filter 0.18s ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
