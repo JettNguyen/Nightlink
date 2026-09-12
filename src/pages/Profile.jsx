@@ -633,83 +633,87 @@ export default function Profile({ user }) {
 
   return (
     <div className="page-container stream-page">
-      <div className="profile-header">
-        <div className="profile-identity">
-          <div className="profile-avatar">
-            <AvatarDisplay
-              photoURL={userData.photoURL}
-              avatarIcon={displayAvatarIconId}
-              avatarBackground={displayAvatarBackground}
-              avatarColor={displayAvatarColor}
-              className="avatar-circle"
-              style={{ fontSize: '2.2rem' }}
-              aria-label="Profile avatar"
-            />
-          </div>
+      <div className="profile-top">
+        <div className="profile-top-main">
+          <div className="profile-header">
+            <div className="profile-identity">
+              <div className="profile-avatar">
+                <AvatarDisplay
+                  photoURL={userData.photoURL}
+                  avatarIcon={displayAvatarIconId}
+                  avatarBackground={displayAvatarBackground}
+                  avatarColor={displayAvatarColor}
+                  className="avatar-circle"
+                  style={{ fontSize: '2.2rem' }}
+                  aria-label="Profile avatar"
+                />
+              </div>
 
-          <div className="profile-info">
-            <h1>{userData.displayName || 'Dreamer'} <ProBadge subscription={userData.subscription} /></h1>
-            {userData.username && <p className="profile-username">@{userData.username}</p>}
-          </div>
+              <div className="profile-info">
+                <h1>{userData.displayName || 'Dreamer'} <ProBadge subscription={userData.subscription} /></h1>
+                {userData.username && <p className="profile-username">@{userData.username}</p>}
+              </div>
 
-          {!viewingOwnProfile && (
-            <div className="overflow-menu-root profile-menu-root" ref={profileMenuRef}>
-              <button
-                type="button"
-                className="overflow-menu-btn"
-                aria-label="More actions"
-                aria-haspopup="menu"
-                aria-expanded={profileMenuOpen}
-                onClick={() => setProfileMenuOpen((open) => !open)}
-              >
-                <FontAwesomeIcon icon={faEllipsisVertical} />
-              </button>
-              {profileMenuOpen && !isNativeIOS && (
-                <div className="overflow-menu" role="menu" aria-label="Profile actions">
+              {!viewingOwnProfile && (
+                <div className="overflow-menu-root profile-menu-root" ref={profileMenuRef}>
                   <button
                     type="button"
-                    className="overflow-menu-item"
-                    role="menuitem"
-                    disabled={isFollowActionBusy}
-                    onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
+                    className="overflow-menu-btn"
+                    aria-label="More actions"
+                    aria-haspopup="menu"
+                    aria-expanded={profileMenuOpen}
+                    onClick={() => setProfileMenuOpen((open) => !open)}
                   >
-                    {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock user' : 'Block user'}
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
-                  <button
-                    type="button"
-                    className="overflow-menu-item overflow-menu-item-danger"
-                    role="menuitem"
-                    disabled={isFollowActionBusy}
-                    onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}
-                  >
-                    Report user
-                  </button>
+                  {profileMenuOpen && !isNativeIOS && (
+                    <div className="overflow-menu" role="menu" aria-label="Profile actions">
+                      <button
+                        type="button"
+                        className="overflow-menu-item"
+                        role="menuitem"
+                        disabled={isFollowActionBusy}
+                        onClick={() => { setProfileMenuOpen(false); if (isBlockedTarget) handleUnblockUser(); else handleBlockUser(); }}
+                      >
+                        {isBlockBusy ? 'Working…' : isBlockedTarget ? 'Unblock user' : 'Block user'}
+                      </button>
+                      <button
+                        type="button"
+                        className="overflow-menu-item overflow-menu-item-danger"
+                        role="menuitem"
+                        disabled={isFollowActionBusy}
+                        onClick={() => { setProfileMenuOpen(false); handleReportUser(); }}
+                      >
+                        Report user
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+
+            {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
+          </div>
+
+          <div className="profile-stats">
+            <button type="button" className="stat-item stat-button" onClick={() => handleOpenConnections('followers')}>
+              <div className="stat-value">{targetFollowerIds.length}</div><div className="stat-label">Followers</div>
+            </button>
+            <button type="button" className="stat-item stat-button" onClick={() => handleOpenConnections('following')}>
+              <div className="stat-value">{targetFollowingIds.length}</div><div className="stat-label">Following</div>
+            </button>
+          </div>
         </div>
 
-        {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
+        {viewingOwnProfile && (
+          <div className="profile-btn-row">
+            <button type="button" onClick={() => navigate('/profile/edit')} className="edit-profile-btn"><FontAwesomeIcon icon={faPencil} /><span>Edit Profile</span></button>
+            {!isNativeIOS && (
+              <button type="button" className="settings-btn" onClick={() => navigate('/settings')}><FontAwesomeIcon icon={faGear} /><span>Settings</span></button>
+            )}
+          </div>
+        )}
       </div>
-
-      <div className="profile-stats">
-        <button type="button" className="stat-item stat-button" onClick={() => handleOpenConnections('followers')}>
-          <div className="stat-value">{targetFollowerIds.length}</div><div className="stat-label">Followers</div>
-        </button>
-        <button type="button" className="stat-item stat-button" onClick={() => handleOpenConnections('following')}>
-          <div className="stat-value">{targetFollowingIds.length}</div><div className="stat-label">Following</div>
-        </button>
-      </div>
-
-      {viewingOwnProfile && (
-        <div className="profile-btn-row">
-          <button type="button" onClick={() => navigate('/profile/edit')} className="edit-profile-btn"><FontAwesomeIcon icon={faPencil} /><span>Edit Profile</span></button>
-          {!isNativeIOS && (
-            <button type="button" className="settings-btn" onClick={() => navigate('/settings')}><FontAwesomeIcon icon={faGear} /><span>Settings</span></button>
-          )}
-        </div>
-      )}
 
       {!viewingOwnProfile && (
         <div className="follow-actions">
