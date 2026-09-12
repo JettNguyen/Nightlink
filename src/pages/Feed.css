@@ -296,6 +296,18 @@
   margin-right: 0.5rem;
 }
 
+/* A quarter smaller than on the dream itself. There the row is the thing you
+   came to use, here it repeats down a scrolling list, and at full size it
+   carried more weight than the dream above it. The buttons keep their 44px
+   targets either way, so only the glyph changes. */
+.feed-reactions .reaction-icon {
+  font-size: 1.125rem;
+}
+
+.feed-reactions .reaction-emoji-text {
+  font-size: 1.25rem;
+}
+
 /* ── Empty + discovery states ──────────────────────────────────────────────── */
 /* A dashed box around "nothing here yet" draws a container around an absence.
    Centred text in open space says it without the outline. */
