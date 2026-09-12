@@ -830,7 +830,7 @@ export default function DreamJournal({ user }) {
                 </p>
               </div>
               <details className="compose-more">
-                <summary>More options</summary>
+                <summary>Hide or tag</summary>
                 <div className="audience-section">
                   <div className="control-headline">
                     <p className="section-label">Hide from specific people</p>
