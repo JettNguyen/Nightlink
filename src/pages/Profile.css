@@ -1191,12 +1191,6 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
-  .profile-ai-badge {
-    font-size: 1.25rem; /* 0.7rem × (16/14), restores 11px at 14px base */
-  }
-}
-
 .profile-dream-title {
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;

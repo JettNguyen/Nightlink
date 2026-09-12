@@ -442,12 +442,6 @@
   letter-spacing: 0;
 }
 
-@media (max-width: 768px) {
-  .dream-ai-badge {
-    font-size: 1.75rem; /* 1.25rem × (16/14), restores 20px at 14px base */
-  }
-}
-
 .dream-chevron {
   font-size: 1.25rem;
   color: var(--text-secondary);

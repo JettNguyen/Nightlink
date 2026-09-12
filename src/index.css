@@ -1465,10 +1465,6 @@ html[data-native-platform='ios'] .profile-ai-badge {
 }
 
 @media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
-
   /* Prevent iOS auto-zoom on input focus (triggered when font-size < 16px) */
   input,
   textarea,
