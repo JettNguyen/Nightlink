@@ -85,15 +85,16 @@
 
      Sizing a glyph, avatar or emoji is not typography, so those keep their own
      font-size values and are deliberately off this scale. */
-  --fs-micro: 0.7rem;
-  --fs-xs: 0.78rem;
-  --fs-sm: 0.85rem;
-  --fs-base: 0.95rem;
-  --fs-md: 1.1rem;
-  --fs-lg: 1.3rem;
-  --fs-xl: 1.55rem;
-  --fs-2xl: 1.85rem;
-  --fs-3xl: 2.25rem;
+  --type-scale: 1;
+  --fs-micro: calc(0.7rem * var(--type-scale));
+  --fs-xs: calc(0.78rem * var(--type-scale));
+  --fs-sm: calc(0.85rem * var(--type-scale));
+  --fs-base: calc(0.95rem * var(--type-scale));
+  --fs-md: calc(1.1rem * var(--type-scale));
+  --fs-lg: calc(1.3rem * var(--type-scale));
+  --fs-xl: calc(1.55rem * var(--type-scale));
+  --fs-2xl: calc(1.85rem * var(--type-scale));
+  --fs-3xl: calc(2.25rem * var(--type-scale));
 }
 
 html {
@@ -1466,6 +1467,14 @@ html[data-native-platform='ios'] .profile-ai-badge {
 }
 
 @media (max-width: 768px) {
+  /* Text alone comes down on a phone, which is held closer and has a fraction
+     of the width to read across. This used to be a 14px root font size, and
+     that shrank the icons, the padding and every gap in the app along with the
+     words. One knob on the type scale moves only what is typography. */
+  :root {
+    --type-scale: 0.875;
+  }
+
   /* Prevent iOS auto-zoom on input focus (triggered when font-size < 16px) */
   input,
   textarea,
