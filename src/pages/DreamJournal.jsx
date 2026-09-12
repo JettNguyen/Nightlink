@@ -97,12 +97,48 @@ export default function DreamJournal({ user }) {
   const [monthDirection, setMonthDirection] = useState('next');
   const formScrollRef = useRef(null);
   const [scrollEdge, setScrollEdge] = useState({ top: true, bottom: false });
+  const [moreOpen, setMoreOpen] = useState(false);
+  const morePanelRef = useRef(null);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const navigate = useNavigate();
   const hasAudienceQuery = audienceQuery.trim().length > 0;
+
+  // A details element has no in between state to animate: the content is either
+  // laid out or it is not. So the panel is a plain element and its height is
+  // measured and driven by hand. A max-height guess would not do, because the
+  // lists inside are any length, and a ceiling set too high spends the first
+  // part of the close travelling through space the content never filled.
+  useEffect(() => {
+    const panel = morePanelRef.current;
+    if (!panel) return undefined;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      panel.style.height = moreOpen ? 'auto' : '0px';
+      return undefined;
+    }
+
+    if (moreOpen) {
+      panel.style.height = `${panel.scrollHeight}px`;
+      // Back to auto once it lands, so the lists can still grow while open.
+      const settle = (event) => {
+        if (event.propertyName === 'height') panel.style.height = 'auto';
+      };
+      panel.addEventListener('transitionend', settle);
+      return () => panel.removeEventListener('transitionend', settle);
+    }
+
+    // Closing has to start from a real number, so pin the height it is sitting
+    // at and let the layout catch up before asking for zero. The rendered height
+    // rather than the content height, so a close that interrupts an open carries
+    // on from where it got to instead of snapping open first.
+    panel.style.height = `${panel.getBoundingClientRect().height}px`;
+    void panel.offsetHeight;
+    panel.style.height = '0px';
+    return undefined;
+  }, [moreOpen]);
 
   // Lock body scroll while modal is open so only the modal itself scrolls
   useEffect(() => {
@@ -386,6 +422,7 @@ export default function DreamJournal({ user }) {
     setVisibility('private'); setExcludedViewerIds([]);
     setTaggedUsers([]); setTagHandle(''); setTaggingStatus('');
     setAiResult(null); setAiBusy(false);
+    setMoreOpen(false);
   };
 
   // Reading the dream before it is saved, rather than telling people to save it
@@ -829,124 +866,134 @@ export default function DreamJournal({ user }) {
                   {VISIBILITY_OPTIONS.find((o) => o.value === visibility)?.helper}
                 </p>
               </div>
-              <details className="compose-more">
-                <summary>Hide or tag</summary>
-                <div className="audience-section">
-                  <div className="control-headline">
-                    <p className="section-label">Hide from specific people</p>
-                    <p className="section-helper">Anyone you pick here will never see this entry, regardless of visibility.</p>
-                  </div>
-                  {audienceLoading ? (
-                    <div className="loading-inline">
-                      <LoadingIndicator label="Loading your connections…" size="sm" align="start" />
+              <div className={`compose-more${moreOpen ? ' is-open' : ''}`}>
+                <button
+                  type="button"
+                  className="compose-more-toggle"
+                  aria-expanded={moreOpen}
+                  aria-controls="compose-more-panel"
+                  onClick={() => { void triggerLightHaptic(); setMoreOpen((open) => !open); }}
+                >
+                  Hide or tag
+                </button>
+                <div className="compose-more-panel" id="compose-more-panel" ref={morePanelRef} inert={!moreOpen}>
+                  <div className="audience-section">
+                    <div className="control-headline">
+                      <p className="section-label">Hide from specific people</p>
+                      <p className="section-helper">Anyone you pick here will never see this entry, regardless of visibility.</p>
                     </div>
-                  ) : connectionOptions.length === 0 ? (
-                    <p className="hint">Connect with people to curate who sees limited posts.</p>
-                  ) : (
-                    <>
-                      <div className="audience-search-input">
-                        <input
-                          type="text"
-                          placeholder="Search your following"
-                          aria-label="Search your following"
-                          value={audienceQuery}
-                          onChange={(e) => setAudienceQuery(e.target.value)}
-                          disabled={loading}
-                        />
+                    {audienceLoading ? (
+                      <div className="loading-inline">
+                        <LoadingIndicator label="Loading your connections…" size="sm" align="start" />
                       </div>
-                      {hasAudienceQuery && (
-                        <div className="audience-result-list">
-                          {filteredConnections.length ? (
-                            filteredConnections.map((profile) => {
-                              const isHidden = excludedViewerIds.includes(profile.id);
+                    ) : connectionOptions.length === 0 ? (
+                      <p className="hint">Connect with people to curate who sees limited posts.</p>
+                    ) : (
+                      <>
+                        <div className="audience-search-input">
+                          <input
+                            type="text"
+                            placeholder="Search your following"
+                            aria-label="Search your following"
+                            value={audienceQuery}
+                            onChange={(e) => setAudienceQuery(e.target.value)}
+                            disabled={loading}
+                          />
+                        </div>
+                        {hasAudienceQuery && (
+                          <div className="audience-result-list">
+                            {filteredConnections.length ? (
+                              filteredConnections.map((profile) => {
+                                const isHidden = excludedViewerIds.includes(profile.id);
+                                return (
+                                  <button
+                                    key={profile.id}
+                                    type="button"
+                                    className={`audience-result${isHidden ? ' active' : ''}`}
+                                    onClick={() => toggleExcludedViewer(profile.id)}
+                                    disabled={loading}
+                                  >
+                                    <div className="audience-result-meta">
+                                      <span className="result-name">{profile.displayName}</span>
+                                      {profile.username && <span className="result-handle">@{profile.username}</span>}
+                                    </div>
+                                    <span className="result-status">{isHidden ? 'Hidden' : 'Visible'}</span>
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <p className="hint">No matches for &ldquo;{audienceQuery}&rdquo;.</p>
+                            )}
+                          </div>
+                        )}
+                        {excludedViewerIds.length ? (
+                          <div className="selected-pill-row">
+                            {excludedViewerIds.map((id) => {
+                              const profile = connectionLookup[id];
+                              const label = profile?.username ? `@${profile.username}` : profile?.displayName || 'Dreamer';
                               return (
-                                <button
-                                  key={profile.id}
-                                  type="button"
-                                  className={`audience-result${isHidden ? ' active' : ''}`}
-                                  onClick={() => toggleExcludedViewer(profile.id)}
-                                  disabled={loading}
-                                >
-                                  <div className="audience-result-meta">
-                                    <span className="result-name">{profile.displayName}</span>
-                                    {profile.username && <span className="result-handle">@{profile.username}</span>}
-                                  </div>
-                                  <span className="result-status">{isHidden ? 'Hidden' : 'Visible'}</span>
-                                </button>
+                                <span key={id} className="selected-pill">
+                                  {label}
+                                  <button type="button" onClick={() => toggleExcludedViewer(id)} aria-label={`Remove ${label}`} disabled={loading}>×</button>
+                                </span>
                               );
-                            })
-                          ) : (
-                            <p className="hint">No matches for &ldquo;{audienceQuery}&rdquo;.</p>
-                          )}
-                        </div>
-                      )}
-                      {excludedViewerIds.length ? (
-                        <div className="selected-pill-row">
-                          {excludedViewerIds.map((id) => {
-                            const profile = connectionLookup[id];
-                            const label = profile?.username ? `@${profile.username}` : profile?.displayName || 'Dreamer';
-                            return (
-                              <span key={id} className="selected-pill">
-                                {label}
-                                <button type="button" onClick={() => toggleExcludedViewer(id)} aria-label={`Remove ${label}`} disabled={loading}>×</button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="hint">No one is hidden right now.</p>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="tag-people-section">
-                  <div className="control-headline">
-                    <p className="section-label">Tag people</p>
-                    <p className="section-helper">Let specific friends know this dream involves them.</p>
+                            })}
+                          </div>
+                        ) : (
+                          <p className="hint">No one is hidden right now.</p>
+                        )}
+                      </>
+                    )}
                   </div>
-                  <div className="tag-people-input">
-                    <input
-                      type="text"
-                      placeholder="@username"
-                      aria-label="Tag a dreamer by username"
-                      value={tagHandle}
-                      onChange={(e) => { setTagHandle(e.target.value); setTaggingStatus(''); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTaggedPerson(); } }}
-                      disabled={loading || taggingBusy}
-                    />
-                    <button type="button" className="add-tag-btn" onClick={handleAddTaggedPerson} disabled={loading || taggingBusy || !tagHandle.trim()}>
-                      {taggingBusy ? 'Tagging…' : 'Tag'}
-                    </button>
+                  <div className="tag-people-section">
+                    <div className="control-headline">
+                      <p className="section-label">Tag people</p>
+                      <p className="section-helper">Let specific friends know this dream involves them.</p>
+                    </div>
+                    <div className="tag-people-input">
+                      <input
+                        type="text"
+                        placeholder="@username"
+                        aria-label="Tag a dreamer by username"
+                        value={tagHandle}
+                        onChange={(e) => { setTagHandle(e.target.value); setTaggingStatus(''); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTaggedPerson(); } }}
+                        disabled={loading || taggingBusy}
+                      />
+                      <button type="button" className="add-tag-btn" onClick={handleAddTaggedPerson} disabled={loading || taggingBusy || !tagHandle.trim()}>
+                        {taggingBusy ? 'Tagging…' : 'Tag'}
+                      </button>
+                    </div>
+                    {tagSuggestions.length > 0 && (
+                      <div className="tag-suggestion-list">
+                        {tagSuggestions.map((profile) => (
+                          <button type="button" key={profile.id} className="tag-suggestion-item" onClick={() => handleSelectTagSuggestion(profile)} disabled={loading}>
+                            <span className="suggestion-name">{profile.displayName}</span>
+                            {profile.username && <span className="suggestion-username">@{profile.username}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {taggingStatus && <p className="hint status-hint" role="status">{taggingStatus}</p>}
+                    {taggedUsers.length ? (
+                      <div className="tagged-pill-row">
+                        {taggedUsers.map((entry) => (
+                          <span key={entry.userId} className="tagged-pill">
+                            @{entry.username || entry.displayName}
+                            <button type="button" aria-label={`Remove ${entry.username || entry.displayName}`} onClick={() => handleRemoveTaggedPerson(entry.userId)} disabled={loading}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="hint">
+                        {visibility === 'private'
+                          ? 'Tags are for your own record on this private dream.'
+                          : 'Tagged dreamers will see this on their profile.'}
+                      </p>
+                    )}
                   </div>
-                  {tagSuggestions.length > 0 && (
-                    <div className="tag-suggestion-list">
-                      {tagSuggestions.map((profile) => (
-                        <button type="button" key={profile.id} className="tag-suggestion-item" onClick={() => handleSelectTagSuggestion(profile)} disabled={loading}>
-                          <span className="suggestion-name">{profile.displayName}</span>
-                          {profile.username && <span className="suggestion-username">@{profile.username}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {taggingStatus && <p className="hint status-hint" role="status">{taggingStatus}</p>}
-                  {taggedUsers.length ? (
-                    <div className="tagged-pill-row">
-                      {taggedUsers.map((entry) => (
-                        <span key={entry.userId} className="tagged-pill">
-                          @{entry.username || entry.displayName}
-                          <button type="button" aria-label={`Remove ${entry.username || entry.displayName}`} onClick={() => handleRemoveTaggedPerson(entry.userId)} disabled={loading}>×</button>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="hint">
-                      {visibility === 'private'
-                        ? 'Tags are for your own record on this private dream.'
-                        : 'Tagged dreamers will see this on their profile.'}
-                    </p>
-                  )}
                 </div>
-              </details>
+              </div>
               <div className="ai-compose">
                 <button
                   type="button"

@@ -904,51 +904,71 @@
   padding-top: 1rem;
 }
 
-.compose-more > summary {
-  list-style: none;
+.compose-more-toggle {
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  width: 100%;
   min-height: 44px;
-  cursor: pointer;
+  padding: 0;
+  background: none;
   color: var(--text-secondary);
+  font-size: inherit;
   font-weight: 600;
+  text-align: left;
   transition: color 0.18s ease;
 }
 
-.compose-more > summary::-webkit-details-marker {
-  display: none;
-}
-
-.compose-more > summary::after {
+.compose-more-toggle::after {
   content: '';
   width: 0.45rem;
   height: 0.45rem;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: translateY(-2px) rotate(45deg);
-  transition: transform 0.2s ease;
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.compose-more[open] > summary::after {
+.compose-more.is-open .compose-more-toggle::after {
   transform: translateY(1px) rotate(-135deg);
 }
 @media (hover: hover) and (pointer: fine) {
-  .compose-more > summary:hover {
+  .compose-more-toggle:hover {
     color: var(--text);
   }
 }
 
-.compose-more > summary:active {
+.compose-more-toggle:active {
   color: var(--text);
+}
+
+/* The height is measured and set in js, because it is the one thing here that
+   cannot be written down: the lists inside are any length. All this does is
+   keep what has not been revealed yet out of sight. */
+.compose-more-panel {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: height 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease;
+}
+
+.compose-more.is-open .compose-more-panel {
+  opacity: 1;
 }
 
 /* The first section inside draws its own top rule, which would double up with
    the one the disclosure already has. */
-.compose-more > .audience-section {
+.compose-more-panel > .audience-section {
   margin-top: 0;
   border-top: none;
   padding-top: 0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compose-more-panel,
+  .compose-more-toggle::after {
+    transition: none;
+  }
 }
 
 .audience-section,
