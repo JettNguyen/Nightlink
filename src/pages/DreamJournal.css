@@ -645,8 +645,11 @@
   transition: opacity 0.2s ease;
 }
 
+/* Two pixels above the scroll box rather than level with it, so the solid end
+   of the fade covers the sliver of a line that the rounding leaves showing. */
 .modal-form-wrap::before {
-  top: 0;
+  top: -2px;
+  height: calc(3rem + 2px);
   background: linear-gradient(to bottom, var(--modal-surface), transparent);
 }
 
