@@ -68,7 +68,7 @@ export default function Activity({ user, activityPreview }) {
 
   const formatReactionEmoji = (emoji) => {
     if (emoji === '💙') {
-      return <FontAwesomeIcon icon={faHeart} style={{ color: 'var(--primary)' }} />;
+      return <FontAwesomeIcon icon={faHeart} style={{ color: 'var(--like)' }} />;
     }
     return emoji;
   };

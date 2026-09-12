@@ -14,7 +14,12 @@
      losing ground against the background: 10.94:1, up from 9.48:1. */
   --link: #d9b3ff;
   --primary-strong: #9d6fd4;
+  /* Two colours that are not the interface. Purple is the app talking; gold is
+     the AI's voice and marks anything it wrote; red is a heart, which is a heart
+     everywhere and the one place this palette should not be inventing its own
+     convention. Everything else stays in the greys so these still land. */
   --accent: #e8c87a;
+  --like: #ff6b8a;
   --background: #0d0d11;
   --background-secondary: #13121a;
   --surface: rgba(255, 255, 255, 0.04);
@@ -58,7 +63,11 @@
   --vis-anonymous-soft: rgba(245, 158, 11, 0.13);
   --vis-private: #f87171;
   --vis-private-soft: rgba(248, 113, 113, 0.13);
-  --app-background-gradient: linear-gradient(180deg, #0d0d11 0%, #110f1c 55%, #0d0d11 100%);
+  /* A wash of violet behind the top of the page. The app is read at night on a
+     near black screen, and a flat one reads as switched off rather than dark. */
+  --app-background-gradient:
+    radial-gradient(130% 55% at 50% 0%, rgba(157, 111, 212, 0.13), transparent 62%),
+    linear-gradient(180deg, #0d0d11 0%, #13101f 55%, #0d0d11 100%);
 
   /* Type scale. One step per role. If two things are the same size they are
      meant to read as the same rank. Anything not on this scale was drift.
@@ -894,6 +903,13 @@ html[data-native-platform='ios'] .profile-ai-badge {
     color: var(--text);
     background: none;
   }
+}
+
+/* The heart is the one control that keeps its own colour. Everything else in a
+   reaction row is the interface, and the interface is purple. */
+.reaction-button--heart.active,
+.comment-heart-btn.active {
+  color: var(--like);
 }
 
 /* ── Reactions ────────────────────────────────────────────────────────────────

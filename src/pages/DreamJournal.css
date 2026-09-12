@@ -766,12 +766,12 @@
 }
 
 .ai-compose-mark {
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .ai-compose-result {
   width: 100%;
-  border-left: 2px solid rgba(201, 167, 240, 0.32);
+  border-left: 2px solid rgba(232, 200, 122, 0.45);
   padding-left: 0.85rem;
   display: flex;
   flex-direction: column;
