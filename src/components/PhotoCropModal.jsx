@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import Overlay from './Overlay';
 import { compressImage } from '../utils/imageUtils';
 import useEscapeKey from '../hooks/useEscapeKey';
 import './PhotoCropModal.css';
@@ -169,6 +170,7 @@ export default function PhotoCropModal({ file, onConfirm, onCancel }) {
   };
 
   return (
+    <Overlay>
     <div className="crop-modal-backdrop" role="dialog" aria-modal="true" aria-label="Crop profile photo">
       <div className="crop-modal-card">
         <h2 className="crop-modal-title">Crop photo</h2>
@@ -230,6 +232,7 @@ export default function PhotoCropModal({ file, onConfirm, onCancel }) {
         </div>
       </div>
     </div>
+    </Overlay>
   );
 }
 

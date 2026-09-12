@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
+import Overlay from '../components/Overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical, faComment } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -3024,6 +3025,7 @@ export default function DreamDetail({ user }) {
       />
 
       {reportModal && (
+        <Overlay>
         <div className="report-modal-backdrop" onClick={closeReportModal}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Report {reportModal.targetType === 'comment' ? 'comment' : 'dream'}</h3>
@@ -3053,6 +3055,7 @@ export default function DreamDetail({ user }) {
             </div>
           </div>
         </div>
+        </Overlay>
       )}
 
       {confirmModal?.action === 'deleteComment' && (

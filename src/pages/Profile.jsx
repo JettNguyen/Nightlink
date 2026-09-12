@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
+import Overlay from '../components/Overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencil, faGear, faLock, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -711,6 +712,7 @@ export default function Profile({ user }) {
       <Toast message={toast} onDismiss={() => setToast('')} />
 
       {reportModal && (
+        <Overlay>
         <div className="report-modal-backdrop" onClick={() => setReportModal(false)}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Report user</h3>
@@ -726,9 +728,11 @@ export default function Profile({ user }) {
             </div>
           </div>
         </div>
+        </Overlay>
       )}
 
       {profileMenuOpen && !viewingOwnProfile && isNativeIOS && (
+        <Overlay>
         <div className="report-modal-backdrop" onClick={() => setProfileMenuOpen(false)}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <h3>User actions</h3>
@@ -762,6 +766,7 @@ export default function Profile({ user }) {
             </div>
           </div>
         </div>
+        </Overlay>
       )}
     </div>
   );

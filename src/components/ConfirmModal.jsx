@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import useEscapeKey from '../hooks/useEscapeKey';
+import Overlay from './Overlay';
 import { triggerLightHaptic, triggerHeavyHaptic } from '../utils/haptics';
 import './ConfirmModal.css';
 
@@ -25,6 +26,7 @@ export default function ConfirmModal({
   };
 
   return (
+    <Overlay>
     <div className="confirm-modal-backdrop" onClick={onCancel}>
       <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
         {title && <h3 className="confirm-modal-title">{title}</h3>}
@@ -55,6 +57,7 @@ export default function ConfirmModal({
         </div>
       </div>
     </div>
+    </Overlay>
   );
 }
 

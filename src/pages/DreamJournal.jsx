@@ -16,6 +16,7 @@ import { highlightSnippet } from '../utils/highlight';
 import useEscapeKey from '../hooks/useEscapeKey';
 import useRefreshSignal from '../hooks/useRefreshSignal';
 import VoiceInput, { VoiceField } from '../components/VoiceInput';
+import Overlay from '../components/Overlay';
 import './DreamJournal.css';
 import { appUserPropType } from '../propTypes';
 
@@ -706,6 +707,7 @@ export default function DreamJournal({ user }) {
       )}
 
       {showNewDream && (
+        <Overlay>
         <div className="modal-overlay" onClick={handleOverlayClick}>
           <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="new-dream-heading">
             <div className="modal-header">
@@ -906,6 +908,7 @@ export default function DreamJournal({ user }) {
             </div>
           </div>
         </div>
+        </Overlay>
       )}
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} duration={5000} />}
     </div>

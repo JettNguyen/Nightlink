@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
+import Overlay from '../components/Overlay';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart, faPlus, faComment, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
@@ -825,6 +826,7 @@ export default function Feed({ user }) {
         />
       )}
       {reportModal && (
+        <Overlay>
         <div className="report-modal-backdrop" onClick={closeReportModal}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Report dream</h3>
@@ -840,6 +842,7 @@ export default function Feed({ user }) {
             </div>
           </div>
         </div>
+        </Overlay>
       )}
     </div>
   );
