@@ -50,23 +50,46 @@ const TEEN_UNSAFE_PATTERNS = [
 const SAFE_AI_TITLE_FALLBACK = 'Reflective Dream';
 const SAFE_AI_THEMES_FALLBACK = 'Some details were removed from this analysis as they fall outside what the AI can discuss. Use this as a general reflection only. AI output may be inaccurate and is not medical, mental health, legal, or safety advice.';
 
-// Shared base: output contract, length, safety, and speculative-language rules.
-// All style deltas inherit this, so never repeat format instructions inside a delta.
-const buildBasePrompt = (lengthRule) => `You are a dream analysis assistant on NightLink, an 18+ dream journaling app.
-Analyze the dream through your assigned lens and return ONLY minified JSON: {"title":"string","themes":"string","connections":[]}
+// The one thing each voice has to actually do. This rides in the "themes" field
+// contract rather than in the persona, because a requirement stated next to the
+// field is followed and the same sentence inside the persona was not: balanced
+// kept dropping both its question and its action.
+const STYLE_REQUIREMENT = {
+  balanced:  'Two symbols at most, but go deep on those two, then one reflection question with a question mark in it, then one small thing to try today.',
+  coach:     'End on the one thing to do tonight.',
+  therapist: 'Open on the feeling, not on a symbol.',
+  scientist: 'Name at least two brain systems or REM mechanisms outright, each tied to a detail of this dream. Writing around them in plain psychology language is the one way to get this wrong.',
+  mystical:  'Name the archetypes you find by their names.',
+  creative:  'End on the writing prompt.',
+  director:  'Write it in the vocabulary of production: the shot, the lens, the palette, the cut, the score. It is a pitch, so no psychological reading of the dreamer.',
+  comedian:  'Land one actual joke. Describing what would be funny about the dream is not the same thing.',
+  astrology: 'Name at least two placements from the sky block outright.',
+};
+const DEFAULT_STYLE_REQUIREMENT = STYLE_REQUIREMENT.balanced;
+
+// The persona goes first and the contract second, on purpose. With the app
+// identity and the JSON rules on top, gpt-4o-mini locked onto "dream analysis
+// assistant" and answered every style in the same "this dream may suggest"
+// voice, with the assigned lens showing up as nothing but word choice.
+const buildOutputRules = (lengthRule, requirement) => `You are writing for NightLink, an 18+ dream journaling app. Hold the voice above from the first sentence to the last: a reading that could have come from any other reader on this app is a failed reading.
+
+Return ONLY minified JSON: {"title":"string","themes":"string","connections":[]}
 
 - "title": a poetic, evocative 2 to 4 word phrase that names this specific dream (never generic)
-- "themes": your analysis in your assigned voice, ${lengthRule}, written as one flowing paragraph of plain text. The app shows it as a single paragraph, so no markdown, no headings, no bullets, no line breaks
+- "themes": ${lengthRule}, written as one flowing paragraph of plain text. The app shows it as a single paragraph, so no markdown, no headings, no bullets, no line breaks. ${requirement}
 - "connections": [], unless a memory block below tells you otherwise
-- Anchor every claim to something the dreamer actually described. A reading that would fit any dream is a failed reading
-- Use speculative language ("may suggest", "could reflect", "seems to") for anything you claim about the dreamer
+- Never open with "This dream may suggest" or a variant of it, and never walk the dream image by image handing each one a meaning. Work the details your lens actually cares about
+- Anchor what you say to something the dreamer described. A reading that would fit any dream is a failed reading
+- The dreamer reads this, so write to them as "you". Never call them "the dreamer" or write about them in the third person
+- No em dashes and no en dashes. Use a comma, a colon, or a new sentence
+- Keep claims about the dreamer's inner life speculative ("may suggest", "could reflect"). Never hedge your own craft: a shot, a joke, a story premise, or a named brain system is stated plainly, not qualified into mush
 - Engage thoughtfully with mature content as it naturally appears in dreams; never encourage self-harm or glorify real-world violence
 - If the dream touches on self-harm or suicidal themes, respond with warm, grounded support`;
 
 // Per-style persona and interpretive methodology, with no format instructions here.
 const STYLE_DELTAS = {
   balanced:
-    "You are a thoughtful, grounded dream interpreter. No mysticism, no jargon, just honest insight. Identify 1-2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
+    "You are a thoughtful, grounded dream interpreter. No mysticism, no jargon, just honest insight. Go deep on the symbols that actually carry the dream and what they may reveal about where the dreamer is right now, rather than cataloguing every image. The question you ask should be one that could genuinely unlock something, and the thing you suggest should be small enough to do today. Warm, clear, never condescending.",
 
   coach:
     "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns, and name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
@@ -75,7 +98,7 @@ const STYLE_DELTAS = {
     "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation. Name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
 
   scientist:
-    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Name only the mechanisms this dream's content actually supports, and say which detail points to each one. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
+    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
 
   mystical:
     "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols are actually present, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Name only the ones the imagery earns. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
@@ -110,7 +133,7 @@ const STYLE_TEMPERATURE = {
 // length; MAX_TOKENS is only a ceiling, kept well clear of the longest target so
 // a style is never cut off mid-JSON.
 const STYLE_LENGTH = {
-  balanced:  '150 to 190 words',
+  balanced:  '130 to 170 words',
   coach:     '140 to 180 words',
   therapist: '140 to 180 words',
   scientist: '150 to 200 words',
@@ -120,7 +143,7 @@ const STYLE_LENGTH = {
   comedian:  '100 to 140 words',
   astrology: '150 to 200 words',
 };
-const DEFAULT_STYLE_LENGTH = '150 to 190 words';
+const DEFAULT_STYLE_LENGTH = '150 to 190 words';  // custom prompts, which have no beat structure to fit
 const MAX_TOKENS = 600;
 
 // Keep PROMPT_TEMPLATES as an alias so the custom-style path and any callers still work.
@@ -454,8 +477,11 @@ Return ONLY the updated memory file. No preamble or explanation.`;
   }
 };
 
-const buildSystemPrompt = (styleDelta, contextBlock, lengthRule) => {
-  const parts = [buildBasePrompt(lengthRule || DEFAULT_STYLE_LENGTH), styleDelta || STYLE_DELTAS.balanced];
+const buildSystemPrompt = (styleDelta, contextBlock, lengthRule, requirement) => {
+  const parts = [
+    styleDelta || STYLE_DELTAS.balanced,
+    buildOutputRules(lengthRule || DEFAULT_STYLE_LENGTH, requirement || DEFAULT_STYLE_REQUIREMENT),
+  ];
   // The connections rules live here rather than in the base prompt, because
   // without a memory file there is nothing to connect and the whole block is
   // just tokens that invite the model to invent a pattern.
@@ -471,8 +497,8 @@ MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly.
   return parts.join('\n\n');
 };
 
-const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, lengthRule = DEFAULT_STYLE_LENGTH) => {
-  const sys = buildSystemPrompt(styleDelta, contextBlock, lengthRule);
+const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, lengthRule = DEFAULT_STYLE_LENGTH, requirement = DEFAULT_STYLE_REQUIREMENT) => {
+  const sys = buildSystemPrompt(styleDelta, contextBlock, lengthRule, requirement);
   // The client has no timeout of its own, so a stalled call would leave the
   // generate button spinning for as long as the platform allows.
   const res = await fetch(API_URL, {
@@ -528,6 +554,13 @@ const scheduleMemoryIndexing = ({ uid, tier, dreamId, text, title, themes, safet
   deferWork(indexing);
 };
 
+// House style has no em or en dashes. The prompt asks, this guarantees.
+const stripDashes = (text) => (text || '')
+  .replace(/(\d)\s*[\u2013\u2014]\s*(\d)/g, '$1-$2')
+  .replace(/\s*[\u2013\u2014]\s*/g, ', ')
+  .replace(/\s*,\s*,/g, ',')
+  .replace(/\s+([,.;:!?])/g, '$1');
+
 const parse = (raw) => {
   if (!raw) return { title: null, themes: null, connections: [] };
   const t = raw.trim();
@@ -544,7 +577,11 @@ const parse = (raw) => {
   }
   if (!title) { const m = raw.match(/"title"\s*:\s*"([^"]+)"/i); if (m) title = m[1].trim(); }
   if (!themes) { const m = raw.match(/"themes"\s*:\s*"([^"]+)"/i); if (m) themes = m[1].trim(); }
-  return { title, themes, connections };
+  return {
+    title: title && stripDashes(title),
+    themes: themes && stripDashes(themes),
+    connections: connections.map(stripDashes),
+  };
 };
 
 module.exports = async function handler(req, res) {
@@ -657,9 +694,10 @@ module.exports = async function handler(req, res) {
 
   const temperature = STYLE_TEMPERATURE[normalizedStyle] ?? 0.7;
   const lengthRule = STYLE_LENGTH[normalizedStyle] ?? DEFAULT_STYLE_LENGTH;
+  const requirement = STYLE_REQUIREMENT[normalizedStyle] ?? DEFAULT_STYLE_REQUIREMENT;
 
   let raw = '';
-  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule); }
+  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule, requirement); }
   catch (e) {
     refundQuota(uid, quota.usedCredit).catch(() => {});
     return res.status(502).json({ error: e.message || 'AI failed.' });
