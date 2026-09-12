@@ -601,7 +601,7 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(8px);
-  padding: 1.25rem;
+  padding: calc(env(safe-area-inset-top) + 1.25rem) 1.25rem calc(env(safe-area-inset-bottom) + 1.25rem);
   touch-action: none;
 }
 
@@ -611,8 +611,10 @@
   padding: 1.85rem;
   width: 100%;
   max-width: 580px;
-  max-height: calc(100dvh - 2.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  padding-bottom: 1.85rem;
+  /* Against the overlay's own box, not a viewport unit. dvh does not mean the
+     same thing in a web view as it does in a browser, which is how the panel
+     ended up taller than the screen it was supposed to fit inside. */
+  max-height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1155,32 +1157,22 @@
   animation: slideInUp 0.22s ease-out both;
 }
 
-/* The whole screen on a phone, not a card floating in the middle of it. As a
-   partial sheet there was always a strip of the dimmed page above it, which
-   read as a second panel sitting behind this one, and the panel's own height
-   had to be guessed against a viewport unit that does not mean the same thing
-   in a web view as it does in a browser. Filling the window sidesteps both:
-   there is nothing behind to see and nothing to measure. */
+/* A phone has less room to give away, so the panel keeps its gutter and spends
+   the rest on the form. The outer gutter comes from the overlay, which already
+   holds back off the status bar and the home indicator. */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 0;
-    align-items: stretch;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .modal-content {
-    width: 100%;
-    max-width: none;
-    height: 100%;
-    max-height: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: var(--raise-highlight);
-    padding: calc(env(safe-area-inset-top) + 0.6rem) 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+    padding: 1.25rem;
   }
 
-  /* The dream is the point of this screen, so it gets the room. */
+  /* The dream is the point of this screen, so it gets what is left. */
   .dream-textarea {
-    min-height: 38dvh;
+    min-height: 30dvh;
   }
 }
 
@@ -1210,10 +1202,6 @@
     font-size: var(--fs-sm);
     line-clamp: 3;
     -webkit-line-clamp: 3;
-  }
-
-  .modal-content {
-    padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
   }
 
   .modal-actions {
