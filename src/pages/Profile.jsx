@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Overlay from '../components/Overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencil, faGear, faLock, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faGear, faLock, faEllipsisVertical, faHeart, faComment } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
@@ -39,6 +39,51 @@ const resolveAccountEndpoint = () => {
 };
 
 const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
+
+const DEFAULT_REACTION = '💙';
+
+// What a dream collected, as a count rather than a control. The card is a link,
+// so reacting happens on the dream itself; this only says whether anyone did.
+// Three emoji at most, because the card is narrow and this is a preview.
+const renderReactionPreview = (dream) => {
+  const counts = dream.reactionCounts || {};
+  const hearts = counts[DEFAULT_REACTION] || 0;
+  const emoji = Object.entries(counts)
+    .filter(([key, count]) => key !== DEFAULT_REACTION && count > 0)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+  const comments = dream.commentCount || 0;
+  const total = Object.values(counts).reduce((sum, count) => sum + (count || 0), 0);
+  if (!total && !comments) return null;
+
+  const spoken = [];
+  if (total) spoken.push(`${total} ${total === 1 ? 'reaction' : 'reactions'}`);
+  if (comments) spoken.push(`${comments} ${comments === 1 ? 'comment' : 'comments'}`);
+
+  return (
+    <span className="profile-dream-reactions">
+      <span className="sr-only">{spoken.join(', ')}</span>
+      {hearts > 0 && (
+        <span className="profile-dream-reaction" aria-hidden="true">
+          <FontAwesomeIcon icon={faHeart} className="profile-dream-reaction-icon" />
+          {hearts}
+        </span>
+      )}
+      {emoji.map(([key, count]) => (
+        <span key={key} className="profile-dream-reaction" aria-hidden="true">
+          <span className="profile-dream-reaction-emoji">{key}</span>
+          {count}
+        </span>
+      ))}
+      {comments > 0 && (
+        <span className="profile-dream-reaction" aria-hidden="true">
+          <FontAwesomeIcon icon={faComment} className="profile-dream-reaction-icon" />
+          {comments}
+        </span>
+      )}
+    </span>
+  );
+};
 
 export default function Profile({ user }) {
   const { handle: routeHandle } = useParams();
@@ -528,6 +573,7 @@ export default function Profile({ user }) {
     const hasAi = Boolean(dream.aiGenerated && dream.aiInsights);
     const tagCount = dream.tags?.length || 0;
     const taggedCount = Array.isArray(dream.taggedUsers) ? dream.taggedUsers.length : 0;
+    const reactionPreview = renderReactionPreview(dream);
     return (
       <div key={dream.id} className={`profile-dream-card${hasAi ? ' profile-dream-card--analyzed' : ''}`} role="button" tabIndex={0}
         onClick={() => handleDreamNavigation(dream.id)}
@@ -539,8 +585,9 @@ export default function Profile({ user }) {
         </div>
         {title ? <h3 className="profile-dream-title">{title}</h3> : <p className="pending-title">Untitled</p>}
         <p className="profile-dream-snippet">{snippet}</p>
-        {(tagCount > 0 || taggedCount > 0) && (
+        {(reactionPreview || tagCount > 0 || taggedCount > 0) && (
           <div className="profile-dream-footer-meta">
+            {reactionPreview}
             {tagCount > 0 && <span className="profile-tag-count">{tagCount} {tagCount === 1 ? 'tag' : 'tags'}</span>}
             {taggedCount > 0 && <span className="profile-tag-count">{taggedCount} tagged</span>}
           </div>
@@ -555,6 +602,7 @@ export default function Profile({ user }) {
     const authorHandle = !isAnonymous ? (dream.authorProfile?.username || '') : '';
     const dateLabel = dream.createdAt ? formatDreamDate(dream.createdAt) : 'Shared recently';
     const snippet = dream.content?.length > 200 ? `${dream.content.slice(0, 200)}…` : (dream.content || 'No description yet.');
+    const reactionPreview = renderReactionPreview(dream);
     return (
       <div key={dream.id} className="tagged-dream-card" role="button" tabIndex={0}
         onClick={() => handleDreamNavigation(dream.id, authorHandle, dream.userId)}
@@ -576,6 +624,9 @@ export default function Profile({ user }) {
           <span className="tagged-pill shared-pill">Shared with you</span>
           {isAnonymous && <span className="tagged-pill muted-pill">Anonymous</span>}
         </div>
+        {reactionPreview && (
+          <div className="profile-dream-footer-meta tagged-dream-reactions">{reactionPreview}</div>
+        )}
       </div>
     );
   };

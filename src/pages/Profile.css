@@ -1222,11 +1222,45 @@
   overflow: hidden;
 }
 
+/* The gap here has to be wider than the one inside the reaction group, or the
+   tag counts read as another reaction. */
 .profile-dream-footer-meta {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.85rem;
   margin-top: auto;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* A count, not a control. The card is a link, so nothing here is pressable:
+   you go to the dream to react to it. */
+.profile-dream-reactions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.profile-dream-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-dream-reaction-icon {
+  font-size: 0.9rem;
+}
+
+.profile-dream-reaction-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tagged-dream-reactions {
+  margin-top: 0.6rem;
 }
 
 .profile-tag-count {

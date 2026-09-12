@@ -919,6 +919,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
  * --------------------------------------------------------------------------- */
 .reaction-button--heart:not(.active) .reaction-icon path,
 .reaction-button--comment .reaction-icon path,
+.profile-dream-reaction-icon path,
 .comment-heart-btn:not(.active) svg path {
   fill: none;
   stroke: currentColor;
