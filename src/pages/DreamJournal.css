@@ -894,10 +894,14 @@
 /* Hiding people and tagging people are both things most entries never use, so
    they sit behind a disclosure instead of adding two sections to every compose.
    Date and audience stay out in the open: those get set. */
+/* Collapsed, this sits between its own rule and the one the ai block draws, and
+   the label has to land in the middle of that band. The ai block contributes a
+   1rem margin below the summary, so the same 1rem goes above it. It is also
+   what every other section leaves under a rule. */
 .compose-more {
   margin-top: 1rem;
   border-top: 1px solid var(--border);
-  padding-top: 0.2rem;
+  padding-top: 1rem;
 }
 
 .compose-more > summary {
