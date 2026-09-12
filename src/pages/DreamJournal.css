@@ -576,7 +576,7 @@
   color: var(--text);
   font-size: var(--fs-base);
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
   min-height: 180px;
   transition: border-color 0.22s ease, box-shadow 0.22s ease;
   /* Ensure scrolling happens only within textarea, not the modal */
@@ -744,6 +744,54 @@
     color: var(--primary);
     background: rgba(255, 255, 255, 0.04);
   }
+}
+
+/* Generating from the sheet, before the dream exists as a row. The button stays
+   disabled until there is something to read, and the allowance it spends is
+   worth saying out loud before it goes. */
+.ai-compose {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.ai-compose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ai-compose-mark {
+  color: var(--primary);
+}
+
+.ai-compose-result {
+  width: 100%;
+  border-left: 2px solid rgba(201, 167, 240, 0.32);
+  padding-left: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ai-compose-result-label {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ai-compose-result-text {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .modal-actions {

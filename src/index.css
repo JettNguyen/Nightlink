@@ -380,6 +380,13 @@ input, textarea, select {
   outline: none;
 }
 
+/* The browser's resize grabber is drawn in the corner of the box, so a rounded
+   textarea clips it into a stub. It is also dead weight on a phone, where there
+   is no drag to perform. Fields size themselves instead. */
+textarea {
+  resize: none;
+}
+
 a {
   text-decoration: none;
   color: inherit;

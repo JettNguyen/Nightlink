@@ -302,7 +302,7 @@
 }
 
 .profile-textarea {
-  resize: vertical;
+  resize: none;
 }
 
 .profile-input:focus,

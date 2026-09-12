@@ -31,18 +31,9 @@ import { COMMON_EMOJI_REACTIONS, filterEmojiInput } from '../constants/emojiOpti
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED, syncCustomerInfoToSupabase } from '../utils/purchases';
 
-const PROMPT_TEMPLATES = {
-  balanced:  "You are a thoughtful, grounded dream interpreter. No mysticism, no jargon, just honest insight. Identify 1 or 2 standout symbols and explain what they may reveal about the dreamer's inner life right now. Ask one precise reflection question that could genuinely unlock something for them. Close with a single, concrete small action they could take today. Warm, clear, never condescending.",
-  coach:     "You are a performance and recovery coach who specializes in sleep quality and stress physiology. Scan this dream for signals of cognitive overload, unresolved pressure, or avoidance patterns, and name what you find specifically. Explain what the nervous system may be processing during this REM content. Deliver one targeted, practical suggestion the dreamer can implement tonight to reduce whatever stress this dream is mirroring. Supportive and direct, zero fluff.",
-  therapist: "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation. Name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
-  scientist: "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
-  mystical:  "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
-  creative:  "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream: the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
-  director:  "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary, so make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
-  comedian:  "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it, the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands: warm, specific, never punching down.",
-  astrology: "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block, meaning the moon phase and sign, the sun, and the visible planets, as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer, not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
-};
-
+// The wording of each named style lives on the server (api/ai.js), keyed by the
+// ids below, so there is exactly one copy of it. Only a custom prompt is sent
+// from here. Labels and descriptions are screen copy and belong on the client.
 const PROMPT_LABELS = {
   balanced: 'Balanced guide',
   coach: 'Sleep coach',
@@ -259,17 +250,13 @@ export default function DreamDetail({ user }) {
   const longPressTimeoutRef = useRef(null);
   const longPressTriggeredRef = useRef(false);
   const suppressNextClickRef = useRef(false);
-  const resolvePromptFromSettings = useCallback(() => {
-    const raw = (userSettings?.aiPromptPreset || '').trim() || 'balanced';
-    const preset = normalizePromptKey(raw);
-    if (isPromptLockedForTier(aiQuota?.tier || 'free', preset)) {
-      return PROMPT_TEMPLATES.balanced;
-    }
-    if (preset === 'custom') {
-      const custom = (userSettings?.aiPromptCustom || '').trim();
-      return custom || PROMPT_TEMPLATES.balanced;
-    }
-    return PROMPT_TEMPLATES[preset] || PROMPT_TEMPLATES.balanced;
+  // The saved custom instructions, but only when custom is the style in use and
+  // the plan allows it. Everything else is a named style the server words itself.
+  const resolveCustomPromptText = useCallback(() => {
+    const preset = normalizePromptKey((userSettings?.aiPromptPreset || '').trim() || 'balanced');
+    if (preset !== 'custom') return null;
+    if (isPromptLockedForTier(aiQuota?.tier || 'free', preset)) return null;
+    return (userSettings?.aiPromptCustom || '').trim() || null;
   }, [userSettings, aiQuota?.tier]);
   // Which style Settings is set to. Used both to order the list and to preselect
   // it when the chooser opens.
@@ -1685,9 +1672,11 @@ export default function DreamDetail({ user }) {
         selectedPromptKey = 'balanced';
       }
 
-      const promptToUse = customPrompt || resolvePromptFromSettings();
-      if (promptToUse) {
-        requestBody.customPrompt = promptToUse;
+      const customText = selectedPromptKey === 'custom'
+        ? (customPrompt || resolveCustomPromptText())
+        : null;
+      if (customText) {
+        requestBody.customPrompt = customText;
       }
       requestBody.promptStyle = selectedPromptKey;
 
@@ -1825,18 +1814,11 @@ export default function DreamDetail({ user }) {
       let selectedPromptKey = normalizePromptKey(promptKey || 'balanced');
 
       if (promptKey === 'current') {
-        const settingsKey = normalizePromptKey((userSettings?.aiPromptPreset || '').trim() || 'balanced');
-        selectedPromptKey = settingsKey;
-        customPrompt = resolvePromptFromSettings();
+        selectedPromptKey = normalizePromptKey((userSettings?.aiPromptPreset || '').trim() || 'balanced');
+        customPrompt = resolveCustomPromptText();
       } else if (promptKey === 'custom') {
         selectedPromptKey = 'custom';
-        customPrompt = userSettings?.aiPromptCustom || PROMPT_TEMPLATES.balanced;
-      } else if (promptKey) {
-        const normalizedKey = normalizePromptKey(promptKey);
-        if (PROMPT_TEMPLATES[normalizedKey]) {
-          customPrompt = PROMPT_TEMPLATES[normalizedKey];
-          selectedPromptKey = normalizedKey;
-        }
+        customPrompt = (userSettings?.aiPromptCustom || '').trim() || null;
       }
 
       if (isPromptLockedForTier(aiQuota?.tier || 'free', selectedPromptKey)) {
@@ -2194,7 +2176,7 @@ export default function DreamDetail({ user }) {
     // A 'custom' preset with nothing saved in it resolves to balanced on the
     // server, so mark balanced rather than leaving the list with no default.
     const currentKey = resolveCurrentPromptKey();
-    const all = Object.keys(PROMPT_TEMPLATES)
+    const all = Object.keys(PROMPT_LABELS)
       .filter((key) => key !== 'custom')
       .map((key) => ({ key, label: PROMPT_LABELS[key] || key }));
     if (usesCustom) all.push({ key: 'custom', label: 'My custom prompt' });

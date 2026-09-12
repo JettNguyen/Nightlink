@@ -11,12 +11,13 @@ import Toast from '../components/Toast';
 import { formatDreamDate, getTodayDateInputValue, parseDateInputValue } from '../utils/dates';
 import { buildDreamPath } from '../utils/urlHelpers';
 import { triggerLightHaptic, triggerMediumHaptic, triggerSelectionHaptic, triggerSuccessHaptic, triggerErrorHaptic } from '../utils/haptics';
-import { getModerationFeedback } from '../utils/contentModeration';
+import { getModerationFeedback, sanitizeAiGeneratedContent } from '../utils/contentModeration';
 import { highlightSnippet } from '../utils/highlight';
 import useEscapeKey from '../hooks/useEscapeKey';
 import useRefreshSignal from '../hooks/useRefreshSignal';
 import VoiceInput, { VoiceField } from '../components/VoiceInput';
 import Overlay from '../components/Overlay';
+import { requestDreamAnalysis } from '../services/AiService';
 import './DreamJournal.css';
 import { appUserPropType } from '../propTypes';
 
@@ -76,6 +77,8 @@ export default function DreamJournal({ user }) {
   const [content, setContent] = useState('');
   const [dreamDate, setDreamDate] = useState(() => getTodayDateInputValue());
   const [visibility, setVisibility] = useState('private');
+  const [aiResult, setAiResult] = useState(null);
+  const [aiBusy, setAiBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -382,6 +385,43 @@ export default function DreamJournal({ user }) {
     setTitle(''); setContent(''); setDreamDate(getTodayDateInputValue());
     setVisibility('private'); setExcludedViewerIds([]);
     setTaggedUsers([]); setTagHandle(''); setTaggingStatus('');
+    setAiResult(null); setAiBusy(false);
+  };
+
+  // Reading the dream before it is saved, rather than telling people to save it
+  // and come back. The style follows the preference in Settings, the same one
+  // the detail page uses when it regenerates.
+  const handleGenerateAi = async () => {
+    const text = content.trim();
+    if (!text || aiBusy || loading) return;
+    const feedback = getModerationFeedback(text, { contentType: 'dream text' });
+    if (feedback) { setToast(feedback); return; }
+
+    setAiBusy(true);
+    setToast(null);
+    void triggerLightHaptic();
+    try {
+      const selectedDate = parseDateInputValue(dreamDate);
+      const result = await requestDreamAnalysis({
+        dreamText: text,
+        promptStyle: (viewerProfile?.settings?.aiPromptPreset || 'balanced').trim() || 'balanced',
+        dreamDate: selectedDate ? selectedDate.toISOString() : null,
+      });
+      const sanitized = sanitizeAiGeneratedContent({ title: result.title, insights: result.insights });
+      if (!sanitized.title && !sanitized.insights) {
+        throw new Error('AI response was incomplete.');
+      }
+      setAiResult({ title: sanitized.title, insights: sanitized.insights });
+      // Only fills an empty field. A title you wrote yourself is the one you
+      // meant, so it is never overwritten.
+      if (sanitized.title && !title.trim()) setTitle(sanitized.title);
+      void triggerSuccessHaptic();
+    } catch (error) {
+      void triggerErrorHaptic();
+      setToast(error?.message || 'Could not generate right now. Try again in a moment.');
+    } finally {
+      setAiBusy(false);
+    }
   };
 
   const appendDictation = useCallback((text) => {
@@ -431,7 +471,9 @@ export default function DreamJournal({ user }) {
       title: resolvedTitle,
       content: content.trim(),
       visibility,
-      aiGenerated: false,
+      aiGenerated: Boolean(aiResult?.insights),
+      aiTitle: aiResult?.title || null,
+      aiInsights: aiResult?.insights || null,
       authorUsername: visibility === 'anonymous' ? null : (viewerProfile?.username || null),
       createdAt: selectedDreamDate,
       excludedViewerIds,
@@ -450,7 +492,9 @@ export default function DreamJournal({ user }) {
         title:               resolvedTitle,
         content:             content.trim(),
         visibility,
-        ai_generated:        false,
+        ai_generated:        Boolean(aiResult?.insights),
+        ai_title:            aiResult?.title || null,
+        ai_insights:         aiResult?.insights || null,
         author_username:     visibility === 'anonymous' ? null : (viewerProfile?.username || null),
         excluded_viewer_ids: excludedViewerIds,
         tagged_users:        taggedMeta,
@@ -903,7 +947,26 @@ export default function DreamJournal({ user }) {
                   )}
                 </div>
               </details>
-              <p className="ai-hint">Want an AI title or analysis? Save first, then open the dream to generate it.</p>
+              <div className="ai-compose">
+                <button
+                  type="button"
+                  className="ghost-btn ai-compose-btn"
+                  onClick={handleGenerateAi}
+                  disabled={loading || aiBusy || !content.trim()}
+                >
+                  <span className="ai-compose-mark" aria-hidden="true">✦</span>
+                  {aiBusy ? 'Reading your dream…' : aiResult ? 'Generate again' : 'Generate title and analysis'}
+                </button>
+                {aiResult?.insights ? (
+                  <div className="ai-compose-result" role="status" aria-live="polite">
+                    <p className="ai-compose-result-label">Analysis</p>
+                    <p className="ai-compose-result-text">{aiResult.insights}</p>
+                    <p className="ai-hint">Saves with the dream. Regenerate any time from the dream itself.</p>
+                  </div>
+                ) : (
+                  <p className="ai-hint">Uses one generation from your monthly allowance.</p>
+                )}
+              </div>
             </form>
             </div>
           </div>

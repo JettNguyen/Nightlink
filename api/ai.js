@@ -52,13 +52,14 @@ const SAFE_AI_THEMES_FALLBACK = 'Some details were removed from this analysis as
 
 // Shared base: output contract, length, safety, and speculative-language rules.
 // All style deltas inherit this, so never repeat format instructions inside a delta.
-const BASE_PROMPT = `You are a dream analysis assistant on NightLink, an 18+ dream journaling app.
+const buildBasePrompt = (lengthRule) => `You are a dream analysis assistant on NightLink, an 18+ dream journaling app.
 Analyze the dream through your assigned lens and return ONLY minified JSON: {"title":"string","themes":"string","connections":[]}
 
 - "title": a poetic, evocative 2 to 4 word phrase that names this specific dream (never generic)
-- "themes": your full analysis in your assigned voice
-- "connections": array of short strings (under 15 words each) for patterns explicitly recorded in the dreamer's memory file that also appear in this dream. A contrast counts as a connection when both halves are grounded, for example "water recurs, but this is the first time it turns violent". Only cite a connection if the memory states it, and do not infer, guess, or hallucinate recurring themes. Return [] if no memory context was provided or no overlap exists.
-- Use speculative language ("may suggest", "could reflect", "seems to")
+- "themes": your analysis in your assigned voice, ${lengthRule}, written as one flowing paragraph of plain text. The app shows it as a single paragraph, so no markdown, no headings, no bullets, no line breaks
+- "connections": [], unless a memory block below tells you otherwise
+- Anchor every claim to something the dreamer actually described. A reading that would fit any dream is a failed reading
+- Use speculative language ("may suggest", "could reflect", "seems to") for anything you claim about the dreamer
 - Engage thoughtfully with mature content as it naturally appears in dreams; never encourage self-harm or glorify real-world violence
 - If the dream touches on self-harm or suicidal themes, respond with warm, grounded support`;
 
@@ -74,22 +75,22 @@ const STYLE_DELTAS = {
     "You are an attachment-informed, trauma-aware therapist. Your first move is always emotional validation. Name what this dream likely felt like in the body without assuming the worst. Gently surface the core emotional need or fear the imagery may be expressing. Offer one grounding reframe or hopeful perspective rooted in the specific imagery, not platitudes. Close with a brief, compassionate observation about what this dream may be asking the dreamer to hold more gently. Soft, precise, never clinical.",
 
   scientist:
-    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
+    "You are a cognitive neuroscientist specializing in sleep and memory. Explain which brain systems were likely active during this specific dream content, whether that is the default mode network, limbic circuits, prefrontal suppression, memory consolidation, or emotional regulation, and why this particular scenario emerged. Name only the mechanisms this dream's content actually supports, and say which detail points to each one. Connect it to documented REM mechanisms: threat simulation, emotional memory replay, predictive modeling, or social cognition processing. Smart and specific, grounded in real neuroscience, but readable, not a journal abstract.",
 
   mystical:
-    "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols appear, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
+    "You are a depth-psychology-informed mystic fluent in Jungian archetypes, cross-cultural mythology, and universal symbol systems. Identify which archetypal figures or threshold symbols are actually present, whether shadow, anima/animus, trickster, death-rebirth, the void, or the guide, and speak to what the psyche is negotiating at a soul level. Name only the ones the imagery earns. Use language that honors the numinous without being vague. End with a single oracular sentence that names the deeper invitation this dream is extending. Poetic, precise, spiritually grounded.",
 
   creative:
     "You are a working fiction writer and story architect. Identify the latent narrative structure in this dream: the inciting wound, the archetypal character roles, the genre this world belongs to. Surface the story this dream is already telling and show the dreamer how it could become something real: a first scene, a character study, a world with its own rules. Give one sharp, specific writing prompt pulled directly from the dream's most vivid or strange detail. Energizing, craft-focused, never generic.",
 
   director:
-    "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary, so make bold aesthetic choices. One tight, cinematic paragraph. Visually precise, tonally committed, occasionally unhinged in the best way.",
+    "You are an auteur film director with a singular visual grammar. Write the pitch: open with the exact establishing shot, name the cinematographic style and emotional register, describe one pivotal image with sensory specificity, and state the thematic question this film would pose. This is a treatment, not a summary, so make bold aesthetic choices. Visually precise, tonally committed, occasionally unhinged in the best way.",
 
   comedian:
     "You are a sharp observational comedian who finds the genuine absurdity in how the subconscious works. Identify the most surreal, contradictory, or structurally ridiculous element of this dream and land a joke on it, the kind of humor that makes someone feel seen, not mocked. Still acknowledge the real emotional texture underneath; the best dream comedy is always at least a little true. Funny in a way that lands: warm, specific, never punching down.",
 
   astrology:
-    "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block, meaning the moon phase and sign, the sun, and the visible planets, as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer, not a directive, just an honest read. Flowing prose, no headers. Precise where the chart is interesting, quiet where it isn't."
+    "You are a practicing astrologer who reads dreams through the lens of the sky. Use the planetary positions in the sky context block, meaning the moon phase and sign, the sun, and the visible planets, as your source material. Don't work through each planet in sequence; instead, let the sky tell a coherent story. Lead with what feels most alive in the chart that night and connect it to what's most alive in the dream. Name specific planets and signs when they illuminate something, skip them when they don't. End with a brief, grounded sense of what this sky was asking of the dreamer, not a directive, just an honest read. Precise where the chart is interesting, quiet where it isn't."
 };
 
 // Per-style temperature: higher for expressive/generative styles, lower for analytical ones.
@@ -105,18 +106,22 @@ const STYLE_TEMPERATURE = {
   astrology: 0.75,
 };
 
-// Per-style token budget. Astrology needs more room to cover every planet.
-const STYLE_MAX_TOKENS = {
-  balanced:  650,
-  coach:     650,
-  therapist: 650,
-  scientist: 700,
-  mystical:  680,
-  creative:  680,
-  director:  650,
-  comedian:  600,
-  astrology: 800,
+// How long each voice runs. Asking for a word count is what actually sets the
+// length; MAX_TOKENS is only a ceiling, kept well clear of the longest target so
+// a style is never cut off mid-JSON.
+const STYLE_LENGTH = {
+  balanced:  '150 to 190 words',
+  coach:     '140 to 180 words',
+  therapist: '140 to 180 words',
+  scientist: '150 to 200 words',
+  mystical:  '140 to 180 words',
+  creative:  '150 to 200 words',
+  director:  '120 to 160 words',
+  comedian:  '100 to 140 words',
+  astrology: '150 to 200 words',
 };
+const DEFAULT_STYLE_LENGTH = '150 to 190 words';
+const MAX_TOKENS = 600;
 
 // Keep PROMPT_TEMPLATES as an alias so the custom-style path and any callers still work.
 const PROMPT_TEMPLATES = STYLE_DELTAS;
@@ -449,22 +454,25 @@ Return ONLY the updated memory file. No preamble or explanation.`;
   }
 };
 
-const buildSystemPrompt = (styleDelta, contextBlock) => {
-  const parts = [BASE_PROMPT, styleDelta || STYLE_DELTAS.balanced];
+const buildSystemPrompt = (styleDelta, contextBlock, lengthRule) => {
+  const parts = [buildBasePrompt(lengthRule || DEFAULT_STYLE_LENGTH), styleDelta || STYLE_DELTAS.balanced];
+  // The connections rules live here rather than in the base prompt, because
+  // without a memory file there is nothing to connect and the whole block is
+  // just tokens that invite the model to invent a pattern.
   if (contextBlock) {
     parts.push(`${contextBlock}
 
-MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly:
-- In your "themes" text, reference a memory pattern only if it genuinely appears in this dream, for example "Water has come up in your dreams before; here it shifts from still to rushing..." Never fabricate a connection that isn't supported by the memory file.
-- Populate the "connections" array ONLY with patterns that are (a) explicitly listed in the memory file AND (b) clearly present in this dream. If a symbol from this dream is not in the memory file, do not claim it recurs. Return [] if nothing overlaps.
-- Say the thing the dreamer is least likely to have noticed themselves: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion that is missing where the memory says it usually sits. A grounded contrast or absence is a connection, and both halves just have to be real.
+MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly.
+- Fill "connections" only with patterns the memory file explicitly records that are also clearly present in this dream, each under 15 words. A contrast counts when both halves are real, for example "water recurs, but this is the first time it turns violent". A symbol this dream has that the memory file does not is not recurring. Return [] if nothing overlaps.
+- In "themes", mention a remembered pattern only where it genuinely shows up in this dream, for example "Water has come up in your dreams before; here it shifts from still to rushing..."
+- Reach for what the dreamer is least likely to have noticed: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion missing where the memory says it usually sits.
 - Accuracy matters more than fullness. Fewer real connections are better than more invented ones.`);
   }
   return parts.join('\n\n');
 };
 
-const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, maxTokens = 500) => {
-  const sys = buildSystemPrompt(styleDelta, contextBlock);
+const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, lengthRule = DEFAULT_STYLE_LENGTH) => {
+  const sys = buildSystemPrompt(styleDelta, contextBlock, lengthRule);
   // The client has no timeout of its own, so a stalled call would leave the
   // generate button spinning for as long as the platform allows.
   const res = await fetch(API_URL, {
@@ -477,7 +485,10 @@ const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 
         { role: 'system', content: sys },
         { role: 'user', content: `Dream:\n"""${text}"""` }
       ],
-      max_tokens: maxTokens,
+      // JSON mode, so the answer is always parseable and the regex fallback in
+      // parse() stops being the thing that saves a response.
+      response_format: { type: 'json_object' },
+      max_tokens: MAX_TOKENS,
       temperature
     })
   });
@@ -486,7 +497,11 @@ const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 
     throw new Error(`OpenAI error ${res.status}: ${err}`);
   }
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content;
+  const choice = data.choices?.[0];
+  // A cut-off answer is truncated JSON. The caller refunds the quota on a throw,
+  // so name what happened instead of letting it read as an incomplete response.
+  if (choice?.finish_reason === 'length') throw new Error('The analysis ran long and was cut off. Try generating it again.');
+  const content = choice?.message?.content;
   if (!content) throw new Error('Empty AI response');
   return content;
 };
@@ -641,10 +656,10 @@ module.exports = async function handler(req, res) {
   }
 
   const temperature = STYLE_TEMPERATURE[normalizedStyle] ?? 0.7;
-  const maxTokens = STYLE_MAX_TOKENS[normalizedStyle] ?? 500;
+  const lengthRule = STYLE_LENGTH[normalizedStyle] ?? DEFAULT_STYLE_LENGTH;
 
   let raw = '';
-  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, maxTokens); }
+  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule); }
   catch (e) {
     refundQuota(uid, quota.usedCredit).catch(() => {});
     return res.status(502).json({ error: e.message || 'AI failed.' });

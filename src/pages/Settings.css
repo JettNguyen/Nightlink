@@ -351,7 +351,7 @@ html[data-native-platform='ios'] .settings-save-bar {
   color: var(--text);
   font-size: var(--fs-base);
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
   transition: border-color 0.2s ease;
 }
 
