@@ -19,7 +19,7 @@ import { getModerationFeedback, sanitizeAiGeneratedContent } from '../utils/cont
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import useEscapeKey from '../hooks/useEscapeKey';
-import VoiceInput from '../components/VoiceInput';
+import VoiceInput, { VoiceField } from '../components/VoiceInput';
 import AvatarDisplay from '../components/AvatarDisplay';
 import ProBadge from '../components/ProBadge';
 import { buildProfilePath } from '../utils/urlHelpers';
@@ -2441,7 +2441,7 @@ export default function DreamDetail({ user }) {
         <div className="detail-body">
             {isOwner && editingContent ? (
               <>
-                <div className="voice-field">
+                <VoiceField>
                   <textarea
                     className="detail-textarea"
                     aria-label="Dream text"
@@ -2455,7 +2455,7 @@ export default function DreamDetail({ user }) {
                       label="Dictate your dream"
                     />
                   </div>
-                </div>
+                </VoiceField>
                 <div className="detail-tags-editor">
                   <label htmlFor="detail-tag-input">Tags</label>
                   <div className="detail-tag-input-row">

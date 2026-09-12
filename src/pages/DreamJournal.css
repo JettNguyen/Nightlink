@@ -585,9 +585,12 @@
 }
 
 .modal-overlay {
+  /* One colour for the sheet and for the fades that sit on top of it. They were
+     three separate copies of the same hex, which is how they drift. */
+  --modal-surface: #1f1c2b;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -598,7 +601,7 @@
 }
 
 .modal-content {
-  background: #131219;
+  background: var(--modal-surface);
   border-radius: 20px;
   padding: 1.85rem;
   width: 100%;
@@ -610,7 +613,6 @@
   flex-direction: column;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(16px);
   touch-action: pan-y;
 }
 
@@ -638,12 +640,12 @@
 
 .modal-form-wrap::before {
   top: 0;
-  background: linear-gradient(to bottom, #131219, transparent);
+  background: linear-gradient(to bottom, var(--modal-surface), transparent);
 }
 
 .modal-form-wrap::after {
   bottom: 0;
-  background: linear-gradient(to top, #131219, transparent);
+  background: linear-gradient(to top, var(--modal-surface), transparent);
 }
 
 .modal-form-wrap.at-top::before {
@@ -1003,9 +1005,21 @@
   animation: slideInUp 0.22s ease-out both;
 }
 
+/* A sheet rather than a card floating in the middle of the screen. The gutter
+   around it meant the dream you are writing got a fraction of the width while
+   the page behind it kept the rest. */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 1rem;
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: none;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    max-height: calc(100dvh - env(safe-area-inset-top) - 1.25rem);
+    padding-bottom: calc(1.85rem + env(safe-area-inset-bottom));
   }
 }
 
@@ -1038,7 +1052,7 @@
   }
 
   .modal-content {
-    padding: 1.25rem;
+    padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
   }
 
   .modal-actions {

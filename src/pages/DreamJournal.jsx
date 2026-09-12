@@ -15,7 +15,7 @@ import { getModerationFeedback } from '../utils/contentModeration';
 import { highlightSnippet } from '../utils/highlight';
 import useEscapeKey from '../hooks/useEscapeKey';
 import useRefreshSignal from '../hooks/useRefreshSignal';
-import VoiceInput from '../components/VoiceInput';
+import VoiceInput, { VoiceField } from '../components/VoiceInput';
 import './DreamJournal.css';
 import { appUserPropType } from '../propTypes';
 
@@ -734,7 +734,7 @@ export default function DreamJournal({ user }) {
                   disabled={loading}
                 />
               </div>
-              <div className="voice-field">
+              <VoiceField>
                 <textarea
                   className="dream-textarea"
                   placeholder="Describe everything you remember…"
@@ -751,7 +751,7 @@ export default function DreamJournal({ user }) {
                     label="Dictate your dream"
                   />
                 </div>
-              </div>
+              </VoiceField>
               <div className="visibility-section">
                 <p className="section-label">Who can see this dream?</p>
                 <div className="visibility-options">

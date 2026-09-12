@@ -298,3 +298,43 @@ VoiceInput.defaultProps = {
   disabled: false,
   label: 'Dictate your dream',
 };
+
+/* The mic floats over the bottom right of the field, and the textarea reserves
+   padding so the end of the text clears it. That padding only helps once the
+   field is scrolled all the way down, and a browser scrolling the caret into
+   view stops as soon as the caret is inside the visible box, which leaves the
+   line you are typing sitting underneath the button.
+   
+   Pinning the scroll to the bottom while the caret is at the end of the value
+   reveals that reserved padding, so the live line stays above the mic. Editing
+   anywhere else in the text is left alone. */
+export function VoiceField({ children, className }) {
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    const field = rootRef.current?.querySelector('textarea');
+    if (!field) return undefined;
+    const keepCaretClear = () => {
+      if (field.selectionStart !== field.value.length) return;
+      field.scrollTop = field.scrollHeight;
+    };
+    field.addEventListener('input', keepCaretClear);
+    return () => field.removeEventListener('input', keepCaretClear);
+  }, []);
+
+  return (
+    <div ref={rootRef} className={className ? `voice-field ${className}` : 'voice-field'}>
+      {children}
+    </div>
+  );
+}
+
+VoiceField.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
+VoiceField.defaultProps = {
+  children: null,
+  className: '',
+};
