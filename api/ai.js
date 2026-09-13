@@ -512,9 +512,15 @@ const reconcileMemory = (updated, previous) => {
       const text = line.trim();
       if (!text) return false;
       const phrase = toBarePhrase(text);
+      const prior = before.get(normalizePhrase(phrase));
       // Nothing in the file knew about this, so this dream is its first sighting
       // whatever count the model put on it. One sighting is not a pattern.
-      if (!before.has(normalizePhrase(phrase))) {
+      //
+      // An entry the old file carried with no count at all is the same story a
+      // step back: files written before any of this recorded first sightings as
+      // patterns and never said how often. It goes back to the log too, and
+      // comes up again on its own the next time it actually appears.
+      if (!prior || (!prior.seenOnce && prior.count === null)) {
         if (phrase) demoted.push(phrase);
         return false;
       }
@@ -536,12 +542,11 @@ const serializeMemory = (sections, demoted, before) => {
       const prior = before.get(normalizePhrase(toBarePhrase(line)));
       if (!prior) return line;
       const stated = entryCount(line);
-      const ceiling = prior.count === null ? 2 : prior.count + 1;
-      if (stated === null) {
-        // Never invent a count for something the file never counted.
-        if (prior.count === null) return line;
-        return line.replace(/^(\s*[-•*]\s*[^:\n]+?)(\s*:|$)/, `$1: ~${prior.count} times$2`);
-      }
+      const held = prior.seenOnce ? 2 : (prior.count ?? 2);
+      const ceiling = prior.seenOnce ? 2 : held + 1;
+      // A rewrite that leaves the count off keeps the one the file already had,
+      // since there is nothing to say the thing turned up again this time.
+      if (stated === null) return line.replace(/^(\s*[-•*]\s*[^:\n]+?)(\s*:|$)/, `$1: ~${held} times$2`);
       if (stated <= ceiling) return line;
       return line.replace(/~?\s*\d+\s*times?/i, `~${ceiling} times`);
     });
