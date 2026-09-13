@@ -98,6 +98,14 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Which one each person left, once the popover covers every emoji on a dream
+   rather than one at a time. */
+.reaction-popover-row-emoji {
+  margin-left: auto;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .reaction-popover-avatar {
   width: 38px;
   height: 38px;

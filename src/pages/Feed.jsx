@@ -22,6 +22,7 @@ import useEscapeKey from '../hooks/useEscapeKey';
 import useRefreshSignal from '../hooks/useRefreshSignal';
 import { triggerLightHaptic, triggerSelectionHaptic, triggerSuccessHaptic, triggerErrorHaptic } from '../utils/haptics';
 import { COMMON_EMOJI_REACTIONS, filterEmojiInput } from '../constants/emojiOptions';
+import { buildReactionCluster } from '../utils/reactions';
 
 const DEFAULT_API_ORIGIN = 'https://www.nightlink.dev';
 
@@ -586,14 +587,15 @@ export default function Feed({ user }) {
       viewerReactions: Array.isArray(rawR) ? rawR : (rawR ? [rawR] : []),
     };
     const viewerCustomEmoji = reactionSnapshot.viewerReactions?.find((e) => e !== defaultReaction) || null;
-    // Same row the dream detail page draws: one chip per emoji with its count,
-    // yours ringed. The feed used to show only your own emoji, on the picker
-    // trigger, so a post everyone had reacted to looked unreacted to until you
-    // opened it.
-    const emojiReactionEntries = Object.entries(reactionSnapshot.counts || {})
-      .filter(([emoji, count]) => typeof emoji === 'string' && emoji.trim().length
-        && emoji !== defaultReaction && count > 0)
-      .sort((a, b) => b[1] - a[1]);
+    // Same cluster the dream page draws: every emoji as three glyphs and one
+    // total, yours leading. The feed used to show only your own emoji, on the
+    // picker trigger, so a post everyone had reacted to looked unreacted to
+    // until you opened it.
+    const reactionCluster = buildReactionCluster(
+      reactionSnapshot.counts,
+      reactionSnapshot.viewerReactions,
+      defaultReaction
+    );
 
     const handleCardKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -667,22 +669,21 @@ export default function Feed({ user }) {
               <FontAwesomeIcon icon={faComment} className="reaction-icon" />
               <span className="reaction-count">{dream.commentCount || 0}</span>
             </button>
-            {emojiReactionEntries.map(([emoji, count]) => {
-              const reacted = reactionSnapshot.viewerReactions?.includes(emoji);
-              return (
-                <button
-                  key={emoji}
-                  type="button"
-                  className={`reaction-button reaction-button--emoji${reacted ? ' active' : ''}`}
-                  onClick={(e) => handleReactionClick(e, dream, emoji)}
-                  aria-pressed={Boolean(reacted)}
-                  aria-label={reacted ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
-                >
-                  <span className="reaction-emoji-text" aria-hidden="true">{emoji}</span>
-                  <span className="reaction-count">{count}</span>
-                </button>
-              );
-            })}
+            {reactionCluster.total > 0 && (
+              <button
+                type="button"
+                className={`reaction-button reaction-button--cluster${reactionCluster.reacted ? ' active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); openDreamDetail(); }}
+                aria-label={`${reactionCluster.total} ${reactionCluster.total === 1 ? 'reaction' : 'reactions'}, open the dream to see who`}
+              >
+                <span className="reaction-cluster-glyphs" aria-hidden="true">
+                  {reactionCluster.glyphs.map((emoji) => (
+                    <span key={emoji} className="reaction-emoji-text">{emoji}</span>
+                  ))}
+                </span>
+                <span className="reaction-count">{reactionCluster.total}</span>
+              </button>
+            )}
             <button type="button" className="reaction-button custom-emoji-trigger" onClick={(e) => openCustomReactionPicker(e, dream)} aria-label="Add emoji reaction">
               <FontAwesomeIcon icon={faPlus} className="reaction-icon" />
             </button>

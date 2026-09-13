@@ -186,6 +186,9 @@ export default function ReactionInsightsModal({
                       <span className="reaction-popover-username">@{entry.username}</span>
                     )}
                   </div>
+                  {entry.emoji && (
+                    <span className="reaction-popover-row-emoji" aria-hidden="true">{entry.emoji}</span>
+                  )}
                 </li>
               );
             })}
@@ -211,6 +214,7 @@ ReactionInsightsModal.propTypes = {
   emoji: PropTypes.string,
   entries: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
+    emoji: PropTypes.string,
     displayName: PropTypes.string,
     username: PropTypes.string,
     avatarIcon: PropTypes.string,

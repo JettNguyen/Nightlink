@@ -28,6 +28,7 @@ import { DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR } from '../constants/av
 import './DreamDetail.css';
 import { appUserPropType } from '../propTypes';
 import { COMMON_EMOJI_REACTIONS, filterEmojiInput } from '../constants/emojiOptions';
+import { buildReactionCluster } from '../utils/reactions';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED, syncCustomerInfoToSupabase } from '../utils/purchases';
 
@@ -120,6 +121,7 @@ const INITIAL_INSIGHT_STATE = {
   title: '',
   subtitle: '',
   userIds: [],
+  emojiByUser: null,
   anchorRect: null
 };
 
@@ -324,6 +326,18 @@ export default function DreamDetail({ user }) {
     reactionInsightOpenRef.current = reactionInsightState.open;
   }, [reactionInsightState.open]);
 
+  // On a mouse the popover follows the pointer off the control. A tap has no
+  // equivalent, so the next press anywhere else puts it away.
+  useEffect(() => {
+    if (!reactionInsightState.open) return undefined;
+    const closeOnOutside = (event) => {
+      if (event.target?.closest?.('.reaction-popover, .reaction-button--cluster')) return;
+      setReactionInsightState({ ...INITIAL_INSIGHT_STATE });
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [reactionInsightState.open]);
+
   const totalDreamReactions = useMemo(() => (
     Object.values(reactionSnapshot.counts || {}).reduce((sum, value) => sum + (value || 0), 0)
   ), [reactionSnapshot]);
@@ -334,29 +348,25 @@ export default function DreamDetail({ user }) {
 
   const viewerHeartedDream = viewerDreamReactions.includes(DEFAULT_EMOJI);
 
-  // One chip per emoji, counts included, the viewer's own marked as reacted.
-  // The row used to show the viewer's emoji on the picker trigger with no count
-  // and then list every emoji again underneath, so your own reaction appeared
-  // twice and only the second copy was counted.
-  const emojiReactionEntries = useMemo(() => (
-    Object.entries(reactionSnapshot.counts || {})
-      .filter(([emoji, count]) => typeof emoji === 'string' && emoji.trim().length
-        && emoji !== DEFAULT_EMOJI && count > 0)
-      .sort((a, b) => b[1] - a[1])
-  ), [reactionSnapshot]);
+  // Every emoji on the dream as one control: three glyphs and a total, the
+  // viewer's own leading so being in on a reaction still reads at a glance.
+  const reactionCluster = useMemo(() => (
+    buildReactionCluster(reactionSnapshot.counts, viewerDreamReactions, DEFAULT_EMOJI)
+  ), [reactionSnapshot, viewerDreamReactions]);
 
   const reactionInsightEntries = useMemo(() => {
     const ids = reactionInsightState.userIds || [];
     if (!ids.length) return [];
     return ids.map((id) => ({
       id,
+      emoji: reactionInsightState.emojiByUser?.[id] || '',
       displayName: userSummaries[id]?.displayName || 'Dreamer',
       username: userSummaries[id]?.username || '',
       avatarIcon: userSummaries[id]?.avatarIcon || null,
       avatarBackground: userSummaries[id]?.avatarBackground || undefined,
       avatarColor: userSummaries[id]?.avatarColor || undefined
     }));
-  }, [reactionInsightState.userIds, userSummaries]);
+  }, [reactionInsightState.userIds, reactionInsightState.emojiByUser, userSummaries]);
 
   const renderReactionSymbol = (emoji) => (
     emoji === DEFAULT_EMOJI
@@ -413,20 +423,10 @@ export default function DreamDetail({ user }) {
       emoji: payload.emoji || '',
       title: payload.title || 'Reactions',
       subtitle: payload.subtitle || '',
-      userIds: ids
+      userIds: ids,
+      emojiByUser: payload.emojiByUser || null
     });
   }, [ensureUserSummaries, cancelModalAutoClose]);
-
-  const getDreamReactionUserIds = useCallback((emoji) => {
-    if (!emoji || !dream?.viewerReactions) return [];
-    return Object.entries(dream.viewerReactions)
-      .filter(([, value]) => {
-        const arr = Array.isArray(value) ? value : (value ? [value] : []);
-        return arr.includes(emoji);
-      })
-      .map(([userId]) => userId)
-      .filter(Boolean);
-  }, [dream?.viewerReactions]);
 
   const getCommentHeartUserIds = useCallback((entry) => (
     Array.isArray(entry?.heartUserIds)
@@ -434,18 +434,26 @@ export default function DreamDetail({ user }) {
       : []
   ), []);
 
-  const buildDreamReactionPayload = useCallback((emoji) => {
-    const userIds = getDreamReactionUserIds(emoji);
-    if (!userIds.length) return null;
-    const countLabel = userIds.length === 1 ? '1 person' : `${userIds.length} people`;
-    const actionLabel = emoji === DEFAULT_EMOJI ? 'hearted this dream' : 'reacted this way';
+  // The per emoji popover answered "who left this one". The cluster stands for
+  // all of them at once, so its popover answers "who reacted", and each row
+  // carries the emoji that person chose.
+  const buildAllDreamReactionsPayload = useCallback(() => {
+    const byUser = [];
+    Object.entries(dream?.viewerReactions || {}).forEach(([userId, value]) => {
+      const list = Array.isArray(value) ? value : (value ? [value] : []);
+      const chosen = list.find((emoji) => emoji && emoji !== DEFAULT_EMOJI);
+      if (userId && chosen) byUser.push([userId, chosen]);
+    });
+    if (!byUser.length) return null;
+    const countLabel = byUser.length === 1 ? '1 person' : `${byUser.length} people`;
     return {
       title: 'Dream reactions',
-      subtitle: `${countLabel} ${actionLabel}`,
-      emoji: emoji || '',
-      userIds
+      subtitle: `${countLabel} reacted`,
+      emoji: '',
+      userIds: byUser.map(([userId]) => userId),
+      emojiByUser: Object.fromEntries(byUser)
     };
-  }, [getDreamReactionUserIds]);
+  }, [dream?.viewerReactions]);
 
   const buildCommentHeartPayload = useCallback((entry) => {
     const userIds = getCommentHeartUserIds(entry);
@@ -509,19 +517,19 @@ export default function DreamDetail({ user }) {
     }
   }, []);
 
-  const handleDreamReactionHoverStart = useCallback((event, emoji) => {
-    const payload = buildDreamReactionPayload(emoji);
+  const handleDreamReactionHoverStart = useCallback((event) => {
+    const payload = buildAllDreamReactionsPayload();
     if (!payload) return;
     const anchorRect = event?.currentTarget?.getBoundingClientRect?.();
     openReactionInsight({ ...payload, anchorRect });
-  }, [buildDreamReactionPayload, openReactionInsight]);
+  }, [buildAllDreamReactionsPayload, openReactionInsight]);
 
-  const handleDreamReactionTouchStart = useCallback((event, emoji) => {
-    const payload = buildDreamReactionPayload(emoji);
+  const handleDreamReactionTouchStart = useCallback((event) => {
+    const payload = buildAllDreamReactionsPayload();
     if (!payload) return;
     const anchorElement = event?.currentTarget || null;
     beginLongPressPreview(payload, () => anchorElement?.getBoundingClientRect?.());
-  }, [beginLongPressPreview, buildDreamReactionPayload]);
+  }, [beginLongPressPreview, buildAllDreamReactionsPayload]);
 
   const handleCommentHeartHoverStart = useCallback((event, entry) => {
     const payload = buildCommentHeartPayload(entry);
@@ -2520,25 +2528,30 @@ export default function DreamDetail({ user }) {
               <FontAwesomeIcon icon={faComment} className="reaction-icon" />
               <span className="reaction-count">{comments.length}</span>
             </button>
-            {emojiReactionEntries.map(([emoji, count]) => {
-              const reacted = viewerDreamReactions.includes(emoji);
-              return (
-                <button
-                  key={emoji}
-                  type="button"
-                  className={`reaction-button reaction-button--emoji${reacted ? ' active' : ''}`}
-                  onClick={(event) => {
-                    if (consumeSuppressedClick(event)) return;
-                    handleDreamReactionSelection(emoji);
-                  }}
-                  aria-pressed={reacted}
-                  aria-label={reacted ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
-                >
-                  <span className="reaction-emoji-text" aria-hidden="true">{emoji}</span>
-                  <span className="reaction-count">{count}</span>
-                </button>
-              );
-            })}
+            {reactionCluster.total > 0 && (
+              <button
+                type="button"
+                className={`reaction-button reaction-button--cluster${reactionCluster.reacted ? ' active' : ''}`}
+                onClick={(event) => {
+                  if (consumeSuppressedClick(event)) return;
+                  handleDreamReactionHoverStart(event);
+                }}
+                aria-label={`${reactionCluster.total} ${reactionCluster.total === 1 ? 'reaction' : 'reactions'}, see who reacted`}
+                onMouseEnter={handleDreamReactionHoverStart}
+                onMouseLeave={scheduleModalAutoClose}
+                onTouchStart={handleDreamReactionTouchStart}
+                onTouchEnd={handleTouchEndInteraction}
+                onTouchCancel={handleTouchEndInteraction}
+                onTouchMove={handleTouchMoveInteraction}
+              >
+                <span className="reaction-cluster-glyphs" aria-hidden="true">
+                  {reactionCluster.glyphs.map((emoji) => (
+                    <span key={emoji} className="reaction-emoji-text">{emoji}</span>
+                  ))}
+                </span>
+                <span className="reaction-count">{reactionCluster.total}</span>
+              </button>
+            )}
             <button
               type="button"
               className="reaction-button custom-emoji-trigger"

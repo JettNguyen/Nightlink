@@ -998,6 +998,15 @@ html[data-native-platform='ios'] .profile-ai-badge {
   font-variant-numeric: tabular-nums;
 }
 
+/* Every emoji on a dream, as one control. A chip each meant the row wrapped
+   into a block of counts on anything that landed well, and the picker takes any
+   emoji a person can type, so there was no ceiling on it. */
+.reaction-cluster-glyphs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .reaction-button:hover:not(:disabled) {
     color: var(--text);
@@ -1014,7 +1023,8 @@ html[data-native-platform='ios'] .profile-ai-badge {
    with a ring says it the way every reaction chip does. After the hover block
    on purpose, so hovering a chip you have reacted to does not wash the tint
    back out. */
-.reaction-button--emoji.active {
+.reaction-button--emoji.active,
+.reaction-button--cluster.active {
   background: rgba(201, 167, 240, 0.16);
   box-shadow: inset 0 0 0 1.5px rgba(201, 167, 240, 0.6);
 }
