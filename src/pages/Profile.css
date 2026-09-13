@@ -778,6 +778,7 @@
   color: var(--text);
   margin: 0;
   transition: color 0.18s ease;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {

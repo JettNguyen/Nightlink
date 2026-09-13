@@ -416,6 +416,7 @@
 .comment-time {
   color: var(--text-secondary);
   font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 .comment-body {
@@ -499,6 +500,7 @@
 
 .comment-heart-count {
   font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .comment-reply-context {

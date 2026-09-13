@@ -403,6 +403,7 @@
 .dream-tag-count {
   font-size: var(--fs-xs);
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* meta row: date + visibility + AI badge */

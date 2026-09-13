@@ -28,6 +28,7 @@
   padding: 0.1rem 0.42rem;
   border-radius: 999px;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .feed-tab.active .feed-tab-count {

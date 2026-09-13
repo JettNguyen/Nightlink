@@ -35,6 +35,7 @@
   font-size: var(--fs-sm);
   margin: 0;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* The row's one line of text: who, what they did, when. Only the name is bold,
