@@ -52,6 +52,40 @@ export default function EditProfile({ user }) {
     setAccountVisibility(event.target.checked ? 'private' : 'public');
   };
 
+  // Measured against what was loaded, so the bar can say whether there is
+  // anything to save rather than offering to save nothing.
+  const hasChanges = Boolean(userData) && (
+    displayName !== (userData.displayName || '')
+    || username !== (userData.username || '')
+    || bio !== (userData.settings?.bio || '')
+    || avatarIcon !== (userData.avatarIcon || AVATAR_ICONS[0].id)
+    || avatarBackground !== (userData.avatarBackground || AVATAR_BACKGROUNDS[0])
+    || avatarColor !== (userData.avatarColor || AVATAR_COLORS[0])
+    || accountVisibility !== (userData.accountVisibility || userData.settings?.accountVisibility || 'private')
+    || Boolean(photoBlob)
+    || removePhotoFlag
+  );
+
+  const handleDiscard = () => {
+    if (!userData) return;
+    if (photoPreviewURL && photoPreviewURL !== userData.photoURL) {
+      URL.revokeObjectURL(photoPreviewURL);
+    }
+    setDisplayName(userData.displayName || '');
+    setUsername(userData.username || '');
+    setBio(userData.settings?.bio || '');
+    setAvatarIcon(userData.avatarIcon || AVATAR_ICONS[0].id);
+    setAvatarBackground(userData.avatarBackground || AVATAR_BACKGROUNDS[0]);
+    setAvatarColor(userData.avatarColor || AVATAR_COLORS[0]);
+    setAccountVisibility(userData.accountVisibility || userData.settings?.accountVisibility || 'private');
+    setPhotoPreviewURL(userData.photoURL || null);
+    setPhotoFile(null);
+    setPhotoBlob(null);
+    setRemovePhotoFlag(false);
+    setUsernameError('');
+    setUploadError('');
+  };
+
   useEffect(() => {
     if (!user?.uid) { navigate('/profile', { replace: true }); return; }
     supabase.from('profiles').select('*').eq('id', user.uid).single()
@@ -190,7 +224,26 @@ export default function EditProfile({ user }) {
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="profile-edit-form">
+      {!pageLoading && (
+        <div className="save-bar">
+          <p>{hasChanges ? 'You have unsaved changes' : 'All changes saved'}</p>
+          <div className="btn-group">
+            <button type="button" className="ghost-btn" onClick={handleDiscard} disabled={saving || !hasChanges}>
+              Discard
+            </button>
+            <button
+              type="submit"
+              form="profile-edit-form"
+              className={`primary-btn${saving ? ' is-loading' : ''}`}
+              disabled={saving || !hasChanges}
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form id="profile-edit-form" onSubmit={handleSave} className="profile-edit-form">
         <div className="profile-field">
           <label htmlFor="ep-display-name" className="profile-field-label">Display name</label>
           <input
@@ -355,15 +408,6 @@ export default function EditProfile({ user }) {
               />
             ))}
           </div>
-        </div>
-
-        <div className="profile-actions">
-          <button type="button" className="secondary-btn" onClick={() => navigate('/profile')}>
-            Cancel
-          </button>
-          <button type="submit" className="primary-btn" disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
         </div>
       </form>
 

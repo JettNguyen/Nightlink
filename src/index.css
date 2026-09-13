@@ -1429,6 +1429,82 @@ html[data-native-platform='ios'] .profile-ai-badge {
   }
 }
 
+/* Save lives at the top of a long form, not at the bottom of it. Sticking it
+   under the header means the state of your edits and the way to commit them are
+   never something you have to scroll to find. Shared, because every screen that
+   saves should say the same thing the same way. */
+.save-bar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: calc(74px + env(safe-area-inset-top));
+  z-index: 200;
+  background: rgba(14, 10, 20, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+/* iOS: stick save bar just below the iOS header (52px, same for all device sizes) */
+html[data-native-platform='ios'] .save-bar {
+  top: calc(52px + env(safe-area-inset-top));
+  /* Remove backdrop-filter on iOS native to prevent GPU compositing promotion.
+     The compositing layer it creates causes a blank-box stale-tile artifact
+     above it (where settings-header renders) until the user scrolls. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(14, 10, 20, 0.97);
+}
+
+.save-bar p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.save-bar .btn-group {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* The way back off a pushed page. It started on the legal screens and is now on
+   connections, edit profile and settings too, so it lives here rather than
+   making every page that needs it pull in the legal stylesheet. */
+.legal-back-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  padding: 0.5rem 0;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  min-height: 44px;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease, opacity 0.18s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .legal-back-btn:hover {
+    opacity: 0.8;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

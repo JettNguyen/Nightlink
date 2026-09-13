@@ -21,55 +21,6 @@
   margin: 0;
 }
 
-.settings-save-bar {
-  position: -webkit-sticky;
-  position: sticky;
-  top: calc(74px + env(safe-area-inset-top));
-  z-index: 200;
-  background: rgba(14, 10, 20, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: nowrap;
-}
-
-/* iOS: stick save bar just below the iOS header (52px, same for all device sizes) */
-html[data-native-platform='ios'] .settings-save-bar {
-  top: calc(52px + env(safe-area-inset-top));
-  /* Remove backdrop-filter on iOS native to prevent GPU compositing promotion.
-     The compositing layer it creates causes a blank-box stale-tile artifact
-     above it (where settings-header renders) until the user scrolls. */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: rgba(14, 10, 20, 0.97);
-}
-
-.settings-save-bar p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-base);
-  min-width: 0;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.settings-save-bar .btn-group {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
 .settings-status {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -632,13 +583,13 @@ html[data-native-platform='ios'] .settings-save-bar {
 
 
 @media (max-width: 600px) {
-  .settings-save-bar {
+  .save-bar {
     flex-direction: row;
     align-items: center;
     gap: 0.75rem;
   }
 
-  .settings-save-bar .btn-group {
+  .save-bar .btn-group {
     justify-content: flex-end;
   }
 
