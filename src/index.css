@@ -22,8 +22,12 @@
   --like: #ff6b8a;
   --background: #0d0d11;
   --background-secondary: #13121a;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-muted: rgba(255, 255, 255, 0.02);
+  /* Overlays in violet rather than white. A white veil over a dark page makes
+     grey, and grey everywhere is what reads as flat: the surfaces, the
+     hairlines and the presses were all the same colourless film. Same lightness,
+     carried at a slightly higher alpha because violet is darker than white. */
+  --surface: rgba(205, 188, 245, 0.05);
+  --surface-muted: rgba(205, 188, 245, 0.028);
   --text: #eeeafa;
   /* Secondary text used to be #cdbded, a 20% saturated purple. That sat only
      10 saturation points off --primary, so a link inside a sentence read as
@@ -36,23 +40,30 @@
      without dropping under the floor. */
   --text-meta: #948cae;
   /* What a press paints, at the shape of the target rather than the glyph. */
-  --press-surface: rgba(255, 255, 255, 0.075);
+  --press-surface: rgba(214, 200, 255, 0.09);
   /* Two of these on purpose. --border draws hairlines between rows and around
      panels, which are structure rather than controls, so they stay quiet. A
      text field is a control: its boundary is the only thing saying where to
      type, which puts it under WCAG 1.4.11 and its 3:1 floor. 0.34 over the page
      lands at 3.06:1. */
-  --border: rgba(255, 255, 255, 0.07);
+  --border: rgba(205, 188, 245, 0.09);
+  /* This one stays white. Violet at the same lightness measures 2.0:1 against
+     the page, well under the 3:1 a control's boundary owes, and no alpha fixes
+     it: the hue is darker than white to begin with. A field's edge is the only
+     thing saying where to type, so it keeps the contrast and loses the tint. */
   --control-border: rgba(255, 255, 255, 0.34);
   /* Depth, kept to one rule: light comes from above. A raised surface catches a
      hairline of it along its top edge, and a recessed one takes a shadow there
      instead. Both are one pixel and neither is a glow, which is the line
      between depth and tack. Stream rows stay flat on purpose: they are content,
      not objects sitting on the page. */
-  --raise-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  --sink-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 38px rgba(0, 0, 0, 0.34);
-  --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.24), 0 8px 22px rgba(0, 0, 0, 0.26);
+  /* Light has a colour and so does its absence. The highlight is warm, the
+     shadows are a deep violet rather than black, which is the difference
+     between a surface that is lit and a surface that is merely lighter. */
+  --raise-highlight: inset 0 1px 0 rgba(255, 248, 236, 0.075);
+  --sink-shadow: inset 0 1px 2px rgba(9, 5, 24, 0.36);
+  --shadow-soft: 0 1px 2px rgba(9, 5, 24, 0.36), 0 14px 38px rgba(9, 5, 24, 0.4);
+  --shadow-light: 0 1px 2px rgba(9, 5, 24, 0.3), 0 8px 22px rgba(9, 5, 24, 0.32);
   --glow-primary: 0 0 50px rgba(157, 111, 212, 0.22);
   --error: #ff5050;
   --success: #2cd44e;
@@ -72,9 +83,9 @@
   /* A wash of violet behind the top of the page. The app is read at night on a
      near black screen, and a flat one reads as switched off rather than dark. */
   --app-background-gradient:
-    radial-gradient(130% 55% at 50% 0%, rgba(157, 111, 212, 0.13), transparent 62%),
-    radial-gradient(110% 42% at 50% 100%, rgba(157, 111, 212, 0.07), transparent 72%),
-    linear-gradient(180deg, #0d0d11 0%, #13101f 55%, #0d0d11 100%);
+    radial-gradient(130% 55% at 50% 0%, rgba(157, 111, 212, 0.17), transparent 62%),
+    radial-gradient(110% 45% at 50% 100%, rgba(72, 108, 200, 0.11), transparent 72%),
+    linear-gradient(180deg, #0d0d11 0%, #141024 48%, #0e0c16 100%);
 
   /* Type scale. One step per role. If two things are the same size they are
      meant to read as the same rank. Anything not on this scale was drift.
