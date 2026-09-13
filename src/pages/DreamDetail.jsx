@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Overlay from '../components/Overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical, faComment } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
+import { faHeart, faPlus, faLock, faChevronDown, faEllipsisVertical, faComment, faPencil } from '@fortawesome/free-solid-svg-icons'; // faPlus kept for emoji picker trigger
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
@@ -2303,7 +2303,7 @@ export default function DreamDetail({ user }) {
                     className="detail-title-editable"
                     onClick={() => setEditingTitle(true)}
                   >
-                    {titleText} <span className="edit-hint">✎</span>
+                    {titleText} <FontAwesomeIcon icon={faPencil} className="edit-hint" aria-hidden="true" />
                   </button>
                 </h1>
               )
@@ -2339,7 +2339,7 @@ export default function DreamDetail({ user }) {
                   onClick={() => setEditingDate(true)}
                 >
                   {formattedDate}
-                  <span className="edit-hint">✎</span>
+                  <FontAwesomeIcon icon={faPencil} className="edit-hint" aria-hidden="true" />
                 </button>
               ) : (
                 <div className="detail-date-pill">{formattedDate}</div>

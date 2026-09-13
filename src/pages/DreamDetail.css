@@ -51,6 +51,8 @@
   /* User-authored text: break long unbroken strings instead of overflowing. */
   overflow-wrap: break-word;
   overflow-wrap: anywhere;
+  text-align: left;
+  justify-content: flex-start;
   /* It is an h1, so it was inheriting Prata italic 600 and coming out as the
      only dream title in the app set in the display serif. Same face and weight
      as the feed and journal titles now, just at page-heading size. */
@@ -67,6 +69,8 @@
 }
 
 .detail-title-editable {
+  text-align: left;
+  justify-content: flex-start;
   cursor: pointer;
   background: none;
   border: none;
@@ -142,17 +146,14 @@
   justify-content: flex-end;
 }
 
-/* display, not opacity. At opacity 0 it still held its width and the pill's
-   gap, so the date sat off-centre in a badge with an empty slot beside it. On
-   touch there is no hover, so it simply never takes up room. */
+/* Always there. It used to appear on hover, which on a phone means never, so
+   the one mark saying a title can be edited was invisible to almost everyone
+   who could act on it. Purple because that is what interactive means here, and
+   a size down so it hints rather than competing with the heading. */
 .edit-hint {
-  display: none;
-  font-size: var(--fs-sm);
-}
-@media (hover: hover) and (pointer: fine) {
-  .detail-title-editable:hover .edit-hint, .detail-date-pill--interactive:hover .edit-hint {
-    display: inline;
-  }
+  font-size: 0.6em;
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .detail-title-edit,
