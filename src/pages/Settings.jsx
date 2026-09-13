@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
 import { SettingsSkeleton } from '../components/SkeletonLoader';
@@ -846,8 +844,7 @@ export default function Settings({ user }) {
   return (
     <div className="page-container settings-page">
       {!isNativeIOS && (
-        <button type="button" className="legal-back-btn" onClick={() => navigate('/profile')}>
-          <FontAwesomeIcon icon={faChevronLeft} style={{ marginRight: '0.4rem' }} />
+        <button type="button" className="page-back-btn" onClick={() => navigate('/profile')}>
           Profile
         </button>
       )}

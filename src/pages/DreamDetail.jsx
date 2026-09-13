@@ -2136,9 +2136,8 @@ export default function DreamDetail({ user }) {
     return (
       <div className={containerClass}>
         {!isNativeIOS && (
-          <button className="detail-back-btn" type="button" onClick={goBack}>
-            <span className="detail-back-icon" aria-hidden="true">&larr;</span>
-            <span>Go back</span>
+          <button className="page-back-btn" type="button" onClick={goBack}>
+            Back
           </button>
         )}
         <div className="detail-error">{error}</div>
@@ -2150,9 +2149,8 @@ export default function DreamDetail({ user }) {
     return (
       <div className={containerClass}>
         {!isNativeIOS && (
-          <button className="detail-back-btn" type="button" onClick={goBack}>
-            <span className="detail-back-icon" aria-hidden="true">&larr;</span>
-            <span>Go back</span>
+          <button className="page-back-btn" type="button" onClick={goBack}>
+            Back
           </button>
         )}
         <div className="detail-error">Dream not available.</div>
@@ -2262,11 +2260,10 @@ export default function DreamDetail({ user }) {
           <div className="detail-toolbar">
             <button
               type="button"
-              className="detail-back-btn"
+              className="page-back-btn"
               onClick={goBack}
             >
-              <span className="detail-back-icon" aria-hidden="true">&larr;</span>
-              <span>Go back</span>
+              Back
             </button>
           </div>
         )}

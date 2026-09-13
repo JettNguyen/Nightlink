@@ -1496,9 +1496,10 @@ html[data-native-platform='ios'] .save-bar {
 /* The way back off a pushed page. It started on the legal screens and is now on
    connections, edit profile and settings too, so it lives here rather than
    making every page that needs it pull in the legal stylesheet. */
-.legal-back-btn {
+.page-back-btn {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
   background: none;
   border: none;
   color: var(--primary);
@@ -1510,8 +1511,20 @@ html[data-native-platform='ios'] .save-bar {
   min-height: 44px;
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease, opacity 0.18s ease;
 }
+
+/* Drawn rather than imported, so every page gets the same arrow without each
+   one choosing its own. Two of them were a literal left arrow character and the
+   rest a font icon, at two different weights. */
+.page-back-btn::before {
+  content: '';
+  width: 0.46rem;
+  height: 0.46rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateX(1px) rotate(45deg);
+}
 @media (hover: hover) and (pointer: fine) {
-  .legal-back-btn:hover {
+  .page-back-btn:hover {
     opacity: 0.8;
   }
 }
@@ -1955,12 +1968,11 @@ button:disabled:active {
 .auth-password-toggle:active,
 .comment-replies-toggle:active,
 .detail-author-btn:active,
-.detail-back-btn:active,
 .detail-title-editable:active,
 .detail-date-pill--interactive:active,
 .feed-author-link:active,
 .feed-card-menu-btn:active,
-.legal-back-btn:active,
+.page-back-btn:active,
 .memory-patterns-link:active,
 .nav-logo:active,
 .rc-restore-btn:active,
@@ -1993,8 +2005,7 @@ button:disabled:active {
 
   .feed-card-menu-btn:hover,
   .auth-password-toggle:hover,
-  .detail-back-btn:hover,
-  .legal-back-btn:hover {
+  .page-back-btn:hover {
     color: var(--text);
   }
 

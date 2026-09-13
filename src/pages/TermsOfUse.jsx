@@ -5,8 +5,8 @@ export default function TermsOfUse() {
   const navigate = useNavigate();
   return (
     <div className="page-container legal-page">
-      <button type="button" className="legal-back-btn" onClick={() => navigate(-1)}>
-        ← Back
+      <button type="button" className="page-back-btn" onClick={() => navigate(-1)}>
+        Back
       </button>
       <article className="legal-card">
         <h1>Terms of Use</h1>

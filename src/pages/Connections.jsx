@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
@@ -313,8 +311,7 @@ export default function Connections({ user }) {
   return (
     <div className="page-container stream-page">
       {!isNativeIOS && (
-        <button type="button" className="legal-back-btn" onClick={() => navigate(-1)}>
-          <FontAwesomeIcon icon={faChevronLeft} style={{ marginRight: '0.4rem' }} />
+        <button type="button" className="page-back-btn" onClick={() => navigate(-1)}>
           Back
         </button>
       )}

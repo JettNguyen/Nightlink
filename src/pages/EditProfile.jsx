@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faCamera, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
@@ -211,8 +211,7 @@ export default function EditProfile({ user }) {
   return (
     <div className="page-container">
       {!isNativeIOS && (
-        <button type="button" className="legal-back-btn" onClick={() => navigate('/profile')}>
-          <FontAwesomeIcon icon={faChevronLeft} style={{ marginRight: '0.4rem' }} />
+        <button type="button" className="page-back-btn" onClick={() => navigate('/profile')}>
           Profile
         </button>
       )}

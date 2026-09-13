@@ -141,9 +141,8 @@ export default function DreamInsights({ user }) {
   }, [rcCustomerInfo]);
 
   const backButton = !isNativeIOS && (
-    <button type="button" className="detail-back-btn insights-back-btn" onClick={() => navigate(-1)}>
-      <span className="detail-back-icon" aria-hidden="true">&larr;</span>
-      <span>Go back</span>
+    <button type="button" className="page-back-btn" onClick={() => navigate(-1)}>
+      Back
     </button>
   );
 
