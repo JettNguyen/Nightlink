@@ -380,13 +380,13 @@ const isDreamMemoryIndexed = async (uid, dreamId) => {
   return data ? !!data.memory_indexed : true;
 };
 
-// Rewrites the memory file from the current one. Returns whether it persisted.
-// The caller must not mark the dream indexed unless it did, or the dream is lost
-// from the memory permanently.
-const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) => {
-  const systemPrompt = `You maintain a private dream memory file for one dreamer, written for that dreamer to read. After each analyzed dream, update the file by merging in new patterns, symbols, and themes.
+// Rewrites the memory file after each analysis. Lives here with the other
+// prompts rather than inside the function that sends it.
+const MEMORY_PROMPT = `You maintain a private dream memory file for one dreamer, written for that dreamer to read. After each analyzed dream, update the file.
 
-Your value is in noticing what the dreamer cannot see from inside a single night: how a symbol changes over time, which figure keeps returning, what pairs with what, and what has quietly stopped appearing.
+You have two jobs and the order matters. First, log what this dream held, so a later dream can be matched against it. Second, promote anything that has now happened more than once into a pattern. A detail from a single dream is not a pattern, however striking it was.
+
+Your value is in noticing what the dreamer cannot see from inside a single night: how a symbol changes over time, which figure keeps returning, what pairs with what, and what has quietly stopped appearing. None of that is visible until something happens twice.
 
 Use only the headings that have content (omit empty ones):
 ## Recurring symbols
@@ -396,27 +396,192 @@ Use only the headings that have content (omit empty ones):
 ## Notable narratives
 ## Shifts over time
 ## Open threads
+## Seen once
+
+The file has two parts and nothing appears in both:
+- "Seen once" is the log. One line for each thing that has turned up in exactly one dream, written as a bare noun phrase and nothing else: "a black Tesla", "a flooded stairwell", "your old high school". No meaning, no reading, no count
+- Every section above "Seen once" is for patterns, and a pattern is something that has turned up in two or more separate dreams. Every line there carries its count, and that count is never 1
+
+Working a new dream into the file:
+- Something you have no record of: add one line to "Seen once" and nothing anywhere else. Writing it above "Seen once" with a count of 1 is always wrong, however striking it was
+- Something already sitting under "Seen once": this is its second appearance. Take it out of "Seen once", put it in the section where it belongs as "2 times", and only now say what it may mean
+- Something already recorded as a pattern: raise its count and sharpen the reading
+- Moods, themes and narratives work the same way. One dream's dread is not an emotional pattern
+- An entry above "Seen once" carrying a count of 1, or no count at all, came from an older version of this file. Move it down to "Seen once" and strip its reading
+- Keep "Seen once" to about 25 entries. When it overflows, drop the oldest
 
 Rules:
 - Keep total length under 900 words
 - Use concise note-style writing, not full prose sentences
-- Track rough occurrence counts where useful (e.g. "water: ~8 times")
+- Every entry above "Seen once" carries its count (e.g. "water: ~8 times")
 - Note the direction a pattern is moving, not just that it exists (e.g. "water: ~8 times; still and calm in early entries, turbulent recently")
 - Record pairings that keep co-occurring (e.g. "the house appears with the absent father in most entries")
 - Under "Shifts over time", record changes worth telling the dreamer about: a symbol that has inverted, an emotion that has cooled, a recurring figure that has stopped appearing
 - Under "Open threads", record what keeps arriving unresolved, such as a chase never resolved, a door never opened, or a conversation never finished
 - Relative sequencing only ("early entries", "recently", "the last few"), never dates, months, or dream IDs
 - Merge new information into existing entries, never duplicate
-- Add new entries only when genuinely novel
+- Add new entries only when genuinely novel, and never duplicate an item between "Seen once" and a section above it
 - Never drop an entry that has occurred 3 or more times; consolidate wording instead
-- When nearing the length limit, trim the rarest single-occurrence entries first
+- When nearing the length limit, trim "Seen once" first, oldest entries going first
 - Never include raw dream text, only synthesized patterns and observations
 - The dreamer reads this file, so write it to them. Never refer to them in the third person and never call them "the user", "the dreamer", or by name
 - Every entry is already about them, so a possessive is redundant: write "Dad: represents a desire for emotional backing", not "User's dad: ...". Where a reference is genuinely unavoidable, use "you" or "your"
 - Apply that to entries already in the file: when merging, rewrite any third-person reference you find into this voice
 - Never speculate about diagnoses, medical conditions, or the dreamer's safety
 
+Last pass before you answer: read every line above "Seen once". Any of them that does not stand on two or more dreams belongs under "Seen once" instead, as a bare noun phrase.
+
 Return ONLY the updated memory file. No preamble or explanation.`;
+
+// Sections where a line is a claim that something recurs, so a line there has
+// to prove it. "Shifts over time" and "Open threads" are prose notes with no
+// counts to check, and are left alone.
+const COUNTED_SECTIONS = new Set([
+  'Recurring symbols',
+  'Recurring figures & people',
+  'Emotional patterns',
+  'Life themes (inferred)',
+  'Notable narratives',
+]);
+const SEEN_ONCE = 'Seen once';
+
+const entryCount = (line) => {
+  const m = line.match(/~?\s*(\d+)\s*time/i);
+  return m ? parseInt(m[1], 10) : null;
+};
+
+// "black Tesla: ~2 times; power and status" -> "black Tesla". A thing logged
+// once is a bare noun phrase, because the reading has not been earned yet.
+const stripBullet = (line) => line.trim().replace(/^[-•*]\s*/, '');
+const toBarePhrase = (line) => stripBullet(line).split(':')[0].replace(/\s*\(.*?\)\s*$/, '').trim();
+// Matches "your mom" to "mom" and "a black Tesla" to "black Tesla", so a
+// rewording between rewrites is not read as a different thing.
+const normalizePhrase = (phrase) => phrase.toLowerCase().replace(/^(?:a|an|the|your|my)\s+/, '').replace(/[^a-z0-9]/g, '');
+
+const parseSections = (file) => {
+  const sections = [];
+  let current = null;
+  for (const line of (file || '').split('\n')) {
+    if (line.startsWith('## ')) {
+      current = { heading: line.slice(3).trim(), lines: [] };
+      sections.push(current);
+    } else if (current) {
+      current.lines.push(line);
+    } else if (line.trim()) {
+      // Anything before the first heading stays where it is.
+      sections.push({ heading: null, lines: [line] });
+    }
+  }
+  return sections;
+};
+
+// What the file held before this rewrite, which is the only ground truth there
+// is for whether something has happened before. A count of null means the file
+// knew the thing but never said how often, which is what older files look like.
+const indexMemory = (file) => {
+  const index = new Map();
+  for (const section of parseSections(file)) {
+    for (const line of section.lines) {
+      if (!line.trim()) continue;
+      const key = normalizePhrase(toBarePhrase(line));
+      if (!key) continue;
+      index.set(key, {
+        seenOnce: section.heading === SEEN_ONCE,
+        count: section.heading === SEEN_ONCE ? 1 : entryCount(line),
+      });
+    }
+  }
+  return index;
+};
+
+// The model cannot count. It has this dream and the current file, no way to
+// check whether it has seen a parking garage before, and a rule saying nothing
+// above "Seen once" may say 1 time. So it writes "2 times" on things that have
+// happened once and promotes them on the spot. The previous file settles it
+// instead: something is a pattern here only if the file already knew it, and a
+// count can only go up by the one dream being merged in.
+const reconcileMemory = (updated, previous) => {
+  if (!updated) return updated;
+  const before = indexMemory(previous);
+  const sections = parseSections(updated);
+  const demoted = [];
+
+  for (const section of sections) {
+    if (!COUNTED_SECTIONS.has(section.heading)) continue;
+    section.lines = section.lines.filter((line) => {
+      const text = line.trim();
+      if (!text) return false;
+      const phrase = toBarePhrase(text);
+      // Nothing in the file knew about this, so this dream is its first sighting
+      // whatever count the model put on it. One sighting is not a pattern.
+      if (!before.has(normalizePhrase(phrase))) {
+        if (phrase) demoted.push(phrase);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  return serializeMemory(sections, demoted, before);
+};
+
+const serializeMemory = (sections, demoted, before) => {
+  // A promotion out of "Seen once" is real and lands on a count of exactly 2.
+  // Anything else is capped at what it had plus this one dream, the most a
+  // single merge can honestly add. An entry the old file never counted stays
+  // uncounted unless the model committed to a number, and then only to 2.
+  for (const section of sections) {
+    if (!COUNTED_SECTIONS.has(section.heading)) continue;
+    section.lines = section.lines.map((line) => {
+      const prior = before.get(normalizePhrase(toBarePhrase(line)));
+      if (!prior) return line;
+      const stated = entryCount(line);
+      const ceiling = prior.count === null ? 2 : prior.count + 1;
+      if (stated === null) {
+        // Never invent a count for something the file never counted.
+        if (prior.count === null) return line;
+        return line.replace(/^(\s*[-•*]\s*[^:\n]+?)(\s*:|$)/, `$1: ~${prior.count} times$2`);
+      }
+      if (stated <= ceiling) return line;
+      return line.replace(/~?\s*\d+\s*times?/i, `~${ceiling} times`);
+    });
+  }
+
+  const promoted = new Set(
+    sections.filter((s) => COUNTED_SECTIONS.has(s.heading))
+      .flatMap((s) => s.lines.map((line) => normalizePhrase(toBarePhrase(line))))
+  );
+  let seenOnce = sections.find((section) => section.heading === SEEN_ONCE);
+  if (!seenOnce && demoted.length) {
+    seenOnce = { heading: SEEN_ONCE, lines: [] };
+    sections.push(seenOnce);
+  }
+  if (seenOnce) {
+    // Anything that just became a pattern leaves the log, and a demotion joins
+    // it as a bare phrase unless the log already has it.
+    seenOnce.lines = seenOnce.lines.filter((line) => line.trim() && !promoted.has(normalizePhrase(toBarePhrase(line))));
+    for (const phrase of demoted) {
+      const key = normalizePhrase(phrase);
+      if (promoted.has(key)) continue;
+      if (seenOnce.lines.some((line) => normalizePhrase(toBarePhrase(line)) === key)) continue;
+      seenOnce.lines.push(`- ${phrase}`);
+    }
+  }
+
+  return sections
+    // A heading the rewrite emptied, and the "- none" the model writes instead
+    // of leaving a heading out, both go.
+    .filter((section) => section.lines.some((line) => line.trim() && !/^[-•*]?\s*none\.?$/i.test(line.trim())))
+    .map((section) => (section.heading
+      ? `## ${section.heading}\n${section.lines.filter((l) => l.trim() && !/^[-•*]?\s*none\.?$/i.test(l.trim())).join('\n')}`
+      : section.lines.join('\n')))
+    .join('\n\n');
+};
+
+// Rewrites the memory file from the current one. Returns whether it persisted.
+// The caller must not mark the dream indexed unless it did, or the dream is lost
+// from the memory permanently.
+const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) => {
 
   // Re-read instead of using the copy fetched at the top of the request: this
   // rewrites the whole file, so building on a stale read would silently discard
@@ -439,7 +604,7 @@ Return ONLY the updated memory file. No preamble or explanation.`;
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: MEMORY_PROMPT },
           { role: 'user', content: userContent },
         ],
         // The file is capped at 900 words, which is roughly 1200 tokens. The
@@ -456,7 +621,7 @@ Return ONLY the updated memory file. No preamble or explanation.`;
       console.error('Dream memory update hit the token ceiling; keeping the previous file.');
       return false;
     }
-    const updatedMemory = choice?.message?.content?.trim();
+    const updatedMemory = reconcileMemory(choice?.message?.content?.trim(), currentMemory);
     if (!updatedMemory) return false;
     // A file that comes back less than half its old size is a failed rewrite,
     // not a consolidation. Trimming rare entries never costs that much.
@@ -489,7 +654,8 @@ const buildSystemPrompt = (styleDelta, contextBlock, lengthRule, requirement) =>
     parts.push(`${contextBlock}
 
 MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly.
-- Fill "connections" only with patterns the memory file explicitly records that are also clearly present in this dream, each under 15 words. A contrast counts when both halves are real, for example "water recurs, but this is the first time it turns violent". A symbol this dream has that the memory file does not is not recurring. Return [] if nothing overlaps.
+- Fill "connections" only with things the memory file explicitly records that are also clearly present in this dream, each under 15 words. A contrast counts when both halves are real, for example "water recurs, but this is the first time it turns violent". A symbol this dream has that the memory file does not is not recurring. Return [] if nothing overlaps.
+- The file's "Seen once" list is things that have happened exactly once. One of those turning up in this dream is its second appearance, which is worth saying plainly ("the black Tesla is back"). Never call it a long-running pattern, and never cite a "Seen once" item that is not in this dream.
 - In "themes", mention a remembered pattern only where it genuinely shows up in this dream, for example "Water has come up in your dreams before; here it shifts from still to rushing..."
 - Reach for what the dreamer is least likely to have noticed: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion missing where the memory says it usually sits.
 - Accuracy matters more than fullness. Fewer real connections are better than more invented ones.`);

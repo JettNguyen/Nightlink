@@ -71,6 +71,38 @@ const extractCount = (entry) => {
   return m ? parseInt(m[1], 10) : null;
 };
 
+// The memory file keeps "Seen once" as its own bookkeeping: details that have
+// turned up in exactly one dream. It needs them to recognise a repeat later,
+// but one sighting is not a pattern, so the list never reaches this page.
+const HIDDEN_SECTIONS = new Set(['Seen once']);
+
+// Sections where a line claims something recurs, so a line there has to prove
+// it with a count. "Shifts over time" and "Open threads" are prose notes with
+// no counts to check, and show as written.
+const COUNTED_SECTIONS = new Set([
+  'Recurring symbols',
+  'Recurring figures & people',
+  'Emotional patterns',
+  'Life themes (inferred)',
+  'Notable narratives',
+]);
+
+// What the page will actually show. A counted section only shows what has
+// happened at least twice, which leaves out both a one-off and an entry an
+// older file recorded with no count at all. The next analysis rewrites the
+// file with counts, so anything real comes back on its own.
+const visibleSections = (sections) => {
+  const visible = {};
+  for (const [name, entries] of Object.entries(sections)) {
+    if (HIDDEN_SECTIONS.has(name)) continue;
+    const kept = COUNTED_SECTIONS.has(name)
+      ? entries.filter((entry) => (extractCount(entry) ?? 0) >= 2)
+      : entries;
+    if (kept.length) visible[name] = kept;
+  }
+  return visible;
+};
+
 export default function DreamInsights({ user }) {
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
@@ -165,8 +197,12 @@ export default function DreamInsights({ user }) {
     );
   }
 
-  const sections = parseMemory(memory);
+  const parsed = parseMemory(memory);
+  const sections = visibleSections(parsed);
   const hasSections = Object.keys(sections).length > 0;
+  // A file that exists but shows nothing means every detail so far has appeared
+  // exactly once. That is a different message from having analyzed nothing yet.
+  const waitingOnARepeat = !hasSections && Object.keys(parsed).length > 0;
 
   return (
     <div className="insights-page">
@@ -185,8 +221,12 @@ export default function DreamInsights({ user }) {
       {!hasSections ? (
         <div className="insights-empty">
           <div className="insights-empty-icon">◌</div>
-          <h3>No patterns yet</h3>
-          <p>Generate your first AI analysis on a dream to start building your pattern file. The more dreams you analyze, the richer this becomes.</p>
+          <h3>{waitingOnARepeat ? 'Nothing has repeated yet' : 'No patterns yet'}</h3>
+          <p>
+            {waitingOnARepeat
+              ? 'Every dream you analyze is being logged, but nothing in them has come back a second time yet. A pattern lands here once something shows up in two dreams. Analyze another dream and anything that returns will appear.'
+              : 'Generate your first AI analysis on a dream to start building your pattern file. The more dreams you analyze, the richer this becomes.'}
+          </p>
         </div>
       ) : (
         <div className="insights-sections">
@@ -206,7 +246,7 @@ export default function DreamInsights({ user }) {
                     return (
                       <li key={i} className="insights-entry">
                         <span className="insights-entry-text">{renderInline(entry)}</span>
-                        {count !== null && count >= 3 && (
+                        {count !== null && count >= 2 && (
                           <span className="insights-entry-badge">{count}×</span>
                         )}
                       </li>
