@@ -648,14 +648,14 @@ export default function DreamJournal({ user }) {
       <div className="page-header journal-header">
         <div className="journal-header-top">
           <div>
-            <h1>Dream Journal</h1>
+            <h1>Journal</h1>
             <p className="page-subtitle">Your own personal dream archive.</p>
           </div>
           <button type="button" onClick={openNewDream} className="primary-btn">
             + New Dream
           </button>
         </div>
-        <div className="view-toggle" role="tablist" aria-label="Dream journal view mode">
+        <div className="view-toggle" role="tablist" aria-label="Journal view mode">
           <button
             type="button"
             className={viewMode === 'list' ? 'view-toggle-btn active' : 'view-toggle-btn'}
@@ -716,7 +716,7 @@ export default function DreamJournal({ user }) {
           </div>
         ) : (
           <div className="journal-calendar-shell">
-            <div className="journal-calendar" aria-label="Dream journal calendar">
+            <div className="journal-calendar" aria-label="Journal calendar">
               <div className="calendar-toolbar">
                 <button type="button" className="calendar-nav-btn" onClick={goToPreviousMonth} aria-label="Previous month">
                   <FontAwesomeIcon icon={faChevronLeft} />
