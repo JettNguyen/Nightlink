@@ -547,7 +547,7 @@ export default function Feed({ user }) {
     }).catch(() => {});
   }, [allFeedDreams, forYouDreams]);
 
-  const renderDreamCard = (dream) => {
+  const renderDreamCard = (dream, index = 0) => {
     const profile = dream.userId
       ? (followingProfiles[dream.userId] || userSummaries[dream.userId] || null)
       : null;
@@ -605,7 +605,15 @@ export default function Feed({ user }) {
     };
 
     return (
-      <div key={dream.id} className="feed-post" role="button" tabIndex={0} onClick={openDreamDetail} onKeyDown={handleCardKeyDown}>
+      <div
+        key={dream.id}
+        className="feed-post stream-row-in"
+        style={{ '--row-index': index }}
+        role="button"
+        tabIndex={0}
+        onClick={openDreamDetail}
+        onKeyDown={handleCardKeyDown}
+      >
         <AvatarDisplay
           photoURL={avatarPhotoURL} avatarIcon={avatarIcon}
           avatarBackground={avatarBackground} avatarColor={avatarColor}

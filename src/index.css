@@ -31,6 +31,12 @@
      gap to 23 points and lets purple mean interactive across the whole app. It
      also lifts headings off body copy, 1.50:1 to 1.72:1. */
   --text-secondary: #b9b6c4;
+  /* Under body copy, for the counts and labels that describe a thing rather
+     than being it. 6.12:1 on the page, so it is quieter by hue and lightness
+     without dropping under the floor. */
+  --text-meta: #948cae;
+  /* What a press paints, at the shape of the target rather than the glyph. */
+  --press-surface: rgba(255, 255, 255, 0.075);
   /* Two of these on purpose. --border draws hairlines between rows and around
      panels, which are structure rather than controls, so they stay quiet. A
      text field is a control: its boundary is the only thing saying where to
@@ -45,8 +51,8 @@
      not objects sitting on the page. */
   --raise-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
   --sink-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
-  --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 38px rgba(0, 0, 0, 0.34);
+  --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.24), 0 8px 22px rgba(0, 0, 0, 0.26);
   --glow-primary: 0 0 50px rgba(157, 111, 212, 0.22);
   --error: #ff5050;
   --success: #2cd44e;
@@ -67,6 +73,7 @@
      near black screen, and a flat one reads as switched off rather than dark. */
   --app-background-gradient:
     radial-gradient(130% 55% at 50% 0%, rgba(157, 111, 212, 0.13), transparent 62%),
+    radial-gradient(110% 42% at 50% 100%, rgba(157, 111, 212, 0.07), transparent 72%),
     linear-gradient(180deg, #0d0d11 0%, #13101f 55%, #0d0d11 100%);
 
   /* Type scale. One step per role. If two things are the same size they are
@@ -320,6 +327,42 @@ html[data-native-platform='ios'] [data-nav-direction='tab'] .insights-page {
   width: 44px;
   height: 44px;
   transform: translate(-50%, -50%);
+}
+
+/* The target you pressed, at the size it really is. These overlays were hit
+   area and nothing else: a 44px reach around a 16px glyph that was never drawn,
+   so what you were aiming at only became apparent when you missed it. On press
+   they take a surface at their own bounds. Fast in because it has to answer the
+   finger, slow out because nothing here should snap. */
+.voice-input-btn::after,
+.close-btn::after,
+.feed-card-menu-btn::after,
+.overflow-menu-btn::after,
+.feed-tab::after,
+.toggle-switch::after,
+.profile-toggle-switch::after,
+.activity-clear-btn::after,
+.comment-heart-btn::after,
+.detail-date-pill--interactive::after,
+.profile-dreams-head .dream-tab::after {
+  border-radius: 999px;
+  background-color: transparent;
+  transition: background-color 280ms ease;
+}
+
+.voice-input-btn:active:not(:disabled)::after,
+.close-btn:active:not(:disabled)::after,
+.feed-card-menu-btn:active:not(:disabled)::after,
+.overflow-menu-btn:active:not(:disabled)::after,
+.feed-tab:active::after,
+.toggle-switch:active::after,
+.profile-toggle-switch:active::after,
+.activity-clear-btn:active:not(:disabled)::after,
+.comment-heart-btn:active:not(:disabled)::after,
+.detail-date-pill--interactive:active::after,
+.profile-dreams-head .dream-tab:active::after {
+  background-color: var(--press-surface);
+  transition-duration: 90ms;
 }
 
 /* Same idea for controls that are already wide enough and only short: a feed
@@ -1082,11 +1125,6 @@ html[data-native-platform='ios'] .profile-ai-badge {
   }
 }
 
-.overflow-menu-btn:active {
-  background: rgba(255, 255, 255, 0.1);
-  transition: background-color 60ms ease-out;
-}
-
 .overflow-menu {
   position: absolute;
   top: calc(100% + 0.35rem);
@@ -1343,6 +1381,52 @@ html[data-native-platform='ios'] .profile-ai-badge {
   padding: 0 1px;
   font-style: inherit;
   font-weight: inherit;
+}
+
+/* Stacked in one grid cell so the box is as tall as the longest wording it can
+   hold. `visibility` rather than `display` keeps the hidden ones contributing
+   their height while staying out of the accessibility tree, and it is what lets
+   the change fade instead of cut. */
+.swap-text {
+  display: grid;
+}
+
+.swap-text-line {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s;
+}
+
+.swap-text-line.is-shown {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-text-line {
+    transition: none;
+  }
+}
+
+/* Rows arrive a beat apart instead of all at once, which is the difference
+   between a list appearing and a list being dealt. The cap matters: past the
+   first handful the delay stops growing, so a long list never spends a second
+   assembling itself. */
+.stream-row-in {
+  animation: streamRowIn 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: min(calc(var(--row-index, 0) * 26ms), 240ms);
+}
+
+@keyframes streamRowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stream-row-in {
+    animation: none;
+  }
 }
 
 .sr-only {

@@ -21,7 +21,7 @@
 @media (min-width: 769px) {
   .profile-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
   }
@@ -1250,9 +1250,12 @@
   overflow: hidden;
 }
 
-/* The gap here has to be wider than the one inside the reaction group, or the
-   tag counts read as another reaction. */
+/* The whole footer is metadata, so it drops a tier below the snippet. Both were
+   --text-secondary, which left the counts reading like more of the dream.
+   The gap has to be wider than the one inside the reaction group, or the tag
+   counts read as another reaction. */
 .profile-dream-footer-meta {
+  color: var(--text-meta);
   display: flex;
   gap: 0.85rem;
   margin-top: auto;
@@ -1273,7 +1276,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.28rem;
-  color: var(--text-secondary);
+  color: inherit;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
 }
@@ -1293,7 +1296,8 @@
 
 .profile-tag-count {
   font-size: var(--fs-xs);
-  color: var(--text-secondary);
+  color: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 /* On small screens, drop the snippet to keep cards compact */

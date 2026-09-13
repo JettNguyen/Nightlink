@@ -9,6 +9,7 @@ import { supabase } from '../supabase';
 import { mapProfile, mapDream } from '../utils/mappers';
 import { AVATAR_ICONS, AVATAR_BACKGROUNDS, AVATAR_COLORS, DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR, getAvatarIconById } from '../constants/avatarOptions';
 import AvatarDisplay from '../components/AvatarDisplay';
+import SwapText from '../components/SwapText';
 import ProBadge from '../components/ProBadge';
 import { ProfilePageSkeleton, ProfileDreamsLoadingSkeleton } from '../components/SkeletonLoader';
 import { formatDreamDate } from '../utils/dates';
@@ -549,15 +550,18 @@ export default function Profile({ user }) {
   // to match the selected tab printed the same words twice. The heading names
   // the section, the tabs carry the state, and the subtitle says what is in the
   // list. Short, because it only gets half a row.
-  const dreamSectionSubtitle = isTaggedTab
-    ? (viewingOwnProfile ? 'Entries that mention you.' : 'Entries that mention them.')
-    : (viewingOwnProfile ? 'Your latest entries.' : 'Only what they have shared with you.');
+  // Both wordings a tab switch can land on, so the header can hold the taller of
+  // the two and stop moving the list underneath it.
+  const dreamSectionSubtitles = viewingOwnProfile
+    ? ['Your latest entries.', 'Entries that mention you.']
+    : ['Only what they have shared with you.', 'Entries that mention them.'];
+  const dreamSectionSubtitle = dreamSectionSubtitles[isTaggedTab ? 1 : 0];
   const emptyPrimary = isTaggedTab ? (viewingOwnProfile ? 'Nobody has tagged you yet' : 'No tagged dreams to show') : (viewingOwnProfile ? 'No dreams yet' : 'No dreams shared with you yet');
   const emptySecondary = isTaggedTab
     ? (viewingOwnProfile ? 'When another dreamer mentions you, their entry appears here automatically.' : 'As soon as a visible tagged entry exists, it will show up in this tab.')
     : (viewingOwnProfile ? 'Start a new entry to see it here.' : viewerFollowedByTarget ? 'They have not shared any public or limited dreams recently.' : 'This dreamer only shares entries with people they follow.');
 
-  const renderDreamPreview = (dream) => {
+  const renderDreamPreview = (dream, index = 0) => {
     const title = dream.title || (dream.aiGenerated ? dream.aiTitle?.trim() : '');
     const snippet = dream.content?.length > 180 ? `${dream.content.slice(0, 180)}…` : dream.content;
     const dateLabel = dream.createdAt ? formatDreamDate(dream.createdAt, 'MMM d') : 'Pending';
@@ -575,7 +579,7 @@ export default function Profile({ user }) {
     const taggedCount = Array.isArray(dream.taggedUsers) ? dream.taggedUsers.length : 0;
     const reactionPreview = renderReactionPreview(dream);
     return (
-      <div key={dream.id} className={`profile-dream-card${hasAi ? ' profile-dream-card--analyzed' : ''}`} role="button" tabIndex={0}
+      <div key={dream.id} className={`profile-dream-card stream-row-in${hasAi ? ' profile-dream-card--analyzed' : ''}`} style={{ '--row-index': index }} role="button" tabIndex={0}
         onClick={() => handleDreamNavigation(dream.id)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDreamNavigation(dream.id); } }}>
         <div className="profile-dream-top">
@@ -596,7 +600,7 @@ export default function Profile({ user }) {
     );
   };
 
-  const renderTaggedDream = (dream) => {
+  const renderTaggedDream = (dream, index = 0) => {
     const isAnonymous = dream.visibility === 'anonymous';
     const authorName = isAnonymous ? 'Anonymous dreamer' : dream.authorProfile?.displayName || 'Dreamer';
     const authorHandle = !isAnonymous ? (dream.authorProfile?.username || '') : '';
@@ -604,7 +608,7 @@ export default function Profile({ user }) {
     const snippet = dream.content?.length > 200 ? `${dream.content.slice(0, 200)}…` : (dream.content || 'No description yet.');
     const reactionPreview = renderReactionPreview(dream);
     return (
-      <div key={dream.id} className="tagged-dream-card" role="button" tabIndex={0}
+      <div key={dream.id} className="tagged-dream-card stream-row-in" style={{ '--row-index': index }} role="button" tabIndex={0}
         onClick={() => handleDreamNavigation(dream.id, authorHandle, dream.userId)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDreamNavigation(dream.id, authorHandle, dream.userId); } }}>
         <div className="tagged-dream-head">
@@ -742,7 +746,11 @@ export default function Profile({ user }) {
         <div className="profile-dreams-head">
           <div className="profile-dreams-head-top">
             <h2>Dreams</h2>
-            <p className="profile-dreams-subtitle">{dreamSectionSubtitle}</p>
+            <SwapText
+              className="profile-dreams-subtitle"
+              value={dreamSectionSubtitle}
+              options={dreamSectionSubtitles}
+            />
           </div>
           <div className="dream-tab-group">
             <button type="button" className={isTaggedTab ? 'dream-tab' : 'dream-tab active'} onClick={() => setDreamTab('authored')} aria-pressed={dreamTab === 'authored'}>
@@ -759,7 +767,9 @@ export default function Profile({ user }) {
           <div className="profile-dreams-empty"><p>{emptyPrimary}</p><p className="empty-subtitle">{emptySecondary}</p></div>
         ) : (
           <div className="profile-dream-grid">
-            {isTaggedTab ? activeDreams.map((d) => renderTaggedDream(d)) : activeDreams.map(renderDreamPreview)}
+            {isTaggedTab
+              ? activeDreams.map((d, index) => renderTaggedDream(d, index))
+              : activeDreams.map(renderDreamPreview)}
           </div>
         )}
       </div>

@@ -298,9 +298,11 @@
   }
 }
 
+/* The press lands on the 44px overlay now, which is the shape of the target.
+   Filling the 30px circle instead drew the glyph's box and left the reach
+   around it invisible. */
 .activity-clear-btn:active:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  transition: background-color 60ms ease-out;
+  color: var(--text);
 }
 
 .activity-clear-btn:disabled {
