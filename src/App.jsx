@@ -11,6 +11,7 @@ import DreamDetail from './pages/DreamDetail';
 import Feed from './pages/Feed';
 import Navigation from './components/Navigation';
 import OfflineIndicator from './components/OfflineIndicator';
+import IosAppPrompt from './components/IosAppPrompt';
 import KeyboardDismiss from './components/KeyboardDismiss';
 import LoadingIndicator from './components/LoadingIndicator';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -443,6 +444,7 @@ function AppContent({ user, loading, ready }) {
         </div>
       )}
       <OfflineIndicator />
+      <IosAppPrompt />
       <KeyboardDismiss />
       {showNav && <Navigation user={user} activityPreview={activity} />}
     <main className={mainClassName} data-nav-direction={navDirection} style={{ minHeight: '100dvh' }}>

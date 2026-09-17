@@ -1,0 +1,70 @@
+.ios-app-prompt-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 560;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: modalBackdropIn 180ms ease-out backwards;
+}
+
+.ios-app-prompt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  animation: modalDialogIn 200ms ease-out backwards;
+}
+
+.ios-app-prompt-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 17px;
+  box-shadow: var(--shadow-soft);
+}
+
+.ios-app-prompt-title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.ios-app-prompt-message {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ios-app-prompt-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.ios-app-prompt-actions > * {
+  flex: 1;
+}
+
+/* The store link is an anchor, so it needs the parts of a button that come
+   from the element rather than from .primary-btn. */
+.ios-app-prompt-get {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  text-align: center;
+}
