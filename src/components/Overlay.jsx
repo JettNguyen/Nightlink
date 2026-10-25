@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { coverNativeTabs } from '../plugins/nativeTabs';
 
 /**
  * Renders full screen overlays as children of <body>.
@@ -10,16 +12,19 @@ import PropTypes from 'prop-types';
  * inside it, so a backdrop with `inset: 0` covers the page's box rather than
  * the screen: the blur stopped short of the top and side edges and left a strip
  * of sharp page around it. A portal takes the overlay out of that box.
+ *
+ * In the iOS app the tab bar is native and sits above the whole web view, so
+ * an overlay hides it while it is open. Toasts and the keyboard's Done button
+ * are not full screen and pass `coversTabBar={false}`.
  */
-export default function Overlay({ children }) {
+export default function Overlay({ children = null, coversTabBar = true }) {
+  useEffect(() => (coversTabBar ? coverNativeTabs() : undefined), [coversTabBar]);
+
   if (typeof document === 'undefined') return null;
   return createPortal(children, document.body);
 }
 
 Overlay.propTypes = {
   children: PropTypes.node,
-};
-
-Overlay.defaultProps = {
-  children: null,
+  coversTabBar: PropTypes.bool,
 };

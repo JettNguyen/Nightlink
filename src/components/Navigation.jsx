@@ -7,6 +7,10 @@ import './Navigation.css';
 import { appUserPropType, activityPreviewPropType } from '../propTypes';
 import { persistFeedSeenTimestamp } from '../services/UserService';
 import { triggerLightHaptic } from '../utils/haptics';
+import {
+  nativeTabsActive, NATIVE_TAB_IDS, NATIVE_TAB_PATHS,
+  setNativeTabsShown, updateNativeTabs, onNativeTabSelect,
+} from '../plugins/nativeTabs';
 
 const COMPACT_ENTER = 110;
 const COMPACT_EXIT = 40;
@@ -139,6 +143,45 @@ function Navigation({ user, activityPreview }) {
     if (currentPath === '/activity') markAllInboxRead?.();
   }, [currentPath, markAllInboxRead]);
 
+  // The native tab bar (AppShell.swift) shows while this is mounted, follows
+  // the route, and hands taps back here to navigate.
+  useEffect(() => {
+    if (!nativeTabsActive) return undefined;
+    setNativeTabsShown(true);
+    return () => setNativeTabsShown(false);
+  }, []);
+
+  useEffect(() => {
+    const id = NATIVE_TAB_IDS[currentPath];
+    if (id) updateNativeTabs({ selected: id });
+  }, [currentPath]);
+
+  useEffect(() => {
+    const badge = (n) => (n > 0 ? (n > 9 ? '9+' : String(n)) : '');
+    updateNativeTabs({
+      badges: {
+        feed: hasNewFeed ? badge(newFeedCount) : '',
+        activity: hasUnread ? badge(unreadCount) : '',
+      },
+    });
+  }, [hasNewFeed, newFeedCount, hasUnread, unreadCount]);
+
+  const nativeTabTapRef = useRef(null);
+  nativeTabTapRef.current = ({ id, reselect }) => {
+    const path = NATIVE_TAB_PATHS[id];
+    if (!path) return;
+    if (path === '/feed') markFeedSeen();
+    // Same as the web bar: tapping the tab you are on goes back to its top.
+    if (reselect && location.pathname === path) {
+      const w = getWin();
+      if (w && w.scrollY > 0) w.scrollTo(0, 0);
+      return;
+    }
+    navigate(path);
+  };
+
+  useEffect(() => onNativeTabSelect((event) => nativeTabTapRef.current?.(event)), []);
+
   useEffect(() => { compactRef.current = compact; }, [compact]);
 
   // Web-only: compact scroll behaviour for top nav
@@ -255,43 +298,45 @@ function Navigation({ user, activityPreview }) {
           </div>
         </header>
 
-        <nav className="nav-ios-tabbar">
-          <Link to="/journal" aria-label="Journal" aria-current={isActive('/journal') ? 'page' : undefined} className={`nav-ios-tab${isActive('/journal') ? ' active' : ''}`} onClick={handleNavTap('/journal')}>
-            <span className="nav-icon-wrapper">
-              <FontAwesomeIcon icon={faBook} className="nav-icon" />
-            </span>
-          </Link>
-          <Link to="/feed" aria-label="Feed" aria-current={isActive('/feed') ? 'page' : undefined} className={`nav-ios-tab${isActive('/feed') ? ' active' : ''}`} onClick={handleNavTap('/feed', markFeedSeen)}>
-            <span className="nav-icon-wrapper">
-              <FontAwesomeIcon icon={faCompass} className="nav-icon" />
-              {hasNewFeed && (
-                <span className="nav-activity-indicator" aria-label={`${newFeedCount} new`}>
-                  {newFeedCount > 9 ? '9+' : newFeedCount}
-                </span>
-              )}
-            </span>
-          </Link>
-          <Link to="/search" aria-label="Search" aria-current={isActive('/search') ? 'page' : undefined} className={`nav-ios-tab${isActive('/search') ? ' active' : ''}`} onClick={handleNavTap('/search')}>
-            <span className="nav-icon-wrapper">
-              <FontAwesomeIcon icon={faSearch} className="nav-icon" />
-            </span>
-          </Link>
-          <Link to="/activity" aria-label="Activity" aria-current={isActive('/activity') ? 'page' : undefined} className={`nav-ios-tab${isActive('/activity') ? ' active' : ''}`} onClick={handleNavTap('/activity')}>
-            <span className="nav-icon-wrapper">
-              <FontAwesomeIcon icon={faBell} className="nav-icon" />
-              {hasUnread && (
-                <span className="nav-activity-indicator" aria-label={`${unreadCount} unread`}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </span>
-          </Link>
-          <Link to="/profile" aria-label="Profile" aria-current={isActive('/profile') ? 'page' : undefined} className={`nav-ios-tab${isActive('/profile') ? ' active' : ''}`} onClick={handleNavTap('/profile')}>
-            <span className="nav-icon-wrapper">
-              <FontAwesomeIcon icon={faUser} className="nav-icon" />
-            </span>
-          </Link>
-        </nav>
+        {!nativeTabsActive && (
+          <nav className="nav-ios-tabbar">
+            <Link to="/journal" aria-label="Journal" aria-current={isActive('/journal') ? 'page' : undefined} className={`nav-ios-tab${isActive('/journal') ? ' active' : ''}`} onClick={handleNavTap('/journal')}>
+              <span className="nav-icon-wrapper">
+                <FontAwesomeIcon icon={faBook} className="nav-icon" />
+              </span>
+            </Link>
+            <Link to="/feed" aria-label="Feed" aria-current={isActive('/feed') ? 'page' : undefined} className={`nav-ios-tab${isActive('/feed') ? ' active' : ''}`} onClick={handleNavTap('/feed', markFeedSeen)}>
+              <span className="nav-icon-wrapper">
+                <FontAwesomeIcon icon={faCompass} className="nav-icon" />
+                {hasNewFeed && (
+                  <span className="nav-activity-indicator" aria-label={`${newFeedCount} new`}>
+                    {newFeedCount > 9 ? '9+' : newFeedCount}
+                  </span>
+                )}
+              </span>
+            </Link>
+            <Link to="/search" aria-label="Search" aria-current={isActive('/search') ? 'page' : undefined} className={`nav-ios-tab${isActive('/search') ? ' active' : ''}`} onClick={handleNavTap('/search')}>
+              <span className="nav-icon-wrapper">
+                <FontAwesomeIcon icon={faSearch} className="nav-icon" />
+              </span>
+            </Link>
+            <Link to="/activity" aria-label="Activity" aria-current={isActive('/activity') ? 'page' : undefined} className={`nav-ios-tab${isActive('/activity') ? ' active' : ''}`} onClick={handleNavTap('/activity')}>
+              <span className="nav-icon-wrapper">
+                <FontAwesomeIcon icon={faBell} className="nav-icon" />
+                {hasUnread && (
+                  <span className="nav-activity-indicator" aria-label={`${unreadCount} unread`}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </span>
+            </Link>
+            <Link to="/profile" aria-label="Profile" aria-current={isActive('/profile') ? 'page' : undefined} className={`nav-ios-tab${isActive('/profile') ? ' active' : ''}`} onClick={handleNavTap('/profile')}>
+              <span className="nav-icon-wrapper">
+                <FontAwesomeIcon icon={faUser} className="nav-icon" />
+              </span>
+            </Link>
+          </nav>
+        )}
       </>
     );
   }

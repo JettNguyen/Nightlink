@@ -38,7 +38,7 @@ export default function Toast({ message, onDismiss, duration = 3000 }) {
   // the journal raises its save and validation errors while the new dream sheet
   // is still open, and inside #root they landed underneath it.
   return (
-    <Overlay>
+    <Overlay coversTabBar={false}>
       <div
         className={`toast${shown.phase === 'out' ? ' is-leaving' : ''}`}
         role="status"

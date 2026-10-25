@@ -37,7 +37,7 @@ export default function KeyboardDismiss() {
   };
 
   return (
-    <Overlay>
+    <Overlay coversTabBar={false}>
       <button
         type="button"
         className="keyboard-dismiss"

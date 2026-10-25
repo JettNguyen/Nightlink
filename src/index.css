@@ -593,6 +593,11 @@ html:not([data-native-platform='ios']) .app-main--with-nav {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* A native tab bar is part of the bottom inset already. */
+html[data-native-tabs] .app-main--with-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* The keyboard hides the tab bar, so stop holding space for it, because otherwise the
    last line of a long entry sits behind a gap that no longer has anything in it. */
 html[data-native-platform='ios'].keyboard-open .app-main {

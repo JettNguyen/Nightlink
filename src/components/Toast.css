@@ -24,6 +24,12 @@
   animation: toastIn 220ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* The native tab bar is inside the bottom inset, so the web bar's 5rem
+   would float the toast a bar's height above it. */
+html[data-native-tabs] .toast {
+  bottom: calc(env(safe-area-inset-bottom) + 1rem);
+}
+
 /* The -50% has to be repeated in every frame: a transform replaces the one on
    the base rule rather than adding to it, so dropping it would snap the toast
    to the right by half its width for the length of the animation. */
