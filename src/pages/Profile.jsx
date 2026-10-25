@@ -123,18 +123,6 @@ export default function Profile({ user }) {
   }, [profileMenuOpen, isNativeIOS]);
 
   useEffect(() => {
-    if (!isNativeIOS) return undefined;
-    const handleOpenProfileMenu = () => {
-      if (!viewingOwnProfile && targetUserId) {
-        setProfileMenuOpen(true);
-      }
-    };
-
-    window.addEventListener('nightlink:open-profile-menu', handleOpenProfileMenu);
-    return () => window.removeEventListener('nightlink:open-profile-menu', handleOpenProfileMenu);
-  }, [isNativeIOS, targetUserId, viewingOwnProfile]);
-
-  useEffect(() => {
     if (!routeHandle) {
       setTargetUserId(user?.uid || null);
       setProfileNotFound(false);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { faBook, faCompass, faSearch, faUser, faBell, faChevronLeft, faGear, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCompass, faSearch, faUser, faBell, faChevronLeft, faGear } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
@@ -32,23 +32,6 @@ function Navigation({ user, activityPreview }) {
     && !TAB_PATHS.has(location.pathname);
 
   const showHeaderSettings = isNativeIOS && location.pathname === '/profile';
-  const showHeaderProfileMenu = useMemo(() => {
-    if (!isNativeIOS) return false;
-
-    const parts = location.pathname.split('/').filter(Boolean);
-    if (parts.length !== 2 || parts[0] !== 'profile') return false;
-
-    const handle = (parts[1] || '').toLowerCase();
-    if (!handle) return false;
-
-    const reserved = new Set(['edit', 'connections', 'settings']);
-    if (reserved.has(handle)) return false;
-
-    const ownUid = (user?.uid || '').toLowerCase();
-    if (ownUid && handle === ownUid) return false;
-
-    return true;
-  }, [location.pathname, user?.uid]);
 
   const handleBack = useCallback(() => {
     void triggerLightHaptic();
@@ -59,13 +42,6 @@ function Navigation({ user, activityPreview }) {
     void triggerLightHaptic();
     navigate('/settings');
   }, [navigate]);
-
-  const handleOpenProfileMenu = useCallback(() => {
-    void triggerLightHaptic();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('nightlink:open-profile-menu'));
-    }
-  }, []);
 
   const viewerId = user?.uid || '';
   const inbox = activityPreview?.inboxEntries ?? [];
@@ -274,11 +250,6 @@ function Navigation({ user, activityPreview }) {
             {showHeaderSettings && (
               <button type="button" className="nav-ios-back-btn" onClick={handleGoSettings} aria-label="Settings">
                 <FontAwesomeIcon icon={faGear} />
-              </button>
-            )}
-            {showHeaderProfileMenu && (
-              <button type="button" className="nav-ios-back-btn" onClick={handleOpenProfileMenu} aria-label="Profile actions">
-                <FontAwesomeIcon icon={faEllipsisVertical} />
               </button>
             )}
           </div>
