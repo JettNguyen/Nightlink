@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import Overlay from './Overlay';
 import './Toast.css';
 
 // Must match the toastOut duration in Toast.css.
@@ -33,15 +34,20 @@ export default function Toast({ message, onDismiss, duration = 3000 }) {
 
   if (shown.phase === 'hidden' || !shown.text) return null;
 
+  // Portalled for the same reason the overlays are, and it has to clear them:
+  // the journal raises its save and validation errors while the new dream sheet
+  // is still open, and inside #root they landed underneath it.
   return (
-    <div
-      className={`toast${shown.phase === 'out' ? ' is-leaving' : ''}`}
-      role="status"
-      aria-live="polite"
-      onClick={onDismiss}
-    >
-      {shown.text}
-    </div>
+    <Overlay>
+      <div
+        className={`toast${shown.phase === 'out' ? ' is-leaving' : ''}`}
+        role="status"
+        aria-live="polite"
+        onClick={onDismiss}
+      >
+        {shown.text}
+      </div>
+    </Overlay>
   );
 }
 

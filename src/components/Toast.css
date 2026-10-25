@@ -14,7 +14,9 @@
   white-space: normal;
   max-width: min(420px, calc(100vw - 2.5rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
   text-align: center;
-  z-index: 600;
+  /* Over the sheets (1000) and the reaction popover (1200), under the keyboard's
+     Done button (1400). */
+  z-index: 1300;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
