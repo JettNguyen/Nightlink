@@ -157,7 +157,21 @@ html[data-native-platform='ios'] {
 
 html[data-native-platform='ios'] body {
   overscroll-behavior: auto;
-  background-color: var(--background);
+  background: none;
+}
+
+/* The background holds still behind the page, the way a native screen's does.
+   On the body it scrolled with the page, so pulling past the top or the bottom
+   uncovered the flat color behind it, which read as black. A fixed layer stays
+   on screen through the bounce. `background-attachment: fixed` does nothing in
+   WebKit on iOS, hence the layer. */
+html[data-native-platform='ios'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--app-background-gradient);
 }
 
 /* Scrollbars are a pointer affordance. On touch the content already tracks your

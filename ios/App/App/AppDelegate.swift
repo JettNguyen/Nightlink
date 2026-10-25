@@ -57,7 +57,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             guard let bridgeVC = self.findBridgeViewController() else { return }
             guard let webView = bridgeVC.bridge?.webView else { return }
 
-            let appBg = UIColor(red: 5.0/255.0, green: 7.0/255.0, blue: 15.0/255.0, alpha: 1.0)
+            // The page's own background reaches past both ends while it
+            // bounces (see `body::before` in index.css). This shows only past
+            // that, so it is the gradient's darkest stop rather than black.
+            let appBg = AppShellViewController.background
 
             // Mark the WebView as opaque so iOS 26 Liquid Glass doesn't composite
             // its tint layer over the app content.
