@@ -454,8 +454,13 @@ html[data-native-platform='ios'] .auth-page {
 }
 
 @media (max-width: 400px) {
-  .auth-page {
-    padding: 1rem 0 calc(2rem + env(safe-area-inset-bottom));
+  /* A sheet on the bottom edge, so nothing is held below it: the sheet pays
+     the home indicator in its own padding. The app's rule above is more
+     specific and kept the old card spacing, which left the flat bottom edge
+     floating over the page. */
+  .auth-page,
+  html[data-native-platform='ios'] .auth-page {
+    padding: calc(1rem + var(--safe-top)) 0 0;
     align-items: flex-end;
   }
 
