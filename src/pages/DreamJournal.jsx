@@ -1005,11 +1005,15 @@ export default function DreamJournal({ user }) {
                   {aiBusy ? 'Reading your dream…' : aiResult ? 'Generate again' : 'Generate title and analysis'}
                 </button>
                 {aiResult?.insights ? (
-                  <div className="ai-compose-result" role="status" aria-live="polite">
-                    <p className="ai-compose-result-label">Analysis</p>
-                    <p className="ai-compose-result-text">{aiResult.insights}</p>
+                  <>
+                    <div className="ai-compose-result" role="status" aria-live="polite">
+                      <p className="ai-compose-result-label">Analysis</p>
+                      <p className="ai-compose-result-text">{aiResult.insights}</p>
+                    </div>
+                    {/* Outside the gold rule, which marks what the AI wrote. Inside
+                        it, this note read as the last line of the analysis. */}
                     <p className="ai-hint">Saves with the dream. Regenerate any time from the dream itself.</p>
-                  </div>
+                  </>
                 ) : (
                   <p className="ai-hint">Uses one generation from your monthly allowance.</p>
                 )}
