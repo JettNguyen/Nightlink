@@ -1131,7 +1131,36 @@
 
 .profile-dreams-subtitle {
   color: var(--text-secondary);
+  font-size: var(--fs-base);
   margin-top: 0.2rem;
+}
+
+/* On a phone the heading and its tabs still share a row, and the subtitle takes
+   the full width under both. Squeezed into the heading's column it broke
+   "Your latest entries." over two lines on anything narrower than a Pro Max. */
+@media (max-width: 520px) {
+  .profile-dreams-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1rem;
+    align-items: center;
+  }
+
+  .profile-dreams-head-top {
+    display: contents;
+  }
+
+  .profile-dreams-head h2 {
+    grid-area: 1 / 1;
+  }
+
+  .profile-dreams-head .dream-tab-group {
+    grid-area: 1 / 2;
+  }
+
+  .profile-dreams-subtitle {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Two columns of stream rows on a wide screen, one below 769px. The old
