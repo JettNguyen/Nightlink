@@ -124,11 +124,6 @@
   box-shadow: 0 0 0 3px rgba(201, 167, 240, 0.15);
 }
 
-.hint {
-  color: var(--text-secondary);
-  font-size: var(--fs-base);
-}
-
 .search-results {
   display: flex;
   flex-direction: column;

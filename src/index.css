@@ -741,6 +741,14 @@ button, a, [role="button"] {
   }
 }
 
+/* Lived in Search.css, a lazy route stylesheet, while the new dream sheet uses
+   it too, so the sheet's helper text only took this style after a visit to
+   Search had loaded that file. */
+.hint {
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
