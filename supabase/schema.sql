@@ -74,11 +74,12 @@ alter table public.dreams add column if not exists comment_count integer not nul
 alter table public.dreams add column if not exists ai_connections jsonb;
 alter table public.dreams add column if not exists memory_indexed boolean not null default false;
 
--- Backfill comment_count for any dreams that had comments before the trigger was created
+-- Recount comment_count wherever it disagrees with the comments themselves:
+-- dreams from before the trigger, and every comment the trigger missed while it
+-- ran without security definer.
 update public.dreams d
 set comment_count = (select count(*) from public.comments c where c.dream_id = d.id)
-where comment_count = 0
-  and exists (select 1 from public.comments c where c.dream_id = d.id);
+where comment_count is distinct from (select count(*) from public.comments c where c.dream_id = d.id);
 
 create index if not exists dreams_user_id_created_at_idx on public.dreams (user_id, created_at desc);
 create index if not exists dreams_visibility_created_at_idx on public.dreams (visibility, created_at desc);
@@ -112,9 +113,15 @@ create table if not exists public.comments (
 
 create index if not exists comments_dream_id_created_at_idx on public.comments (dream_id, created_at asc);
 
--- Trigger: keep dreams.comment_count in sync with comments table
+-- Trigger: keep dreams.comment_count in sync with comments table.
+-- Security definer because the update runs as whoever commented, and row level
+-- security only lets a dream's owner update it: a comment from anyone else
+-- left the count where it was, so the feed showed 0 under dreams with comments.
 create or replace function public.update_dream_comment_count()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   if tg_op = 'INSERT' then
     update public.dreams set comment_count = comment_count + 1 where id = NEW.dream_id;
