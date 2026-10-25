@@ -262,6 +262,14 @@
   font-weight: 400;
   font-size: var(--fs-sm);
   line-height: 1.45;
+  /* The dream above is cut to a snippet but the analysis ran in full, so one
+     analyzed post could fill a phone screen. Three lines here; the post opens
+     to the rest. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .feed-content {
