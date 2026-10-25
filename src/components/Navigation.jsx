@@ -130,7 +130,10 @@ function Navigation({ user, activityPreview }) {
 
   const currentPath = useMemo(() => {
     const p = location.pathname;
-    if (p.startsWith('/dream')) return fromNav || '/journal';
+    // A dream by someone with a username lives under /profile/<name>/dream/,
+    // so without this a dream opened from the feed lit up the Profile tab.
+    if (fromNav && /^\/(profile\/[^/]+\/)?dream\//.test(p)) return fromNav;
+    if (p.startsWith('/dream')) return '/journal';
     if (p.startsWith('/journal')) return '/journal';
     if (p.startsWith('/feed')) return '/feed';
     if (p.startsWith('/search')) return '/search';
