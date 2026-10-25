@@ -238,7 +238,7 @@ p {
 
 .pull-refresh-indicator {
   position: fixed;
-  top: calc(52px + var(--safe-top) + 24px);
+  top: calc(52px + var(--safe-top) + var(--nav-extra, 0px) + 24px);
   /* Centred on the content, which sits inside the side insets, not on the
      screen. They differ by half the Duo's status bar column. */
   left: calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2);
@@ -575,7 +575,7 @@ a {
 }
 
 html[data-native-platform='ios'] .app-main--with-nav {
-  padding-top: calc(52px + var(--safe-top));
+  padding-top: calc(52px + var(--safe-top) + var(--nav-extra, 0px));
 }
 
 /* With no header (the landing page, sign in, and the legal pages signed out)
@@ -1560,7 +1560,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
 
 /* iOS: stick save bar just below the iOS header (52px, same for all device sizes) */
 html[data-native-platform='ios'] .save-bar {
-  top: calc(52px + var(--safe-top));
+  top: calc(52px + var(--safe-top) + var(--nav-extra, 0px));
   /* Remove backdrop-filter on iOS native to prevent GPU compositing promotion.
      The compositing layer it creates causes a blank-box stale-tile artifact
      above it (where settings-header renders) until the user scrolls. */
