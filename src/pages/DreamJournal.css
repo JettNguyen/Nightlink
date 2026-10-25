@@ -18,7 +18,7 @@
 
 .dream-title-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(201, 167, 240, 0.18);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .dream-title-input::placeholder {
@@ -531,7 +531,7 @@
 
 .tags-input input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(127, 179, 194, 0.14);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .add-tag-btn {
@@ -584,7 +584,7 @@
 
 .dream-textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(201, 167, 240, 0.18);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .modal-overlay {
@@ -1018,7 +1018,7 @@
 
 .tag-people-input input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(201, 167, 240, 0.15);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .tagged-pill-row {
