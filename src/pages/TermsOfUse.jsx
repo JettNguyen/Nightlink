@@ -38,7 +38,7 @@ export default function TermsOfUse() {
           <h2>3. Accounts and access</h2>
           <p>
             You are responsible for your account credentials and activity under your account. Keep your login
-            details secure. We grant you a personal, non-transferable, non-exclusive licence to use Nightlink
+            details secure. We grant you a personal, non-transferable, non-exclusive license to use Nightlink
             on Apple devices that you own or control, as permitted by the App Store Terms of Service.
           </p>
         </section>
@@ -49,11 +49,11 @@ export default function TermsOfUse() {
             Your dreams are yours. You keep ownership of everything you write, record, or upload to Nightlink.
           </p>
           <p>
-            To run the service, you grant us a worldwide, non-exclusive, royalty-free licence to host, store,
+            To run the service, you grant us a worldwide, non-exclusive, royalty-free license to host, store,
             reproduce, and display your content, and to send it to the providers listed in our Privacy
             Policy, solely so that we can operate and improve Nightlink for you. If you choose to share a
-            dream publicly, that licence extends to displaying it to other users through the feed, profiles,
-            and search. This licence ends when you delete the content or your account, except for copies that
+            dream publicly, that license extends to displaying it to other users through the feed, profiles,
+            and search. This license ends when you delete the content or your account, except for copies that
             remain in routine backups for a short period.
           </p>
           <p>
