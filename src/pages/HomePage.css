@@ -4,6 +4,7 @@
   min-height: 100dvh;
   color: var(--text);
   padding: clamp(1.25rem, 2vw, 2rem);
+  padding-bottom: calc(clamp(1.25rem, 2vw, 2rem) + env(safe-area-inset-bottom));
   max-width: 960px;
   margin: 0 auto;
 }

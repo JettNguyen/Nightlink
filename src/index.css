@@ -581,12 +581,15 @@ html[data-native-platform='ios'] .app-main--no-nav::before {
   pointer-events: none;
 }
 
-/* Reserve the tab bar's height on iOS, the home indicator's everywhere else. */
-html[data-native-platform='ios'] .app-main {
+/* Reserve the tab bar's height on iOS, the home indicator's everywhere else.
+   Only under the bars: the signed-out pages are a full screen tall already and
+   clear the home indicator themselves, so holding space there just made each
+   of them scroll by that much. */
+html[data-native-platform='ios'] .app-main--with-nav {
   padding-bottom: calc(49px + env(safe-area-inset-bottom));
 }
 
-html:not([data-native-platform='ios']) .app-main {
+html:not([data-native-platform='ios']) .app-main--with-nav {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
