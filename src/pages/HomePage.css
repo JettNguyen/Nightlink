@@ -144,11 +144,15 @@
 
 .home-feature-card h3 {
   margin: 0 0 0.4rem;
-  font-size: var(--fs-base);
+  font-size: var(--fs-md);
+  font-weight: 600;
 }
 
+/* On the app's type scale like every other card's text. Left at the browser's
+   16px, the description outgrew its own title on phones. */
 .home-feature-card p {
   margin: 0;
+  font-size: var(--fs-base);
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -159,6 +163,7 @@
   margin: 0;
   padding-left: 0;
   list-style: none;
+  font-size: var(--fs-base);
   color: var(--text-secondary);
   line-height: 1.6;
   display: grid;
