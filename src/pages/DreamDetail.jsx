@@ -922,6 +922,12 @@ export default function DreamDetail({ user }) {
     if (!input) {
       return;
     }
+    // On a touch screen focusing the field raises the keyboard over the emoji
+    // grid, which is what most people open the picker for. Tapping the field
+    // still brings it up.
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      return;
+    }
     const raf = requestAnimationFrame(() => {
       input.focus({ preventScroll: true });
       const end = input.value.length;
@@ -2585,7 +2591,6 @@ export default function DreamDetail({ user }) {
                   onChange={(event) => handleCustomEmojiChange(event.target.value)}
                   aria-label="Type an emoji"
                   placeholder="Type or paste an emoji"
-                  autoFocus
                 />
                 <button type="submit" className="primary-btn" disabled={!filterEmojiInput(customEmojiValue)}>
                   Add

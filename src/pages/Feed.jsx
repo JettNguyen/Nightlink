@@ -447,6 +447,10 @@ export default function Feed({ user }) {
 
   useEffect(() => {
     if (!customReactionTarget) { customEmojiInputRef.current = null; return; }
+    // On a touch screen focusing the field raises the keyboard over the emoji
+    // grid, which is what most people open the picker for. Tapping the field
+    // still brings it up.
+    if (window.matchMedia('(pointer: coarse)').matches) return;
     const raf = requestAnimationFrame(() => {
       const input = customEmojiInputRef.current;
       if (!input) return;
@@ -713,7 +717,7 @@ export default function Feed({ user }) {
                   ref={(node) => { if (customReactionTarget === dream.id) customEmojiInputRef.current = node; }}
                   inputMode="text" enterKeyHint="done" autoComplete="off" maxLength={4}
                   value={customReactionValue} onChange={(e) => handleCustomEmojiChange(e.target.value)}
-                  aria-label="Type an emoji" placeholder="Type or paste an emoji" autoFocus
+                  aria-label="Type an emoji" placeholder="Type or paste an emoji"
                 />
                 <button type="submit" className="primary-btn" disabled={!filterEmojiInput(customReactionValue)}>Add</button>
                 <button type="button" className="ghost-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeCustomReactionPicker(); }}>Cancel</button>
