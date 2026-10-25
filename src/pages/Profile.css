@@ -109,7 +109,7 @@
 .profile-info {
   flex: 1 1 auto;
   min-width: 0;
-  animation: slideInUp 0.22s ease-out 0.05s both;
+  animation: slideInUp 0.22s ease-out 0.05s backwards;
 }
 
 /* A name, not a page title: bold sans like every other title in the app. The
@@ -359,7 +359,7 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
-  animation: slideInUp 0.22s ease-out 0.12s both;
+  animation: slideInUp 0.22s ease-out 0.12s backwards;
   justify-content: flex-start;
   align-items: stretch;
   flex-wrap: wrap;

@@ -1147,11 +1147,11 @@
 }
 
 .journal-header h1 {
-  animation: slideInUp 0.22s ease-out 0.03s both;
+  animation: slideInUp 0.22s ease-out 0.03s backwards;
 }
 
 .journal-header .page-subtitle {
-  animation: slideInUp 0.22s ease-out 0.05s both;
+  animation: slideInUp 0.22s ease-out 0.05s backwards;
 }
 
 .journal-header .action-group {
@@ -1190,7 +1190,7 @@
 }
 
 .dream-card {
-  animation: slideInUp 0.22s ease-out both;
+  animation: slideInUp 0.22s ease-out backwards;
 }
 
 /* A phone has less room to give away, so the panel keeps its gutter and spends

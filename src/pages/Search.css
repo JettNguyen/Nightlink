@@ -3,11 +3,11 @@
 }
 
 .search-header h1 {
-  animation: slideInUp 0.22s ease-out 0.03s both;
+  animation: slideInUp 0.22s ease-out 0.03s backwards;
 }
 
 .search-header .page-subtitle {
-  animation: slideInUp 0.22s ease-out 0.05s both;
+  animation: slideInUp 0.22s ease-out 0.05s backwards;
 }
 
 /* Title keeps the page gutter; the filter tabs underneath run to both edges so
@@ -329,7 +329,7 @@
 }
 
 .person-card {
-  animation: slideInUp 0.22s ease-out both;
+  animation: slideInUp 0.22s ease-out backwards;
 }
 
 .dream-grid {
@@ -337,7 +337,7 @@
 }
 
 .search-dream-card {
-  animation: slideInUp 0.22s ease-out both;
+  animation: slideInUp 0.22s ease-out backwards;
 }
 
 @media (max-width: 640px) {

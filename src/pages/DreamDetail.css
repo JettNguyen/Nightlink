@@ -20,7 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  animation: slideInUp 0.24s ease-out 0.05s both;
+  animation: slideInUp 0.24s ease-out 0.05s backwards;
 }
 
 .detail-toolbar {
