@@ -62,7 +62,7 @@ class AppShellViewController: UIViewController {
             return UITab(title: spec.title, image: UIImage(systemName: spec.symbol), identifier: spec.id) { _ in host }
         }
 
-        let controller = UITabBarController(tabs: tabs)
+        let controller = ShellTabBarController(tabs: tabs)
         controller.view.tintColor = Self.accent
         controller.delegate = self
 
@@ -139,6 +139,53 @@ extension AppShellViewController: UITabBarControllerDelegate {
         guard selectedTab !== previousTab else { return }
         if let host = hosts[selectedTab.identifier] { move(bridgeController, into: host) }
         bridgeController.tabsPlugin?.notifySelect(selectedTab.identifier, reselect: false)
+    }
+}
+
+/// On the folded iPhone Duo the system draws the tabs as a vertical bar down the
+/// trailing edge and pins it to the bottom. It is moved to the middle of that
+/// edge here.
+///
+/// iOS 27.1 has no setting for where the vertical bar sits, so this shifts the
+/// view that hosts it, found by class name. A shift rather than a new frame
+/// keeps the system's own layout, and touches follow it. If a later iOS renames
+/// those views, nothing is found and the bar stays where the system put it.
+@available(iOS 18.0, *)
+private final class ShellTabBarController: UITabBarController {
+    private weak var shiftedHost: UIView?
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        centerVerticalBar()
+        // The bar lays itself out after this controller does, so check again
+        // once it has.
+        DispatchQueue.main.async { [weak self] in self?.centerVerticalBar() }
+    }
+
+    private func centerVerticalBar() {
+        guard #available(iOS 27.1, *), traitCollection.verticalBarEdge != .unspecified,
+              let host = view.firstDescendant(named: "FloatingBarHostingView"),
+              let platter = host.firstDescendant(named: "_UITabBarExpansionPlatterContainer") else {
+            shiftedHost?.transform = .identity
+            return
+        }
+        let frame = platter.convert(platter.bounds, to: host)
+        guard frame.height > 0, frame.height < host.bounds.height else { return }
+        let shift = (host.bounds.midY - frame.midY).rounded()
+        if host.transform.ty != shift {
+            host.transform = CGAffineTransform(translationX: 0, y: shift)
+        }
+        shiftedHost = host
+    }
+}
+
+private extension UIView {
+    func firstDescendant(named prefix: String) -> UIView? {
+        for sub in subviews {
+            if "\(type(of: sub))".hasPrefix(prefix) { return sub }
+            if let found = sub.firstDescendant(named: prefix) { return found }
+        }
+        return nil
     }
 }
 
