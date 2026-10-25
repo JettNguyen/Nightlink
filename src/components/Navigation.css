@@ -436,6 +436,35 @@
   gap: 0.45rem;
 }
 
+/* The open iPhone Duo held upright (see utils/statusCorner.js): the header
+   moves up into the clock's row, level with it, and its right side stops short
+   of the clock. The logo stays centered on the screen rather than in what is
+   left. Only the bar and the page under it take the smaller top inset; sheets
+   and signed out pages still clear the whole row. The bar no longer leaves the
+   clock's row as you scroll, since there would be nothing behind the clock. */
+html[data-status-corner] .nav-ios-header,
+html[data-status-corner] .app-main--with-nav,
+html[data-status-corner] .pull-refresh-indicator,
+html[data-status-corner] .offline-indicator {
+  --safe-top: 22px;
+}
+
+html[data-status-corner] .nav-ios-header {
+  padding-right: 130px;
+  transform: none !important;
+}
+
+html[data-status-corner] .nav-ios-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+html[data-status-corner] .nav-ios-header-side,
+html[data-status-corner] .nav-ios-header-center {
+  opacity: 1 !important;
+}
+
 .nav-ios-back-btn {
   background: none;
   color: var(--primary);

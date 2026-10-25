@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
 import App from './App';
 import setupKeyboard from './utils/keyboard';
+import watchStatusCorner from './utils/statusCorner';
 import { nativeTabsActive } from './plugins/nativeTabs';
 import './index.css';
 
@@ -22,6 +23,7 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
   if (nativeTabsActive) document.documentElement.dataset.nativeTabs = '';
 
   setupKeyboard();
+  watchStatusCorner();
 
   // Native app shell should not be controlled by a web service worker.
   if ('serviceWorker' in navigator) {
