@@ -2609,7 +2609,9 @@ export default function DreamDetail({ user }) {
         </div>}
 
 
-        <div className="detail-summary">
+        {/* Someone else's dream with no analysis would only say so, and the
+            viewer can't do anything about it. */}
+        {(isOwner || (dream.aiGenerated && dream.aiInsights)) && <div className="detail-summary">
             <div className="detail-summary-text">
               <h3>Analysis</h3>
               {analyzing || reanalyzing ? (
@@ -2732,7 +2734,7 @@ export default function DreamDetail({ user }) {
                 )}
               </div>
             )}
-          </div>
+          </div>}
 
         {isOwner && dream.aiGenerated && dream.aiTitle && dream.aiTitle !== (dream.title || '').trim() ? (
           <div className="ai-title-hint">
