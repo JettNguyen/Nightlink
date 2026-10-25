@@ -14,7 +14,7 @@
    their rule lines up with the row dividers in the results. */
 .search-header-top {
   width: 100%;
-  padding: 0 1.25rem 0.85rem;
+  padding: 0 var(--page-gutter) 0.85rem;
 }
 
 .search-header {
@@ -30,7 +30,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  padding: 1rem 1.25rem 0;
+  padding: 1rem var(--page-gutter) 0;
   animation: fadeIn 0.24s ease-out 0.08s both;
 }
 
@@ -40,7 +40,7 @@
   display: flex;
   gap: 1.5rem;
   width: 100%;
-  padding: 0 1.25rem;
+  padding: 0 var(--page-gutter);
   border-bottom: 1px solid var(--border);
 }
 
@@ -142,7 +142,7 @@
   align-items: baseline;
   justify-content: flex-start;
   gap: 0.55rem;
-  padding: 0 1.25rem;
+  padding: 0 var(--page-gutter);
 }
 
 .section-head h2 {
@@ -183,7 +183,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  padding: 0.9rem 1.25rem;
+  padding: 0.9rem var(--page-gutter);
   transition: background-color 0.18s ease, border-color 0.18s ease;
   cursor: pointer;
 }
@@ -243,7 +243,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  padding: 0.9rem 1.25rem;
+  padding: 0.9rem var(--page-gutter);
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 @media (hover: hover) and (pointer: fine) {

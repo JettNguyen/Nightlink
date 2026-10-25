@@ -22,6 +22,9 @@
   --accent: #e8c87a;
   --like: #ff6b8a;
   --background: #0d0d11;
+  /* The side margin every page's text sits at. Stream pages run edge to edge
+     and pay it on each row, everything else pays it once on .page-container. */
+  --page-gutter: 1.25rem;
   --background-secondary: #13121a;
   /* Overlays in violet rather than white. A white veil over a dark page makes
      grey, and grey everywhere is what reads as flat: the surfaces, the
@@ -621,7 +624,7 @@ html[data-native-platform='ios'].keyboard-open .app-main {
 .page-container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 1.25rem 50px;
+  padding: 24px var(--page-gutter) 50px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -919,7 +922,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
    way the default is (0,1,0) and each exemption is (0,2,0), which is the order
    you would expect. */
 .stream-page > * {
-  margin: 1rem 1.25rem 0;
+  margin: 1rem var(--page-gutter) 0;
 }
 
 /* Full bleed: these run to both screen edges and each row pays for its own
@@ -960,7 +963,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
   display: flex;
   gap: 1.5rem;
   width: 100%;
-  padding: 0 1.25rem;
+  padding: 0 var(--page-gutter);
   margin: 0;
   background: none;
   border: none;
@@ -1759,6 +1762,8 @@ html[data-native-platform='ios'] .save-bar {
      words. One knob on the type scale moves only what is typography. */
   :root {
     --type-scale: 0.875;
+    /* The iOS system margin on a phone. */
+    --page-gutter: 16px;
   }
 
   /* Prevent iOS auto-zoom on input focus (triggered when font-size < 16px) */
@@ -1777,7 +1782,15 @@ html[data-native-platform='ios'] .save-bar {
   }
 
   .page-container {
-    padding: 10px 1.25rem calc(50px + env(safe-area-inset-bottom));
+    padding: 10px var(--page-gutter) calc(50px + env(safe-area-inset-bottom));
+  }
+
+  /* The rule above comes later than .stream-page at the same specificity, so
+     it put the container's gutter back on the stream pages, and every row's
+     own gutter landed a second one in: text 40pt from the edge on a phone. */
+  .stream-page {
+    padding-left: 0;
+    padding-right: 0;
   }
 
   .page-header {

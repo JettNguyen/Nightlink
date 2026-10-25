@@ -1,8 +1,8 @@
 .settings-page {
   max-width: 920px;
   margin: 0 auto;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
   padding-bottom: calc(3rem + env(safe-area-inset-bottom));
 }
 

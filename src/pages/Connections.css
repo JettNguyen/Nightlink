@@ -1,5 +1,5 @@
 .connections-header {
-  padding: 0 1.25rem 0.85rem;
+  padding: 0 var(--page-gutter) 0.85rem;
   margin-bottom: 0.9rem;
   animation: fadeIn 0.2s ease-out;
 }
@@ -20,7 +20,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  padding: 0.9rem 1.25rem;
+  padding: 0.9rem var(--page-gutter);
   display: flex;
   align-items: center;
   justify-content: flex-start;

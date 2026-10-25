@@ -15,7 +15,7 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
-  padding: 0 1.25rem 0.85rem;
+  padding: 0 var(--page-gutter) 0.85rem;
   animation: slideInUp 0.22s ease-out 0.03s backwards;
 }
 
@@ -63,7 +63,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 0.7rem;
-  padding: 0.9rem 1.25rem 0.75rem;
+  padding: 0.9rem var(--page-gutter) 0.75rem;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   animation: slideInUp 0.22s ease-out backwards;

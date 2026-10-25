@@ -1377,10 +1377,6 @@
 }
 
 @media (max-width: 640px) {
-  .detail-card {
-    padding: 1.5rem;
-  }
-
   .comment-thread-children {
     margin-left: 1rem;
     padding-left: 0.75rem;
