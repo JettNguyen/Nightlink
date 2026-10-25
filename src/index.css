@@ -561,6 +561,26 @@ html[data-native-platform='ios'] .app-main--with-nav {
   padding-top: calc(52px + var(--safe-top));
 }
 
+/* With no header (the landing page, sign in, and the legal pages signed out)
+   the page scrolled straight under the clock. This is the header's material
+   at the status bar's height, faded at its lower edge so that at rest it reads
+   as part of the background rather than as a bar. */
+html[data-native-platform='ios'] .app-main--no-nav::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: rgba(13, 13, 17, 0.55);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  -webkit-mask-image: linear-gradient(#000 55%, transparent);
+  mask-image: linear-gradient(#000 55%, transparent);
+  z-index: 100;
+  pointer-events: none;
+}
+
 /* Reserve the tab bar's height on iOS, the home indicator's everywhere else. */
 html[data-native-platform='ios'] .app-main {
   padding-bottom: calc(49px + env(safe-area-inset-bottom));
