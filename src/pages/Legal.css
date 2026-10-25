@@ -8,7 +8,7 @@
      inset. Assume the bare case and pay it here; the rule below hands it back
      when the shell has already covered it. Without the inset the back button
      sits under the clock on every device that has one. */
-  padding: calc(env(safe-area-inset-top) + 0.75rem) 1.25rem 3rem;
+  padding: calc(var(--safe-top) + 0.75rem) 1.25rem 3rem;
 }
 
 .app-main--with-nav .legal-page {

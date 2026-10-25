@@ -536,7 +536,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 1rem;
+  padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
   z-index: 120;
   opacity: 0;
   transition: opacity 0.22s ease;
@@ -1341,7 +1341,7 @@
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   z-index: 500; display: flex; align-items: center; justify-content: center;
-  padding: 1.5rem;
+  padding: 1.5rem max(1.5rem, env(safe-area-inset-right)) 1.5rem max(1.5rem, env(safe-area-inset-left));
   touch-action: none;
 }
 .report-modal {

@@ -1,5 +1,5 @@
 .dream-detail-page {
-  padding-top: calc(88px + env(safe-area-inset-top) + 0.75rem);
+  padding-top: calc(88px + var(--safe-top) + 0.75rem);
 }
 
 .dream-detail-page .detail-card {
@@ -1386,13 +1386,13 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 0 env(safe-area-inset-bottom);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 @media (min-width: 480px) {
   .report-modal-backdrop {
     align-items: center;
-    padding: 1.5rem;
+    padding: 1.5rem max(1.5rem, env(safe-area-inset-right)) 1.5rem max(1.5rem, env(safe-area-inset-left));
   }
 }
 

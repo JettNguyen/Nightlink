@@ -8,7 +8,7 @@ html[data-native-platform='ios'].keyboard-open .keyboard-dismiss {
   position: fixed;
   /* `resize: 'native'` shrinks the web view to sit on top of the keyboard, so
      the bottom of the viewport is the top of the keyboard. */
-  right: 12px;
+  right: calc(12px + env(safe-area-inset-right));
   bottom: 12px;
   /* Above the composer modal (1000) and the reaction popover (1200): the dream
      composer is itself a modal with a textarea in it. */

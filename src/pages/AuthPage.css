@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(2rem + env(safe-area-inset-top)) 1.5rem calc(3rem + env(safe-area-inset-bottom));
+  padding: calc(2rem + var(--safe-top)) 1.5rem calc(3rem + env(safe-area-inset-bottom));
   background: radial-gradient(circle at 100% 100%, rgba(201, 167, 240, 0.1), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(157, 111, 212, 0.1), transparent 55%),
     var(--background);
@@ -18,7 +18,7 @@ html[data-native-platform='ios'] .auth-page {
   height: auto;
   overflow: visible;
   align-items: flex-start;
-  padding-top: calc(3rem + env(safe-area-inset-top));
+  padding-top: calc(3rem + var(--safe-top));
   padding-bottom: calc(3rem + env(safe-area-inset-bottom));
   background: var(--background);
 }

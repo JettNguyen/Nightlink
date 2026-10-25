@@ -3,12 +3,16 @@
   top: 0;
   left: 0;
   right: 0;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top);
+  /* The bar's background runs edge to edge; its contents stay inside the side
+     insets, same as the page below it. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background: rgba(13, 13, 17, 0.7);
   backdrop-filter: blur(14px) saturate(150%);
   border-bottom: 1px solid var(--border);
   z-index: 100;
-  height: calc(88px + env(safe-area-inset-top));
+  height: calc(88px + var(--safe-top));
   transition: background-color 0.2s ease, border-color 0.2s ease, height 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   transform: translateZ(0);
   will-change: background-color;
@@ -227,11 +231,11 @@
   .navigation {
     position: fixed;
     top: 0;
-    height: calc(74px + env(safe-area-inset-top));
+    height: calc(74px + var(--safe-top));
   }
 
   .navigation.navigation-compact {
-    height: calc(48px + env(safe-area-inset-top));
+    height: calc(48px + var(--safe-top));
   }
 
   .nav-container {
@@ -396,8 +400,11 @@
   top: 0;
   left: 0;
   right: 0;
-  height: calc(52px + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
+  height: calc(52px + var(--safe-top));
+  padding-top: var(--safe-top);
+  /* Edge to edge behind, inside the side insets in front, like the page. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   display: flex;
   align-items: center;
   background: rgba(13, 13, 17, 0.7);
@@ -468,6 +475,8 @@
   height: calc(52px + env(safe-area-inset-bottom));
   padding-top: 15px;
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   display: flex;
   align-items: flex-start;
   background: rgba(13, 13, 17, 0.7);

@@ -596,7 +596,7 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(8px);
-  padding: calc(env(safe-area-inset-top) + 1.25rem) 1.25rem calc(env(safe-area-inset-bottom) + 1.25rem);
+  padding: calc(var(--safe-top) + 1.25rem) max(1.25rem, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 1.25rem) max(1.25rem, env(safe-area-inset-left));
   touch-action: none;
 }
 
@@ -1184,8 +1184,8 @@
    holds back off the status bar and the home indicator. */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 
   .modal-content {

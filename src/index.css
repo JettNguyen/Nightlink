@@ -7,8 +7,9 @@
 }
 
 :root {
-  --safe-area-inset-top: env(safe-area-inset-top);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  /* The top safe area. Everything that clears the status bar reads this rather
+     than env() directly, so the native floor below applies everywhere at once. */
+  --safe-top: env(safe-area-inset-top);
   --primary: #c9a7f0;
   /* Links only. Brighter than --primary so it separates from body copy without
      losing ground against the background: 10.94:1, up from 9.48:1. */
@@ -144,6 +145,9 @@ html[data-native-platform='ios'] {
   /* Prevent WKWebView's black background from bleeding through on rubber-band scroll */
   background: var(--background);
   background-color: var(--background);
+  /* The iPhone Duo runs its status bar down the side and reports no top inset,
+     which put the header flush against the top edge of the display. */
+  --safe-top: max(env(safe-area-inset-top), 16px);
 }
 
 html[data-native-platform='ios'] body {
@@ -212,8 +216,10 @@ p {
 
 .pull-refresh-indicator {
   position: fixed;
-  top: calc(52px + env(safe-area-inset-top) + 24px);
-  left: 50%;
+  top: calc(52px + var(--safe-top) + 24px);
+  /* Centred on the content, which sits inside the side insets, not on the
+     screen. They differ by half the Duo's status bar column. */
+  left: calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2);
   transform: translate(-50%, calc(-18px + (var(--pull-progress, 0) * 18px)));
   opacity: 0;
   pointer-events: none;
@@ -528,12 +534,21 @@ a {
   padding: 0 1rem;
 }
 
+/* The side insets (the iPhone Duo's status bar column, a phone on its side in
+   Safari) are taken here and nowhere else, so every page centres in what is
+   left. `.app` wraps both the main shell and the terms gate. The fixed bars and
+   the overlays, which portal to the body, inset themselves. */
+.app {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 .app-main--with-nav {
-  padding-top: calc(88px + env(safe-area-inset-top));
+  padding-top: calc(88px + var(--safe-top));
 }
 
 html[data-native-platform='ios'] .app-main--with-nav {
-  padding-top: calc(52px + env(safe-area-inset-top));
+  padding-top: calc(52px + var(--safe-top));
 }
 
 /* Reserve the tab bar's height on iOS, the home indicator's everywhere else. */
@@ -741,11 +756,11 @@ button, a, [role="button"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left));
 }
 
 .lazy-route-loading {
-  min-height: calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: calc(100dvh - 120px - var(--safe-top) - env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -753,7 +768,7 @@ button, a, [role="button"] {
 }
 
 html[data-native-platform='ios'] .lazy-route-loading {
-  padding-top: calc(2rem + env(safe-area-inset-top) + 56px);
+  padding-top: calc(2rem + var(--safe-top) + 56px);
 }
 
 /* On iOS WebKit, transform is unreliable on flex items and the ✦ glyph has a
@@ -1447,7 +1462,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
 .save-bar {
   position: -webkit-sticky;
   position: sticky;
-  top: calc(74px + env(safe-area-inset-top));
+  top: calc(74px + var(--safe-top));
   z-index: 200;
   background: rgba(14, 10, 20, 0.88);
   backdrop-filter: blur(12px);
@@ -1465,7 +1480,7 @@ html[data-native-platform='ios'] .profile-ai-badge {
 
 /* iOS: stick save bar just below the iOS header (52px, same for all device sizes) */
 html[data-native-platform='ios'] .save-bar {
-  top: calc(52px + env(safe-area-inset-top));
+  top: calc(52px + var(--safe-top));
   /* Remove backdrop-filter on iOS native to prevent GPU compositing promotion.
      The compositing layer it creates causes a blank-box stale-tile artifact
      above it (where settings-header renders) until the user scrolls. */
@@ -1677,7 +1692,7 @@ html[data-native-platform='ios'] .save-bar {
   }
 
   .app-main.app-main--with-nav {
-    padding-top: calc(74px + env(safe-area-inset-top));
+    padding-top: calc(74px + var(--safe-top));
   }
 
   .app-main.app-main--no-nav {
