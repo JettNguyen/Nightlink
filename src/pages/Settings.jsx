@@ -136,7 +136,7 @@ const isPromptSafe = (text) => {
   return !BLOCKED_PATTERNS.some((p) => p.test(text));
 };
 
-function Toggle({ checked, onChange, id, disabled }) {
+function Toggle({ checked, onChange, id, disabled = false }) {
   return (
     <label className={`toggle-switch${disabled ? ' is-disabled' : ''}`} htmlFor={id}>
       <input type="checkbox" id={id} checked={checked} onChange={onChange} disabled={disabled} />
@@ -150,10 +150,6 @@ Toggle.propTypes = {
   onChange: PropTypes.func.isRequired,
   id: PropTypes.string.isRequired,
   disabled: PropTypes.bool
-};
-
-Toggle.defaultProps = {
-  disabled: false
 };
 
 export default function Settings({ user }) {

@@ -13,14 +13,14 @@ import { getAvatarIconById, DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR, AVA
  * overflow: hidden on the parent.
  */
 export default function AvatarDisplay({
-  photoURL,
-  avatarIcon,
-  avatarBackground,
-  avatarColor,
-  className,
-  style,
-  alt,
-  fallbackText,
+  photoURL = null,
+  avatarIcon = null,
+  avatarBackground = null,
+  avatarColor = null,
+  className = '',
+  style = undefined,
+  alt = 'Profile photo',
+  fallbackText = null,
   ...rest
 }) {
   if (photoURL) {
@@ -56,17 +56,6 @@ export default function AvatarDisplay({
     </div>
   );
 }
-
-AvatarDisplay.defaultProps = {
-  photoURL: null,
-  avatarIcon: null,
-  avatarBackground: null,
-  avatarColor: null,
-  className: '',
-  style: undefined,
-  alt: 'Profile photo',
-  fallbackText: null,
-};
 
 AvatarDisplay.propTypes = {
   photoURL: PropTypes.string,

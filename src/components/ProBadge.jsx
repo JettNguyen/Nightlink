@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
  * Small inline "Pro" badge shown next to pro users' names.
  * Pass subscription object or tier string.
  */
-export default function ProBadge({ subscription, className }) {
+export default function ProBadge({ subscription = null, className = '' }) {
   const tier = typeof subscription === 'string'
     ? subscription
     : subscription?.tier;
@@ -15,11 +15,6 @@ export default function ProBadge({ subscription, className }) {
     </span>
   );
 }
-
-ProBadge.defaultProps = {
-  subscription: null,
-  className: '',
-};
 
 ProBadge.propTypes = {
   subscription: PropTypes.oneOfType([

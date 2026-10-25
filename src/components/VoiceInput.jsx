@@ -36,7 +36,9 @@ const readHintSeen = () => {
  * analyser to read a spectrum from, while the native path can only hand back a
  * single amplitude per buffer, so that one scrolls as a history instead.
  */
-export default function VoiceInput({ onTranscript, onNotice, disabled, label }) {
+export default function VoiceInput({
+  onTranscript, onNotice = undefined, disabled = false, label = 'Dictate your dream',
+}) {
   const barsRef = useRef(null);
   const frameRef = useRef(null);
   const levelsRef = useRef(new Float32Array(BAR_COUNT));
@@ -293,12 +295,6 @@ VoiceInput.propTypes = {
   label: PropTypes.string,
 };
 
-VoiceInput.defaultProps = {
-  onNotice: undefined,
-  disabled: false,
-  label: 'Dictate your dream',
-};
-
 /* The mic floats over the bottom right of the field, and the textarea reserves
    padding so the end of the text clears it. That padding only helps once the
    field is scrolled all the way down, and a browser scrolling the caret into
@@ -308,7 +304,7 @@ VoiceInput.defaultProps = {
    Pinning the scroll to the bottom while the caret is at the end of the value
    reveals that reserved padding, so the live line stays above the mic. Editing
    anywhere else in the text is left alone. */
-export function VoiceField({ children, className }) {
+export function VoiceField({ children = null, className = '' }) {
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -332,9 +328,4 @@ export function VoiceField({ children, className }) {
 VoiceField.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-};
-
-VoiceField.defaultProps = {
-  children: null,
-  className: '',
 };
