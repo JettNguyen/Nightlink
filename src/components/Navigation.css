@@ -441,23 +441,29 @@
 /* The iPhone Duo's corners (see utils/statusCorner.js). Upright and open, the
    header moves up into the clock's row and its right side stops short of the
    clock; folded, the camera sits in the bar's top right. Either way the row is
-   centered on the clock or the camera, 48pt down, and the bar is as deep again
-   below that, so the system's dark shape behind the corner sits inside it
-   rather than breaking its bottom line. The logo stays centered on the screen
-   rather than in what is left. Only the bar and the page under it take these;
-   sheets and signed out pages still clear the whole inset. The bar stays put as
-   you scroll: sliding up, it would leave the clock with nothing behind it, or
-   the camera's shape hanging over the page. */
+   centered on the clock or the camera, 48pt down, and the bar runs deep enough
+   that the system's dark shape behind that corner sits inside it rather than
+   breaking its bottom line. Upright the bar stops at 86pt, clear of that
+   shape's soft lower edge; folded it stops at 76.5pt, halfway between the bottom of the camera (66pt)
+   and the top of the clock under it (87pt). The logo stays
+   centered on the screen rather than in what is left. Only the bar and the
+   page under it take these; sheets and signed out pages still clear the whole
+   inset. The bar stays put as you scroll: sliding up, it would leave the clock
+   with nothing behind it, or the camera's shape hanging over the page. */
 html[data-status-corner] .nav-ios-header,
 html[data-status-corner] .app-main--with-nav,
 html[data-status-corner] .pull-refresh-indicator,
-html[data-status-corner] .offline-indicator,
+html[data-status-corner] .offline-indicator {
+  --safe-top: 22px;
+  --nav-extra: 12px;
+}
+
 html[data-camera-corner] .nav-ios-header,
 html[data-camera-corner] .app-main--with-nav,
 html[data-camera-corner] .pull-refresh-indicator,
 html[data-camera-corner] .offline-indicator {
   --safe-top: 22px;
-  --nav-extra: 22px;
+  --nav-extra: 2.5px;
 }
 
 html[data-status-corner] .nav-ios-header,
@@ -467,24 +473,6 @@ html[data-camera-corner] .nav-ios-header {
 
 html[data-status-corner] .nav-ios-header {
   padding-right: 130px;
-}
-
-/* Folded, the system draws a dark panel down the clock's column behind the
-   camera and the clock, and it reaches below the deeper bar's bottom. The line
-   stops where the column starts, so the panel reads as the bar running down
-   that side instead of a shape cutting through its edge. */
-html[data-camera-corner] .nav-ios-header {
-  border-bottom: none;
-  box-shadow: none;
-}
-
-html[data-camera-corner] .nav-ios-header::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: env(safe-area-inset-right);
-  bottom: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 html[data-status-corner] .nav-ios-header-center {
