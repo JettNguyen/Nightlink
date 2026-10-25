@@ -19,6 +19,12 @@
   animation: slideInUp 0.22s ease-out 0.03s both;
 }
 
+/* Same as the journal: the subtitle wraps, the button does not. */
+.feed-header-top > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* ── Feed tabs ─────────────────────────────────────────────────────────────── */
 
 .feed-tab-count {

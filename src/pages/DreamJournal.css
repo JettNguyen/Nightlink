@@ -1132,6 +1132,13 @@
   padding: 0 1.25rem 0.85rem;
 }
 
+/* The button holds its size and the subtitle wraps instead. Left to shrink,
+   "+ New Dream" broke onto two lines on every phone narrower than a Pro Max. */
+.journal-header-top > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .journal-header h1 {
   animation: slideInUp 0.22s ease-out 0.03s both;
 }
