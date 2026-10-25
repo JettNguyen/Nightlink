@@ -10,6 +10,11 @@ import './AuthPage.css';
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 const NATIVE_OAUTH_REDIRECT = 'dev.nightlink://auth/callback';
 const NATIVE_OAUTH_SCHEME = 'dev.nightlink://';
+// Google keeps you signed in inside the sign in browser, and with one account it
+// knows that has approved Nightlink before, it went straight through with no way
+// to pick a different one. This always shows Google's chooser, which has "Use
+// another account" on it.
+const GOOGLE_ACCOUNT_PICKER = { prompt: 'select_account' };
 const IS_IOS_NATIVE = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -194,6 +199,7 @@ export default function AuthPage() {
           options: {
             redirectTo: NATIVE_OAUTH_REDIRECT,
             skipBrowserRedirect: true,
+            queryParams: GOOGLE_ACCOUNT_PICKER,
           }
         });
         if (err) throw err;
@@ -318,7 +324,7 @@ export default function AuthPage() {
 
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin }
+        options: { redirectTo: window.location.origin, queryParams: GOOGLE_ACCOUNT_PICKER }
       });
       if (err) throw err;
       // After redirect, onAuthStateChange fires and App.jsx provisions the profile if needed
