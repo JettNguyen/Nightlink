@@ -10,7 +10,9 @@
   width: min(360px, 90vw);
   max-height: calc(100dvh - 160px);
   border-radius: 18px;
-  background: rgba(15, 21, 36, 0.98);
+  /* Opaque. At 0.98 WebKit let the dream text behind show through the names
+     far more than two percent would suggest. */
+  background: rgb(15, 21, 36);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 22px 50px rgba(6, 8, 18, 0.45);
   padding: 1rem;
@@ -25,7 +27,7 @@
   position: absolute;
   width: 16px;
   height: 16px;
-  background: rgba(15, 21, 36, 0.98);
+  background: rgb(15, 21, 36);
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   transform: translate(-50%, 0) rotate(45deg);
