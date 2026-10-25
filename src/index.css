@@ -1364,25 +1364,6 @@ html[data-native-platform='ios'] .profile-ai-badge {
   outline: none;
 }
 
-.reaction-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.reaction-summary-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--text-secondary);
-  font-size: var(--fs-sm);
-}
-
-.reaction-summary-item .reaction-emoji-icon {
-  font-size: 0.85rem;
-}
-
 .emoji-clear-btn {
   width: 100%;
   margin-top: 0.35rem;

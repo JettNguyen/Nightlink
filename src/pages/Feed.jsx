@@ -725,19 +725,6 @@ export default function Feed({ user }) {
               )}
             </div>
           )}
-          {Object.entries(reactionSnapshot.counts || {}).some(([e, c]) => c > 0 && e !== defaultReaction && e !== viewerCustomEmoji) ? (
-            <div className="reaction-summary">
-              {Object.entries(reactionSnapshot.counts || {})
-                .filter(([emoji, count]) => count > 0 && emoji !== defaultReaction && emoji !== viewerCustomEmoji)
-                .sort(([, a], [, b]) => b - a)
-                .map(([emoji, count]) => (
-                  <span key={emoji} className="reaction-summary-item">
-                    <span aria-hidden="true">{emoji}</span>
-                    <span className="reaction-count">{count}</span>
-                  </span>
-                ))}
-            </div>
-          ) : null}
         </div>
         </div>
       </div>
