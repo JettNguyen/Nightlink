@@ -27,6 +27,9 @@
 }
 
 .dream-date-section {
+  /* The same step as the sections below it. Nothing separated the label from
+     the dream above, so it read as a caption on the text box. */
+  margin-top: 1rem;
   margin-bottom: 0.75rem;
   display: flex;
   flex-direction: column;
@@ -1050,6 +1053,10 @@
 
 .ai-hint {
   padding: 10px 0 0 0;
+  /* A note, like every other .hint in the sheet. It had no colour or size of
+     its own and came out as body copy, the largest text in the panel. */
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
 }
 
 .tag-suggestion-list {
