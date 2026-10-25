@@ -74,12 +74,28 @@ a public figure was hidden. Every PNG is flattened to RGB before upload. The 1.3
 Search leaves out your own dreams, so its results are always someone else's. The review account's
 demo dreams (search "city") are safe to show.
 
+## The native shell
+
+`ios/App/App/AppShell.swift` is the window's root. On iOS 18 and later it puts the five tabs in
+Apple's own tab bar and moves the one web view into whichever tab is selected; the page still does
+all the navigating, through `src/plugins/nativeTabs.js`. Overlays hide the bar while they are open.
+
+**A plugin written in this target has to be registered by hand** in
+`NightlinkBridgeViewController.capacitorDidLoad`. Capacitor only registers plugins that came from
+npm. Live dictation shipped in 1.3 build 1 without this and fell back to recording and uploading,
+so after adding a plugin, check `Capacitor.isPluginAvailable('<name>')` on a simulator.
+
 ## iPhone Duo
 
-The Duo's status bar runs down the side of the screen in both postures, so it reports no top inset
-and a right inset of 84 points. Folded, the app gets 466 by 678 points; open, it runs on its side
-at 951 by 669. The side insets are taken once, on `.app`; fixed bars and overlay backdrops pad
-themselves. Check both postures when a layout changes.
+The Duo's status bar runs down the side of the screen when the clock is on the side, so it
+reports no top inset and a right inset of 84 points. Folded, the app gets 466 by 678 points; open
+on its side, 951 by 669. There iOS draws the tab bar as a vertical glass bar on the right, and
+`AppShell.swift` moves it to the middle of that edge. Open and upright (669 by 951), the clock sits
+in the top right corner with an 82 point row to itself, and the bar is along the bottom.
+
+The side insets are taken once, on `.app`; fixed bars and overlay backdrops pad themselves. Check
+every posture when a layout changes. Nothing on this Mac can rotate a simulator from the command
+line, so turning the Duo upright or sideways is done by hand in Xcode.
 
 ## The database
 
