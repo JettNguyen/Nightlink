@@ -1350,15 +1350,31 @@ html[data-native-platform='ios'] .profile-ai-badge {
   box-shadow: 0 0 0 1px rgba(201, 167, 240, 0.2);
 }
 
+/* The field on its own line, then Cancel and Add together at the right, Add
+   last. As a wrapping flex row the leftover space decided where it broke, and
+   each phone split the two buttons up differently. */
 .emoji-input-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 0.5rem;
   align-items: center;
 }
 
+.emoji-input-row > button {
+  grid-row: 2;
+}
+
+.emoji-input-row > button[type='submit'] {
+  grid-column: 3;
+}
+
+.emoji-input-row > button[type='button'] {
+  grid-column: 2;
+}
+
 .emoji-input-row input {
-  min-width: 160px;
+  grid-column: 1 / -1;
+  min-width: 0;
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--control-border);
