@@ -488,6 +488,24 @@ html[data-camera-corner] .nav-ios-header-center {
   opacity: 1 !important;
 }
 
+/* The deeper bar has room for a larger logo and controls, a step up rather
+   than filling it. */
+html[data-status-corner] .nav-ios-logo-icon,
+html[data-camera-corner] .nav-ios-logo-icon {
+  width: 30px;
+  height: 30px;
+}
+
+html[data-status-corner] .nav-ios-logo-text,
+html[data-camera-corner] .nav-ios-logo-text {
+  font-size: 1.3rem;
+}
+
+html[data-status-corner] .nav-ios-back-btn,
+html[data-camera-corner] .nav-ios-back-btn {
+  font-size: calc(var(--fs-lg) * 1.15);
+}
+
 .nav-ios-back-btn {
   background: none;
   color: var(--primary);
