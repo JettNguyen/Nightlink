@@ -225,13 +225,15 @@ function Navigation({ user, activityPreview }) {
       const center = el.querySelector('.nav-ios-header-center');
       const right = el.querySelector('.nav-ios-header-right');
       if (compact) {
-        el.style.transitionDuration = '0.22s';
-        el.style.transitionTimingFunction = 'cubic-bezier(0.4, 0, 0.6, 1)';
+        // The contents fade for as long as the bar slides. Gone in half the
+        // time, they left an empty bar moving, so it read as a cut.
+        el.style.transitionDuration = '0.28s';
+        el.style.transitionTimingFunction = 'cubic-bezier(0.4, 0, 0.2, 1)';
         el.style.transform = 'translateY(-52px)';
         [left, center, right].forEach((node) => {
           if (!node) return;
           node.style.opacity = '0';
-          node.style.transition = 'opacity 0.12s ease';
+          node.style.transition = 'opacity 0.26s ease-in';
         });
       } else {
         el.style.transitionDuration = '0.38s';
