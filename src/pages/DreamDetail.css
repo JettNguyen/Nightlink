@@ -86,7 +86,10 @@
 
 .detail-date-block {
   padding: 0;
-  width: 100%;
+  /* Only as wide as the date and the edit button. At 100% it took the whole row
+     beside the title and squeezed the title to its 240px minimum on anything
+     wider than a phone. Under 640px the two stack and this goes full width. */
+  flex: 0 1 auto;
   min-width: 160px;
   display: flex;
   justify-content: space-between;
