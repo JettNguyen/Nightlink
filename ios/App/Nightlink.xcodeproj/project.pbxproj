@@ -17,6 +17,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		50D0100122F5000000A10001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D0100022F5000000A10001 /* SceneDelegate.swift */; };
 		7E1A0C022F0000A100000002 /* NativeSpeechPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1A0C012F0000A100000001 /* NativeSpeechPlugin.swift */; };
+		7E1A0C042F0000A100000004 /* AppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1A0C032F0000A100000003 /* AppShell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		50D0100022F5000000A10001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7E1A0C012F0000A100000001 /* NativeSpeechPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSpeechPlugin.swift; sourceTree = "<group>"; };
+		7E1A0C032F0000A100000003 /* AppShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShell.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -71,6 +73,7 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				50D0100022F5000000A10001 /* SceneDelegate.swift */,
+				7E1A0C032F0000A100000003 /* AppShell.swift */,
 				7E1A0C012F0000A100000001 /* NativeSpeechPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -166,6 +169,7 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				50D0100122F5000000A10001 /* SceneDelegate.swift in Sources */,
+				7E1A0C042F0000A100000004 /* AppShell.swift in Sources */,
 				7E1A0C022F0000A100000002 /* NativeSpeechPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
