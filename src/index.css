@@ -123,6 +123,11 @@ html {
   overscroll-behavior: none;
   scroll-behavior: smooth;
   color-scheme: dark;
+  /* WebKit inflates long paragraphs when a page runs sideways, which the open
+     iPhone Duo always does. It set a dream's preview at 25px under a 27px
+     title, where the type scale says 15px under 21px. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
