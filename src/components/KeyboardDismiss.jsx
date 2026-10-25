@@ -3,6 +3,7 @@ import { Keyboard } from '@capacitor/keyboard';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { triggerLightHaptic } from '../utils/haptics';
+import Overlay from './Overlay';
 import './KeyboardDismiss.css';
 
 /**
@@ -15,6 +16,10 @@ import './KeyboardDismiss.css';
  *
  * Visibility is pure CSS off the `keyboard-open` class that the keyboard setup
  * puts on <html>, so there is no state here to fall out of sync with it.
+ *
+ * It portals to <body> like the overlays do. Inside #root, which is its own
+ * stacking context at z-index 2, its 1400 could never beat a sheet's 1000, so
+ * Done sat hidden under the new dream sheet, the one place it matters most.
  */
 export default function KeyboardDismiss() {
   const dismiss = () => {
@@ -32,14 +37,16 @@ export default function KeyboardDismiss() {
   };
 
   return (
-    <button
-      type="button"
-      className="keyboard-dismiss"
-      onClick={dismiss}
-      aria-label="Close keyboard"
-    >
-      <FontAwesomeIcon icon={faChevronDown} />
-      <span>Done</span>
-    </button>
+    <Overlay>
+      <button
+        type="button"
+        className="keyboard-dismiss"
+        onClick={dismiss}
+        aria-label="Close keyboard"
+      >
+        <FontAwesomeIcon icon={faChevronDown} />
+        <span>Done</span>
+      </button>
+    </Overlay>
   );
 }
