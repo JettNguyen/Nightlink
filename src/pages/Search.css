@@ -349,4 +349,11 @@
   .search-input-wrap {
     grid-template-columns: 1fr;
   }
+
+  /* Results come in as you type, and the keyboard's Search key submits the form
+     without it. Stacked under the field, a button that stays disabled until two
+     letters are in read as an empty bar. */
+  .search-input-wrap button[type='submit'] {
+    display: none;
+  }
 }

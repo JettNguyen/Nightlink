@@ -165,12 +165,15 @@ export default function Search({ user }) {
             {searching ? 'Searching…' : 'Search'}
           </button>
         </form>
-        <p className="hint">Type at least {MIN_CHARS} characters. Filter to search only people or only public dreams.</p>
       </div>
 
 
       {searchTerm.trim().length < MIN_CHARS && !searching ? (
-        <div className="empty-state">Start typing to explore {filter === 'people' ? 'people' : 'public dreams'}.</div>
+        <div className="empty-state">
+          {filter === 'people'
+            ? `Type at least ${MIN_CHARS} letters of a name or username.`
+            : `Type at least ${MIN_CHARS} letters to search public dreams.`}
+        </div>
       ) : (
         <div className="search-results">
           {filter === 'people' ? (
