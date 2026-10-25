@@ -678,6 +678,16 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   box-shadow: none;
 }
 
+/* The other buttons had no disabled look at all, so Discard with nothing to
+   discard looked as ready to press as Save. Dimmed less than the filled button,
+   which starts out much brighter. */
+.secondary-btn:disabled,
+.ghost-btn:disabled,
+.danger-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .secondary-btn {
   background: var(--surface-muted);
   color: var(--text);
