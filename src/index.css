@@ -688,6 +688,16 @@ html[data-native-platform='ios'].keyboard-open .app-main {
   cursor: not-allowed;
 }
 
+/* A button with no font size of its own gets WebKit's 11px on iOS, and most of
+   these had none: Save sat at 11px beside a Discard someone had sized by hand.
+   One size for all of them, ahead of the compact variant so it can still shrink. */
+.primary-btn,
+.secondary-btn,
+.ghost-btn,
+.danger-btn {
+  font-size: var(--fs-base);
+}
+
 .secondary-btn {
   background: var(--surface-muted);
   color: var(--text);

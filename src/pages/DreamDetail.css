@@ -1322,6 +1322,15 @@
   margin-top: 0.6rem;
 }
 
+/* The box's text is the small size, and at the body size these two no longer
+   fit side by side on a phone and stacked at uneven widths. They share the row
+   now, and where even that is too narrow each takes a full row. */
+.ai-upgrade-cta-actions > .ghost-btn {
+  flex: 1 1 auto;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
 .detail-actions {
   display: flex;
   justify-content: flex-end;
