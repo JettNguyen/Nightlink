@@ -2133,7 +2133,9 @@ export default function DreamDetail({ user }) {
   if (loading) {
     return (
       <div className={containerClass}>
-        <DreamDetailSkeleton />
+        {/* Opened from the journal it can only be your own dream, which has
+            no author row. */}
+        <DreamDetailSkeleton showBack={!isNativeIOS} owner={fromNav === '/journal'} />
       </div>
     );
   }

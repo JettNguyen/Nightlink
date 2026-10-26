@@ -178,7 +178,14 @@ export default function DreamInsights({ user }) {
     </button>
   );
 
-  if (loading) return <InsightsSkeleton />;
+  if (loading) {
+    return (
+      <div className="insights-page">
+        {backButton}
+        <InsightsSkeleton />
+      </div>
+    );
+  }
 
   if (!isPro) {
     return (

@@ -1,7 +1,18 @@
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPencil, faGear } from '@fortawesome/free-solid-svg-icons';
 import './SkeletonLoader.css';
 
-// Use these to compose page-specific skeletons.
+// Each skeleton is built from its page's own layout classes, with shimmer where
+// the words go. They used to copy those layouts into classes of their own, and
+// the copies drifted: rows inset twice, a gutter of 1.25rem where the page uses
+// 16px on a phone, a back button iOS never draws, and line heights that made
+// every row shorter than the one that replaced it. Built this way a skeleton
+// takes the same box as the real row at every width, on the Duo in each posture
+// and on a phone or a desktop alike, and follows the page when its layout moves.
+//
+// `sk` marks a skeleton's outermost elements: SkeletonLoader.css takes the
+// row's press, hover and entrance animation back off everything inside.
 
 function S({ w, h, r, className = '' }) {
   return (
@@ -23,75 +34,159 @@ S.propTypes = {
   className: PropTypes.string,
 };
 
-function Circle({ size }) {
+// One line of text. It sits inside the element the real text would, so it is
+// exactly as tall as that element's line, at whatever size the page sets type.
+// Inside a flex row give it a width in em, since a percentage of a box that is
+// sized by its own content has nothing to resolve against.
+function Line({ w = '100%', className = '' }) {
   return (
-    <div
-      className="skel"
-      style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0 }}
-    />
+    <span className={`sk-line ${className}`}>
+      <span className="skel sk-line-bar" style={{ width: w }} />
+    </span>
   );
 }
 
-Circle.propTypes = {
-  size: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+Line.propTypes = {
+  w: PropTypes.string,
+  className: PropTypes.string,
 };
 
-// Matches the `dreams-list` auto-fill grid (minmax(280px, 1fr))
-// Shows 6 cards so all columns are populated at any breakpoint.
-
-export function JournalSkeleton() {
+// A paragraph. Past the phone layout, on the open Duo held sideways or a
+// desktop, the same words take about half as many lines as on a phone, or more
+// where a grid splits into columns, so `wide` gives the lines for a screen
+// wider than 768px. The upright Duo and the folded one are under that and wrap
+// like a phone.
+function Lines({ widths, wide }) {
+  if (!wide) return widths.map((w, i) => <Line key={i} w={w} />);
   return (
-    <div className="sk-journal-grid">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="sk-journal-card">
-          <div className="sk-journal-top">
-            <S w="68px" h="20px" r={999} />
-            <S w="36px" h="18px" r={999} />
-          </div>
-          <S w="80%" h="1rem" />
-          <S h="0.82rem" />
-          <S w="65%" h="0.82rem" />
-          <div className="sk-journal-footer">
-            <S w="44px" h="18px" r={999} />
-            <S w="32px" h="18px" r={999} />
-          </div>
-        </div>
-      ))}
-    </div>
+    <>
+      {widths.map((w, i) => <Line key={`n${i}`} w={w} className="sk-line--narrow" />)}
+      {wide.map((w, i) => <Line key={`w${i}`} w={w} className="sk-line--wide" />)}
+    </>
   );
 }
 
-// Matches feed-post: avatar column + byline + title + content + reactions
+Lines.propTypes = {
+  widths: PropTypes.arrayOf(PropTypes.string).isRequired,
+  wide: PropTypes.arrayOf(PropTypes.string),
+};
 
-function FeedCardSkeleton() {
+// A pill, a button or a field with a fixed label. The label is laid out but
+// not drawn, so the shape is exactly the size of the real control. Pass the real
+// control's tag in `as`: a button sets its line at the browser's normal height
+// rather than the page's 1.5, and a textarea is sized by its rows.
+function Ghost({ as: Tag = 'span', className = '', children }) {
+  const controlProps = Tag === 'button' ? { type: 'button', tabIndex: -1 }
+    : Tag === 'textarea' ? { tabIndex: -1, readOnly: true }
+    : {};
+  return <Tag className={`${className} skel sk-ghost`} {...controlProps}>{children}</Tag>;
+}
+
+Ghost.propTypes = {
+  as: PropTypes.elementType,
+  className: PropTypes.string,
+  children: PropTypes.node,
+};
+
+// The heart, the comment count and the add button under a dream.
+function ReactionsSkeleton({ className }) {
   return (
-    <div className="sk-feed-card">
-      {/* 40px circle in the avatar column, matching .feed-avatar */}
-      <div className="skel sk-feed-avatar" />
-      <div className="sk-feed-main">
-        <div className="sk-feed-head">
-          <S w="110px" h="0.9rem" />
-          <S w="90px" h="0.78rem" />
-        </div>
-        <S w="65%" h="1.05rem" r={6} className="sk-mt-sm" />
-        <S h="0.85rem" className="sk-mt-sm" />
-        <S w="90%" h="0.85rem" className="sk-mt-sm" />
-        <S w="60%" h="0.85rem" className="sk-mt-sm" />
-        <div className="sk-feed-footer">
-          <S w="44px" h="20px" r={6} />
-          <S w="44px" h="20px" r={6} />
-          <S w="44px" h="20px" r={6} />
-        </div>
+    <div className={`activity-reactions ${className}`}>
+      <div className="reaction-buttons">
+        <span className="reaction-button"><S w="2.1rem" h="1.05rem" r={999} /></span>
+        <span className="reaction-button"><S w="2.1rem" h="1.05rem" r={999} /></span>
+        <span className="reaction-button"><S w="1.05rem" h="1.05rem" r={999} /></span>
       </div>
     </div>
   );
 }
 
+ReactionsSkeleton.propTypes = {
+  className: PropTypes.string.isRequired,
+};
+
+// ── Journal ─────────────────────────────────────────────────────────────────
+// The search field, the year, then the stream of entries. The field only shows
+// once there are dreams, which is the case almost every time this loads.
+
+const JOURNAL_ROWS = [
+  { title: '58%', content: ['100%', '96%', '62%'], wide: ['100%', '48%'], tags: true },
+  { title: '44%', content: ['100%', '88%', '70%'], wide: ['100%', '62%'], tags: false },
+  { title: '66%', content: ['100%', '93%', '40%'], wide: ['86%'], tags: true },
+  { title: '50%', content: ['100%', '97%', '76%'], wide: ['100%', '70%'], tags: false },
+  { title: '38%', content: ['100%', '90%', '55%'], wide: ['100%', '30%'], tags: false },
+];
+
+export function JournalSkeleton() {
+  return (
+    <>
+      <div className="journal-search-row sk" aria-hidden="true">
+        <Ghost as="div" className="journal-search-input sk-field">&nbsp;</Ghost>
+      </div>
+      <div className="dreams-list sk" aria-hidden="true">
+        <div className="dreams-year-header"><span><Line w="2.6em" /></span></div>
+        {JOURNAL_ROWS.map((row, i) => (
+          <div key={i} className="dream-card">
+            <div className="dream-header">
+              <div className="dream-meta">
+                <span className="dream-date"><Line w="3.2em" /></span>
+                <Ghost className="dream-vis-pill">Public</Ghost>
+              </div>
+              <span className="dream-chevron sk-hidden">→</span>
+            </div>
+            <p className="dream-title"><Line w={row.title} /></p>
+            <p className="dream-content"><Lines widths={row.content} wide={row.wide} /></p>
+            {row.tags && (
+              <div className="dream-footer-meta">
+                <span className="dream-tag-count"><Line w="3em" /></span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ── Feed ────────────────────────────────────────────────────────────────────
+
+const FEED_ROWS = [
+  { title: '62%', content: ['100%', '94%', '58%'], wide: ['100%', '40%'] },
+  { title: '48%', content: ['100%', '97%', '90%', '36%'], wide: ['100%', '84%'] },
+  { title: '70%', content: ['100%', '72%'], wide: ['78%'] },
+];
+
+function FeedPostSkeleton({ title, content, wide }) {
+  return (
+    <div className="feed-post">
+      <span className="skel feed-avatar" />
+      <div className="feed-post-main">
+        <div className="feed-post-head">
+          <div className="feed-post-byline">
+            <span className="feed-author-handle"><Line w="6.5em" /></span>
+            <Ghost className="vis-badge">Public</Ghost>
+            <span className="feed-post-meta"><Line w="5.5em" /></span>
+          </div>
+        </div>
+        <h3 className="feed-title"><Line w={title} /></h3>
+        <p className="feed-content"><Lines widths={content} wide={wide} /></p>
+        <ReactionsSkeleton className="feed-reactions" />
+      </div>
+    </div>
+  );
+}
+
+FeedPostSkeleton.propTypes = {
+  title: PropTypes.string.isRequired,
+  content: PropTypes.arrayOf(PropTypes.string).isRequired,
+  wide: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 export function FeedSkeleton({ count = 3 }) {
   return (
-    <div className="sk-feed-list">
+    <div className="feed-list sk" aria-hidden="true">
       {Array.from({ length: count }).map((_, i) => (
-        <FeedCardSkeleton key={i} />
+        <FeedPostSkeleton key={i} {...FEED_ROWS[i % FEED_ROWS.length]} />
       ))}
     </div>
   );
@@ -101,206 +196,329 @@ FeedSkeleton.propTypes = {
   count: PropTypes.number,
 };
 
-// Header, two counts, the owner actions, then the dreams head and its stream.
+// ── Profile ─────────────────────────────────────────────────────────────────
+// Rendered straight into the page's `stream-page` container, the way the
+// loaded profile is, so each block takes the margin that page gives it. Your
+// own profile has Edit Profile and Settings under the counts; anyone else's
+// has the follow button below them.
 
-export function ProfilePageSkeleton() {
+function ProfileDreamRows() {
   return (
-    <div className="sk-profile">
-      <div className="sk-profile-header">
-        <div className="sk-profile-identity">
-          <Circle size={88} />
-          <div className="sk-profile-name">
-            <S w="165px" h="1.55rem" r={8} />
-            <S w="110px" h="1rem" className="sk-mt-sm" />
+    <div className="profile-dream-grid sk" aria-hidden="true">
+      {['60%', '46%', '68%', '52%', '40%'].map((title, i) => (
+        <div key={i} className="profile-dream-card">
+          <div className="profile-dream-top">
+            <Ghost className="dream-date-pill">Oct 24</Ghost>
+            <Ghost className="profile-vis-pill">Public</Ghost>
           </div>
-        </div>
-        <S w="240px" h="0.85rem" className="sk-mt" />
-        <S w="180px" h="0.85rem" className="sk-mt-sm" />
-      </div>
-      <div className="sk-profile-stats">
-        {[0, 1].map((i) => (
-          <div key={i} className="sk-stat-item">
-            <S w="26px" h="1rem" r={6} />
-            <S w="62px" h="0.8rem" r={4} />
-          </div>
-        ))}
-      </div>
-      <S w="140px" h="38px" r={10} className="sk-profile-btn" />
-      <div className="sk-profile-head">
-        <div className="sk-profile-head-top">
-          <S w="84px" h="1.05rem" r={6} />
-          <S w="150px" h="0.8rem" r={4} className="sk-mt-sm" />
-        </div>
-        <div className="sk-profile-head-tabs">
-          <S w="82px" h="0.95rem" r={4} />
-          <S w="52px" h="0.95rem" r={4} />
-        </div>
-      </div>
-      <div className="sk-profile-grid">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="sk-profile-card">
-            <S w="60px" h="18px" r={999} />
-            <S w="85%" h="0.95rem" className="sk-mt" />
-            <S h="0.8rem" className="sk-mt-sm" />
-            <S w="65%" h="0.8rem" className="sk-mt-sm" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function ProfileDreamsLoadingSkeleton() {
-  return (
-    <div className="sk-profile-grid">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="sk-profile-card">
-          <S w="60px" h="18px" r={999} />
-          <S w="85%" h="0.95rem" className="sk-mt" />
-          <S h="0.8rem" className="sk-mt-sm" />
-          <S w="65%" h="0.8rem" className="sk-mt-sm" />
+          <h3 className="profile-dream-title"><Line w={title} /></h3>
+          <p className="profile-dream-snippet"><Lines widths={['100%', i % 2 ? '58%' : '82%']} wide={['100%', '96%', i % 2 ? '44%' : '70%']} /></p>
+          {i % 2 === 0 && (
+            <div className="profile-dream-footer-meta">
+              <span className="profile-tag-count"><Line w="4.5em" /></span>
+            </div>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-// Back btn + title + date/author + content block + AI section
-// Wrapped in sk-detail-card to mirror the actual .detail-card container.
-
-export function DreamDetailSkeleton() {
+export function ProfilePageSkeleton({ own = true, showSettings = true }) {
   return (
-    <div className="sk-detail-card">
-      <div className="sk-detail-toolbar">
-        <S w="88px" h="34px" r={10} />
-      </div>
-      <div className="sk-detail-title-row">
-        <S w="72%" h="1.75rem" r={8} />
-        <S w="100px" h="0.85rem" className="sk-mt-sm" />
-      </div>
-      <div className="sk-detail-author">
-        <Circle size={36} />
-        <div className="sk-feed-meta">
-          <S w="110px" h="0.85rem" />
-          <S w="72px" h="0.75rem" />
-        </div>
-      </div>
-      <div className="sk-detail-content">
-        {[100, 96, 88, 100, 78, 94, 82, 100, 66, 90, 74, 55].map((w, i) => (
-          <S key={i} w={`${w}%`} h="0.9rem" className="sk-mt-sm" />
-        ))}
-      </div>
-      <div className="sk-detail-ai">
-        <S w="140px" h="1rem" r={6} />
-        {[100, 91, 100, 83, 71, 60].map((w, i) => (
-          <S key={i} w={`${w}%`} h="0.85rem" className={i === 0 ? 'sk-mt' : 'sk-mt-sm'} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Header + section cards
-
-export function InsightsSkeleton() {
-  return (
-    <div className="sk-insights">
-      <div className="sk-insights-header">
-        <S w="200px" h="1.75rem" r={8} />
-        <S w="140px" h="0.8rem" className="sk-mt-sm" />
-      </div>
-      {[4, 3, 3].map((rows, ci) => (
-        <div key={ci} className="sk-insights-card">
-          <div className="sk-insights-card-head">
-            <S w="16px" h="16px" r={999} />
-            <S w="160px" h="0.95rem" r={6} />
-            <S w="60px" h="22px" r={999} className="sk-insights-count" />
+    <>
+      <div className="profile-top sk" aria-hidden="true">
+        <div className="profile-top-main">
+          <div className="profile-header">
+            <div className="profile-identity">
+              <div className="profile-avatar"><span className="avatar-circle skel sk-ghost" /></div>
+              <div className="profile-info">
+                <h1><Line w="6.5em" /></h1>
+                <p className="profile-username"><Line w="6em" /></p>
+              </div>
+            </div>
+            <p className="profile-bio"><Line w="78%" /></p>
           </div>
-          {Array.from({ length: rows }).map((_, i) => (
-            <S key={i} w={i % 3 === 2 ? '75%' : '100%'} h="0.85rem" className="sk-mt-sm" />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Section cards with toggle rows
-
-function ToggleRowSkeleton() {
-  return (
-    <div className="sk-toggle-row">
-      <div className="sk-toggle-label">
-        <S w="120px" h="0.9rem" />
-        <S w="200px" h="0.78rem" className="sk-mt-sm" />
-      </div>
-      <S w="48px" h="28px" r={999} className="sk-toggle-switch" />
-    </div>
-  );
-}
-
-export function SettingsSkeleton() {
-  return (
-    <div className="sk-settings">
-      {[
-        { head: true, rows: 2 },
-        { head: true, rows: 3 },
-        { head: true, rows: 1 },
-        { head: true, rows: 2 },
-      ].map((section, si) => (
-        <div key={si} className="sk-settings-section">
-          <div className="sk-settings-head">
-            <S w="140px" h="1.1rem" r={6} />
-            <S w="220px" h="0.8rem" className="sk-mt-sm" />
-          </div>
-          <div className="sk-settings-body">
-            {Array.from({ length: section.rows }).map((_, i) => (
-              <ToggleRowSkeleton key={i} />
+          <div className="profile-stats">
+            {[0, 1].map((i) => (
+              <div key={i} className="stat-item stat-button">
+                <div className="stat-value"><Line w="1.2em" /></div>
+                <div className="stat-label"><Line w="4.4em" /></div>
+              </div>
             ))}
           </div>
         </div>
-      ))}
-    </div>
-  );
-}
-
-// Notification cards: avatar + content lines + clear btn
-
-function ActivityCardSkeleton() {
-  return (
-    <div className="sk-activity-card">
-      <Circle size={42} />
-      <div className="sk-activity-body">
-        <S w="88%" h="0.85rem" />
-        <S w="52%" h="0.8rem" className="sk-mt-sm" />
+        {own && (
+          <div className="profile-btn-row">
+            <Ghost as="button" className="edit-profile-btn"><FontAwesomeIcon icon={faPencil} /><span>Edit Profile</span></Ghost>
+            {showSettings && <Ghost as="button" className="settings-btn"><FontAwesomeIcon icon={faGear} /><span>Settings</span></Ghost>}
+          </div>
+        )}
       </div>
-      <S w="28px" h="28px" r={6} className="sk-activity-action" />
+      {!own && (
+        <div className="follow-actions sk" aria-hidden="true">
+          <div className="follow-actions-row follow-actions-row-primary">
+            <Ghost as="button" className="follow-action-btn follow-action-btn-follow">Follow</Ghost>
+          </div>
+        </div>
+      )}
+      <div className="profile-dreams sk" aria-hidden="true">
+        <div className="profile-dreams-head">
+          <div className="profile-dreams-head-top">
+            <h2><Line w="3.6em" /></h2>
+            <span className="swap-text profile-dreams-subtitle"><Line w="8em" /></span>
+          </div>
+          <div className="dream-tab-group">
+            <span className="dream-tab"><Line w="6.2em" /></span>
+            <span className="dream-tab"><Line w="3.6em" /></span>
+          </div>
+        </div>
+        <ProfileDreamRows />
+      </div>
+    </>
+  );
+}
+
+ProfilePageSkeleton.propTypes = {
+  own: PropTypes.bool,
+  showSettings: PropTypes.bool,
+};
+
+// The dreams under the profile header, while a tab is still loading.
+export function ProfileDreamsLoadingSkeleton() {
+  return <ProfileDreamRows />;
+}
+
+// ── Dream Detail ────────────────────────────────────────────────────────────
+// The back button is web only, as on the page. Someone else's dream has their
+// name above it and the reactions and comment box under it. Your own has no
+// author row, a date and an Edit button you can use, and opens on its analysis.
+// A new dream is private, with no reactions or comments to hold room for.
+
+export function DreamDetailSkeleton({ showBack = true, owner = false }) {
+  return (
+    <div className="detail-card sk" aria-hidden="true">
+      {showBack && (
+        <div className="detail-toolbar">
+          <Ghost as="button" className="page-back-btn">Back</Ghost>
+        </div>
+      )}
+      <div className="detail-head">
+        <div className="detail-title-block">
+          <h1 className="detail-title"><Line w="72%" /></h1>
+        </div>
+        <div className="detail-date-block">
+          {owner ? (
+            <>
+              <Ghost as="button" className="detail-date-pill detail-date-pill--interactive">
+                October 24, 2026
+                <FontAwesomeIcon icon={faPencil} className="edit-hint" />
+              </Ghost>
+              <Ghost as="button" className="ghost-btn ghost-btn--compact detail-edit-content-btn">Edit content</Ghost>
+            </>
+          ) : (
+            <Ghost className="detail-date-pill">October 24, 2026</Ghost>
+          )}
+        </div>
+      </div>
+      {!owner && (
+        <div className="detail-author-block">
+          <button type="button" tabIndex={-1} className="detail-author-btn">
+            <span className="skel detail-author-avatar" />
+            <span className="detail-author-meta">
+              <span className="detail-author-name"><Line w="7em" /></span>
+              <span className="detail-author-handle"><Line w="5em" /></span>
+            </span>
+          </button>
+        </div>
+      )}
+      <div className="detail-body">
+        <p><Lines widths={['100%', '96%', '100%', '91%', '100%', '64%']} wide={['100%', '97%', '52%']} /></p>
+      </div>
+      {owner ? (
+        <div className="detail-summary">
+          <div className="detail-summary-text">
+            <h3><Line w="4.5em" /></h3>
+            <p className="detail-insight"><Lines widths={['100%', '94%', '100%', '58%']} wide={['100%', '66%']} /></p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <ReactionsSkeleton className="detail-reactions" />
+          <div className="detail-comments">
+            <div className="detail-section-head">
+              <p className="detail-label"><Line w="7em" /></p>
+            </div>
+            <div className="comment-composer">
+              <Ghost as="textarea" />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+DreamDetailSkeleton.propTypes = {
+  showBack: PropTypes.bool,
+  owner: PropTypes.bool,
+};
+
+// ── Insights ────────────────────────────────────────────────────────────────
+// Goes inside the page's own `insights-page`, after its back button.
+
+export function InsightsSkeleton() {
+  return (
+    <>
+      <div className="insights-header sk" aria-hidden="true">
+        <h1 className="insights-title"><Line w="7em" /></h1>
+        <p className="insights-updated"><Line w="10em" /></p>
+      </div>
+      <div className="insights-sections sk" aria-hidden="true">
+        {[3, 2, 2].map((rows, ci) => (
+          <div key={ci} className="insights-card">
+            <div className="insights-card-header">
+              <span className="insights-card-icon sk-hidden">◈</span>
+              <h2 className="insights-card-title"><Line w="9em" /></h2>
+              <span className="insights-card-count"><Line w="4em" /></span>
+            </div>
+            <ul className="insights-entries">
+              {Array.from({ length: rows }).map((_, i) => (
+                <li key={i} className="insights-entry">
+                  <span className="insights-entry-text"><Line w={i % 2 ? '64%' : '86%'} /></span>
+                  <Ghost className="insights-entry-badge">3×</Ghost>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ── Settings ────────────────────────────────────────────────────────────────
+// Goes where the sections will, under the page header. The save bar only
+// appears once settings have loaded, so it is held here too. Billing on iOS
+// goes through the App Store, with its own labels and a restore button.
+
+function ToggleRowSkeleton() {
+  return (
+    <div className="toggle-row">
+      <div className="toggle-label">
+        <strong><Line w="8em" /></strong>
+        <span><Line w="90%" /></span>
+      </div>
+      <S w="48px" h="28px" r={999} />
+    </div>
+  );
+}
+
+export function SettingsSkeleton({ native = false }) {
+  return (
+    <>
+      <div className="save-bar sk" aria-hidden="true">
+        <p><Line w="8em" /></p>
+        <div className="btn-group">
+          <Ghost as="button" className="ghost-btn">Discard</Ghost>
+          <Ghost as="button" className="ghost-btn">Save</Ghost>
+        </div>
+      </div>
+      <div className="settings-sections sk" aria-hidden="true">
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2><Line w="3.5em" /></h2>
+            <p><Lines widths={['100%', '54%']} wide={['82%']} /></p>
+          </div>
+          <div className="settings-section-body">
+            <div className="notification-support">
+              <Ghost className="notification-chip">Plan: Free</Ghost>
+              <Ghost className="notification-chip">{native ? 'Free this month: 1' : 'Free this month left: 1'}</Ghost>
+              <Ghost className="notification-chip">Paid credits: 0</Ghost>
+            </div>
+            <div className="action-buttons">
+              <Ghost as="button" className="ghost-btn">{native ? 'Upgrade to Pro' : 'Subscribe to Pro'}</Ghost>
+              <Ghost as="button" className="ghost-btn">Buy 10 AI credits</Ghost>
+            </div>
+            {native && <Ghost as="button" className="rc-restore-btn">Restore purchases</Ghost>}
+          </div>
+        </section>
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2><Line w="7.5em" /></h2>
+            <p><Lines widths={['100%', '100%', '100%', '36%']} wide={['100%', '64%']} /></p>
+          </div>
+          <div className="settings-section-body">
+            <div className="prompt-options">
+              {[0, 1, 2, 3].map((i) => (
+                <button key={i} type="button" tabIndex={-1} className="prompt-option">
+                  <h3><Line w="6em" /></h3>
+                  <p><Lines widths={['100%', '70%']} wide={['100%', '100%', '45%']} /></p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h2><Line w="6.5em" /></h2>
+            <p><Line w="88%" /></p>
+          </div>
+          <div className="settings-section-body">
+            {!native && (
+              <div className="notification-support">
+                <Ghost className="notification-chip">Browser supports push</Ghost>
+                <Ghost className="notification-chip">Permission pending</Ghost>
+              </div>
+            )}
+            <ToggleRowSkeleton />
+            <ToggleRowSkeleton />
+            <ToggleRowSkeleton />
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+SettingsSkeleton.propTypes = {
+  native: PropTypes.bool,
+};
+
+// ── Activity ────────────────────────────────────────────────────────────────
 
 export function ActivitySkeleton() {
   return (
-    <div className="sk-activity-list">
-      <S w="70px" h="0.8rem" r={4} className="sk-activity-group" />
-      {Array.from({ length: 5 }).map((_, i) => (
-        <ActivityCardSkeleton key={i} />
+    <div className="activity-list sk" aria-hidden="true">
+      <h2 className="activity-group"><span><Line w="5em" /></span></h2>
+      {['88%', '76%', '92%', '70%', '84%'].map((w, i) => (
+        <div key={i} className="activity-card">
+          <div className="activity-card-main">
+            <span className="activity-avatar-wrap"><span className="skel activity-avatar" /></span>
+            <span className="activity-card-text">
+              <span className="activity-title"><Lines widths={[w, i % 2 ? '30%' : '44%']} wide={[i % 2 ? '58%' : '66%']} /></span>
+            </span>
+          </div>
+          <div className="activity-card-actions">
+            <span className="activity-clear-btn" />
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-// People grid (auto-fit minmax 220px) and dreams grid (auto-fit minmax 260px)
+// ── Search ──────────────────────────────────────────────────────────────────
 
 export function SearchPeopleSkeleton() {
   return (
-    <div className="sk-people-grid">
+    <div className="people-grid sk" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="sk-person-card">
-          <Circle size={44} />
-          <div className="sk-feed-meta">
-            <S w="100px" h="0.9rem" />
-            <S w="70px" h="0.78rem" />
+        <div key={i} className="person-card">
+          <span className="skel person-avatar" />
+          <div>
+            <div className="person-name"><Line w="7em" /></div>
+            <div className="person-username"><Line w="5em" /></div>
           </div>
         </div>
       ))}
@@ -310,35 +528,17 @@ export function SearchPeopleSkeleton() {
 
 export function SearchDreamsSkeleton() {
   return (
-    <div className="sk-dream-grid">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="sk-search-dream-card">
-          <S w="70px" h="18px" r={999} />
-          <S w="80%" h="0.95rem" className="sk-mt" />
-          <S h="0.8rem" className="sk-mt-sm" />
-          <S w="60%" h="0.8rem" className="sk-mt-sm" />
+    <div className="dream-grid sk" aria-hidden="true">
+      {['64%', '48%', '72%', '56%'].map((title, i) => (
+        <div key={i} className="search-dream-card">
+          <div className="search-dream-meta">
+            <Ghost className="vis-badge">Public</Ghost>
+            <span className="search-dream-date"><Line w="5.5em" /></span>
+          </div>
+          <h3><Line w={title} /></h3>
+          <p className="dream-snippet"><Lines widths={['100%', '94%', '100%', '50%']} wide={['100%', '72%']} /></p>
         </div>
       ))}
     </div>
   );
 }
-
-// Keep these so any untouched imports don't break.
-
-export function DreamCardSkeleton() {
-  return <FeedCardSkeleton />;
-}
-
-export function ProfileSkeleton() {
-  return <ProfilePageSkeleton />;
-}
-
-export function ListSkeleton({ count = 3 }) {
-  return <FeedSkeleton count={count} />;
-}
-
-ListSkeleton.propTypes = {
-  count: PropTypes.number,
-};
-
-export default DreamCardSkeleton;

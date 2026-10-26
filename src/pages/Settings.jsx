@@ -863,7 +863,7 @@ export default function Settings({ user }) {
         </div>
       )}
       {loading ? (
-        <SettingsSkeleton />
+        <SettingsSkeleton native={isNativeIOS} />
       ) : (
         <div className="settings-sections">
           <section className="settings-section">

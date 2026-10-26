@@ -525,8 +525,8 @@ export default function Profile({ user }) {
   if (profileLoading || !targetUserId || !userData) {
     if (!targetUserId && !routeHandle) return <div className="page-container">Profile unavailable.</div>;
     return (
-      <div className="page-container">
-        <ProfilePageSkeleton />
+      <div className="page-container stream-page">
+        <ProfilePageSkeleton own={!routeHandle || viewingOwnProfile} showSettings={!isNativeIOS} />
       </div>
     );
   }
