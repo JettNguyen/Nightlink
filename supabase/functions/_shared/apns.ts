@@ -80,7 +80,10 @@ export async function sendApns(
         'content-type':   'application/json',
       },
       body: JSON.stringify({
-        aps: { alert: { title, body }, sound: 'default', badge: 1 },
+        // NightLink's own sound, bundled in the iOS app. A phone on a build
+        // without it plays the default sound instead, so this is safe to send
+        // before everyone has updated.
+        aps: { alert: { title, body }, sound: 'nightlink.caf', badge: 1 },
         ...extra,
       }),
     });
