@@ -11,12 +11,10 @@ import { triggerLightHaptic, triggerMediumHaptic, triggerSelectionHaptic, trigge
 import {
   IS_RC_SUPPORTED,
   CREDITS_OFFERING_ID,
-  PAYWALL_RESULT,
   getCustomerInfo,
   getOfferings,
   purchasePackage,
   restorePurchases as rcRestorePurchases,
-  presentPaywallIfNeeded,
   presentCustomerCenter,
   isProFromCustomerInfo,
   syncCustomerInfoToSupabase,
@@ -24,6 +22,7 @@ import {
 } from '../utils/purchases';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+import ProPlansSheet from '../components/ProPlansSheet';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import './Settings.css';
 
@@ -172,6 +171,7 @@ export default function Settings({ user }) {
   const [passwordStatus, setPasswordStatus] = useState('');
   const [promptError, setPromptError] = useState('');
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [billingStatus, setBillingStatus] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -638,47 +638,44 @@ export default function Settings({ user }) {
     }
   };
 
-  const handlePresentPaywall = async () => {
+  // Opens Nightlink's own plans screen (ProPlansSheet), which replaced
+  // RevenueCat's paywall. RevenueCat still sells the plans.
+  const handlePresentPaywall = () => {
     if (!uid || checkoutBusy) return;
-    setCheckoutBusy(true);
     setBillingStatus('');
-    try {
-      const { result } = await presentPaywallIfNeeded();
-      if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
-        const info = await getCustomerInfo();
-        setRcCustomerInfo(info);
-        
-        // Optimistically update local profile state immediately for instant UI feedback
-        const isPro = isProFromCustomerInfo(info);
-        setProfile((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            subscription: {
-              ...(prev.subscription || {}),
-              tier: isPro ? 'premium' : 'free',
-              provider: 'revenuecat',
-              updatedAt: new Date().toISOString(),
-            },
-          };
-        });
-        
-        await syncCustomerInfoToSupabase(uid, info);
+    setPlansOpen(true);
+  };
 
-        setBillingStatus(
-          result === PAYWALL_RESULT.RESTORED
-            ? 'Subscription restored! Welcome back to Pro.'
-            : 'Welcome to Pro! All styles and full quota are now unlocked.',
-        );
-      }
-    } catch (err) {
-      const msg = err?.message || '';
-      if (!msg.toLowerCase().includes('cancel') && !msg.toLowerCase().includes('dismiss')) {
-        setBillingStatus(msg || 'Purchase failed. Please try again.');
-      }
-    } finally {
-      setCheckoutBusy(false);
+  // What the plans screen hands back after a purchase or a restore.
+  const handlePlansCustomerInfo = async (info, how) => {
+    setRcCustomerInfo(info);
+    const isPro = isProFromCustomerInfo(info);
+
+    if (isPro) {
+      // Optimistically update local profile state immediately for instant UI feedback
+      setProfile((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          subscription: {
+            ...(prev.subscription || {}),
+            tier: 'premium',
+            provider: 'revenuecat',
+            updatedAt: new Date().toISOString(),
+          },
+        };
+      });
     }
+
+    await syncCustomerInfoToSupabase(uid, info);
+    if (!isPro) return;
+
+    setPlansOpen(false);
+    setBillingStatus(
+      how === 'restored'
+        ? 'Subscription restored! Welcome back to Pro.'
+        : 'Welcome to Pro! All styles and full quota are now unlocked.',
+    );
   };
 
   const handleBuyCredits = async () => {
@@ -1187,6 +1184,12 @@ export default function Settings({ user }) {
         />
       )}
 
+      {plansOpen && (
+        <ProPlansSheet
+          onClose={() => setPlansOpen(false)}
+          onCustomerInfo={handlePlansCustomerInfo}
+        />
+      )}
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   );

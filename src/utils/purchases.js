@@ -8,7 +8,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { Purchases } from '@revenuecat/purchases-capacitor';
-import { RevenueCatUI, PAYWALL_RESULT } from '@revenuecat/purchases-capacitor-ui';
+import { RevenueCatUI } from '@revenuecat/purchases-capacitor-ui';
 import { supabase } from '../supabase';
 
 /** The RevenueCat entitlement identifier for Nightlink Pro. */
@@ -31,9 +31,6 @@ export const RC_API_KEY =
 /** True only on native iOS, the only platform where IAP is available. */
 export const IS_RC_SUPPORTED =
   Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
-
-/** Re-export so callers can compare paywall outcomes without extra imports. */
-export { PAYWALL_RESULT };
 
 /** Returns true if the supplied CustomerInfo has an active Pro entitlement. */
 export const isProFromCustomerInfo = (customerInfo) =>
@@ -86,21 +83,6 @@ export const restorePurchases = async () => {
   const { customerInfo } = await Purchases.restorePurchases();
   return customerInfo;
 };
-
-/**
- * Present the RC paywall only if the user doesn't already have Pro.
- * Returns a PaywallResult with a `result` field (PAYWALL_RESULT enum).
- */
-export const presentPaywallIfNeeded = () =>
-  RevenueCatUI.presentPaywallIfNeeded({
-    requiredEntitlementIdentifier: ENTITLEMENT_PRO,
-  });
-
-/**
- * Always present the full RC paywall (e.g. to let a Pro user see options,
- * buy credits, or explore plans).
- */
-export const presentPaywall = () => RevenueCatUI.presentPaywall();
 
 /**
  * Present the RC Customer Center, a pre-built sheet where subscribers can
