@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import Overlay from './Overlay';
 import useEscapeKey from '../hooks/useEscapeKey';
 import {
@@ -223,8 +225,14 @@ export default function ProPlansSheet({ onClose, onCustomerInfo }) {
     <Overlay>
       <div className="pro-plans" role="dialog" aria-modal="true" aria-labelledby="pro-plans-title">
         <div className="pro-plans-bar">
-          <button type="button" className="pro-plans-close" onClick={closeIfIdle} disabled={busy === 'buy'}>
-            Close
+          <button
+            type="button"
+            className="pro-plans-close"
+            aria-label="Close"
+            onClick={closeIfIdle}
+            disabled={busy === 'buy'}
+          >
+            <FontAwesomeIcon icon={faXmark} />
           </button>
         </div>
 
