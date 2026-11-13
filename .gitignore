@@ -14,3 +14,6 @@ netlify/.netlify
 .vercel
 .env*.local
 .claude/
+
+# supabase cli cache
+supabase/.temp/
