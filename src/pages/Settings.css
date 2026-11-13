@@ -402,6 +402,10 @@
   color: var(--text-secondary);
 }
 
+.plan-hint {
+  margin: 0.6rem 0 0;
+}
+
 .notification-alert {
   margin-top: 0.85rem;
   font-size: var(--fs-sm);

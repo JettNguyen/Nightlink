@@ -24,6 +24,7 @@ import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import ProPlansSheet from '../components/ProPlansSheet';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
+import { showsManagePlan, showsIphonePlanNote } from '../utils/webPlan';
 import './Settings.css';
 
 const DEFAULT_SETTINGS = {
@@ -173,6 +174,11 @@ export default function Settings({ user }) {
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
   const [billingStatus, setBillingStatus] = useState('');
+  // Whether Stripe has a plan bought on the website for this account: true or
+  // false, or null until the server answers. See utils/webPlan.js.
+  const [webPlan, setWebPlan] = useState(null);
+  const [planBusy, setPlanBusy] = useState(false);
+  const [planMessage, setPlanMessage] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
@@ -189,6 +195,8 @@ export default function Settings({ user }) {
   const supabaseTier = profile?.subscription?.tier === 'premium' ? 'premium' : 'free';
   const rcIsPro = isProFromCustomerInfo(rcCustomerInfo);
   const tier = supabaseTier === 'premium' || (IS_RC_SUPPORTED && rcIsPro) ? 'premium' : 'free';
+  const managePlan = showsManagePlan({ isNativeApp: isNativeIOS, webPlan });
+  const iphonePlanNote = showsIphonePlanNote({ isNativeApp: isNativeIOS, webPlan, subscription: profile?.subscription });
   const creditBalance = Number(profile?.aiUsage?.creditBalance || 0);
   const currentMonthYear = useMemo(() => new Date().toISOString().slice(0, 7), []);
   const monthlyCount = Number(
@@ -308,6 +316,42 @@ export default function Settings({ user }) {
 
     syncEffectiveTier();
   }, [uid, user]);
+
+  // On the website, asks the server whether this account has Pro bought here,
+  // so Manage plan shows for exactly those people. A failed check leaves it
+  // unknown, which shows nothing new. Each check is a search on Stripe, so it
+  // runs per uid rather than per user object, which is rebuilt on every sign-in
+  // event. getIdToken reads the current session either way.
+  useEffect(() => {
+    if (isNativeIOS || !uid || !user?.getIdToken) return;
+    let cancelled = false;
+
+    const checkWebPlan = async () => {
+      try {
+        const idToken = await user.getIdToken();
+        if (!idToken) return;
+        const response = await fetch(STRIPE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ action: 'plan_status' })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok && typeof payload?.webPlan === 'boolean') {
+          setWebPlan(payload.webPlan);
+        }
+      } catch (error) {
+        console.error('Web plan check failed', error);
+      }
+    };
+
+    checkWebPlan();
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, isNativeIOS]);
 
   useEffect(() => {
     setNotificationsSupported(areNotificationsSupported());
@@ -638,6 +682,41 @@ export default function Settings({ user }) {
     }
   };
 
+  // Opens Stripe's page for a plan bought on the website, where it can be
+  // canceled, the card changed, or past payments seen. The server works out
+  // whose plan it is from the sign-in alone.
+  const handleManagePlan = async () => {
+    if (!uid || planBusy) return;
+    setPlanBusy(true);
+    setPlanMessage('');
+    const didntOpen = "Your plan didn't open. Try again in a minute, and if it still doesn't, write to support@nightlink.dev.";
+    try {
+      const idToken = await user?.getIdToken?.();
+      if (!idToken) {
+        setPlanMessage('Sign in again, then try once more.');
+        return;
+      }
+      const response = await fetch(STRIPE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ action: 'manage_plan' })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.url) {
+        setPlanMessage(payload?.error || didntOpen);
+        return;
+      }
+      window.location.assign(payload.url);
+    } catch {
+      setPlanMessage(didntOpen);
+    } finally {
+      setPlanBusy(false);
+    }
+  };
+
   // Opens Nightlink's own plans screen (ProPlansSheet), which replaced
   // RevenueCat's paywall. RevenueCat still sells the plans.
   const handlePresentPaywall = () => {
@@ -940,14 +1019,25 @@ export default function Settings({ user }) {
                   <span className="notification-chip">Paid credits: {creditBalance}</span>
                 </div>
                 <div className="action-buttons">
-                  <button
-                    type="button"
-                    className="primary-btn"
-                    onClick={() => handleStartCheckout('subscription', PREMIUM_PRICE_ID, PREMIUM_PAYMENT_LINK)}
-                    disabled={checkoutBusy || tier === 'premium'}
-                  >
-                    {tier === 'premium' ? 'Pro active' : (checkoutBusy ? 'Opening checkout...' : 'Subscribe to Pro')}
-                  </button>
+                  {managePlan ? (
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={handleManagePlan}
+                      disabled={planBusy || checkoutBusy}
+                    >
+                      {planBusy ? 'Opening…' : 'Manage plan'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="primary-btn"
+                      onClick={() => handleStartCheckout('subscription', PREMIUM_PRICE_ID, PREMIUM_PAYMENT_LINK)}
+                      disabled={checkoutBusy || tier === 'premium'}
+                    >
+                      {tier === 'premium' ? 'Pro active' : (checkoutBusy ? 'Opening checkout...' : 'Subscribe to Pro')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="ghost-btn"
@@ -957,6 +1047,18 @@ export default function Settings({ user }) {
                     {checkoutBusy ? 'Opening checkout...' : 'Buy 10 AI credits'}
                   </button>
                 </div>
+                {managePlan && (
+                  <p className="notification-hint plan-hint">
+                    Cancel your plan, change your card or see past payments on a page from Stripe, who handles our payments.
+                  </p>
+                )}
+                {iphonePlanNote && (
+                  <p className="notification-hint plan-hint">
+                    Got Pro in the iPhone app? Change or cancel it on your iPhone: open the Settings app, tap your name,
+                    then Subscriptions.
+                  </p>
+                )}
+                {planMessage && <p className="notification-alert" role="status">{planMessage}</p>}
                 {billingStatus && <p className="notification-alert">{billingStatus}</p>}
               </div>
             )}
