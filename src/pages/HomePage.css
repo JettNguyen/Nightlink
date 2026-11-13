@@ -188,10 +188,29 @@
 .home-footer {
   margin: 1.15rem 0 0.85rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   color: var(--text-secondary);
+}
+
+/* Three links only just fit across a phone. Where they don't, on the narrowest
+   screens or with Safari's text made larger, the row wraps between links
+   rather than inside one, and the dots go so none is left hanging at a line's
+   end. */
+.home-footer a {
+  white-space: nowrap;
+}
+
+@media (max-width: 359px) {
+  .home-footer {
+    column-gap: 1.25rem;
+  }
+
+  .home-footer span[aria-hidden='true'] {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

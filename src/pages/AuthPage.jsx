@@ -602,6 +602,8 @@ export default function AuthPage() {
           <Link to="/terms">Terms of Use</Link>
           <span aria-hidden="true">•</span>
           <Link to="/privacy">Privacy Policy</Link>
+          <span aria-hidden="true">•</span>
+          <Link to="/support">Support</Link>
         </p>
       </div>
     </div>

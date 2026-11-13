@@ -96,6 +96,11 @@ const Settings = lazy(() => import('./pages/Settings'));
 const DreamInsights = lazy(() => import('./pages/DreamInsights'));
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Support = lazy(() => import('./pages/Support'));
+
+// Pages anyone can open without signing in. They have nothing to refresh, so
+// pull to refresh stays off on them too.
+const OPEN_PATHS = ['/', '/login', '/terms', '/privacy', '/support'];
 
 // Tab roots cross-fade instead of sliding, matching how a native tab bar behaves.
 const TAB_ROOT_PATHS = new Set(['/journal', '/feed', '/search', '/activity', '/profile']);
@@ -194,7 +199,7 @@ function AppContent({ user, loading, ready }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const pullRefreshEnabled = isNativeIOS && !['/', '/login', '/terms', '/privacy'].includes(pathname);
+  const pullRefreshEnabled = isNativeIOS && !OPEN_PATHS.includes(pathname);
 
   useEffect(() => {
     if (!pullRefreshEnabled) return undefined;
@@ -393,11 +398,11 @@ function AppContent({ user, loading, ready }) {
     );
   }
 
-  if (ready && !user && !['/', '/login', '/terms', '/privacy'].includes(pathname)) {
+  if (ready && !user && !OPEN_PATHS.includes(pathname)) {
     return <Navigate to="/login" replace />;
   }
 
-  // Authenticated but hasn't accepted terms yet, so gate everything except /terms and /privacy
+  // Authenticated but hasn't accepted terms yet, so gate everything except /terms, /privacy and /support
   if (user && !termsAccepted) {
     return (
       <div className="app">
@@ -405,6 +410,7 @@ function AppContent({ user, loading, ready }) {
           <Routes>
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/support" element={<Support />} />
             <Route path="*" element={<TermsGate onAccepted={() => {
               setTermsAccepted(true);
               // Persist to Supabase so acceptance survives localStorage eviction on iOS.
@@ -453,6 +459,7 @@ function AppContent({ user, loading, ready }) {
           <Route path="/login" element={user ? <Navigate to="/journal" replace /> : <AuthPage />} />
           <Route path="/terms" element={<Suspense fallback={<LazyRouteLoader />}><TermsOfUse /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<LazyRouteLoader />}><PrivacyPolicy /></Suspense>} />
+          <Route path="/support" element={<Suspense fallback={<LazyRouteLoader />}><Support /></Suspense>} />
           <Route path="/journal" element={wrap(DreamJournal)} />
           <Route path="/profile/:handle/dream/:dreamId" element={wrap(DreamDetail)} />
           <Route path="/dream/:dreamId" element={wrap(DreamDetail)} />

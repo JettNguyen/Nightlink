@@ -295,6 +295,7 @@ html[data-native-platform='ios'] .auth-page {
 .auth-legal-links {
   margin-top: 1rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
@@ -302,11 +303,23 @@ html[data-native-platform='ios'] .auth-page {
   color: var(--text-secondary);
 }
 
+/* Wraps between links, never inside one, the same as the landing page footer. */
 .auth-legal-links a {
   padding: 0.5rem 0.25rem;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 359px) {
+  .auth-legal-links {
+    column-gap: 1rem;
+  }
+
+  .auth-legal-links span[aria-hidden='true'] {
+    display: none;
+  }
 }
 
 .auth-error {

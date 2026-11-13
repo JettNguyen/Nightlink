@@ -1116,6 +1116,7 @@ export default function Settings({ user }) {
               <div className="action-buttons">
                 <button type="button" className="ghost-btn legal-link-btn" onClick={() => navigate('/terms')}>Terms of Use</button>
                 <button type="button" className="ghost-btn legal-link-btn" onClick={() => navigate('/privacy')}>Privacy Policy</button>
+                <button type="button" className="ghost-btn legal-link-btn" onClick={() => navigate('/support')}>Support</button>
               </div>
               <p className="settings-footnote">
                 Safety reporting contact: <a href="mailto:jettuf26@gmail.com">Jett Nguyen (jettuf26@gmail.com)</a>
