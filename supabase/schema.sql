@@ -1,6 +1,11 @@
 -- ============================================================
 -- Nightlink: Supabase PostgreSQL Schema
 -- Run this in the Supabase SQL editor (Dashboard → SQL editor)
+--
+-- Don't run this on the live database while the profile privacy rollout
+-- (supabase/rollout, started 11/13/2026) is under way: it would put back the
+-- dream_memory columns and the old profiles policies. Once step 3 is done,
+-- fold the rollout's end state into this file.
 -- ============================================================
 
 -- Enable UUID generation
