@@ -8,18 +8,8 @@ import { InsightsSkeleton } from '../components/SkeletonLoader';
 import { appUserPropType } from '../propTypes';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED } from '../utils/purchases';
+import { askServerForPlan } from '../utils/accountApi';
 import './DreamInsights.css';
-
-const DEFAULT_API_ORIGIN = 'https://www.nightlink.dev';
-const resolveAccountEndpoint = () => {
-  const ep = (import.meta.env.VITE_ACCOUNT_ENDPOINT || '').trim();
-  if (ep) return ep;
-  const base = (import.meta.env.VITE_API_BASE_URL || '').trim();
-  if (base) return `${base.replace(/\/$/, '')}/api/account`;
-  if (Capacitor.isNativePlatform()) return `${DEFAULT_API_ORIGIN}/api/account`;
-  return '/api/account';
-};
-const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
 
 const SECTION_ORDER = [
   'Recurring symbols',
@@ -138,17 +128,8 @@ export default function DreamInsights({ user }) {
         if (!rcPro && supabaseTier !== 'premium' && user.getIdToken) {
           try {
             const idToken = await user.getIdToken();
-            if (idToken) {
-              const res = await fetch(ACCOUNT_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-                body: JSON.stringify({ action: 'sync_subscription_tier', uid: user.uid }),
-              });
-              const payload = await res.json().catch(() => ({}));
-              if (res.ok && payload?.success && payload?.tier) {
-                supabaseTier = payload.tier;
-              }
-            }
+            const plan = await askServerForPlan({ accessToken: idToken, uid: user.uid });
+            if (plan) supabaseTier = plan.tier;
           } catch { /* non-critical */ }
         }
 

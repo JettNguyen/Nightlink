@@ -30,7 +30,8 @@ import { appUserPropType } from '../propTypes';
 import { COMMON_EMOJI_REACTIONS, filterEmojiInput } from '../constants/emojiOptions';
 import { buildReactionCluster } from '../utils/reactions';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
-import { isProFromCustomerInfo, IS_RC_SUPPORTED, syncCustomerInfoToSupabase } from '../utils/purchases';
+import { isProFromCustomerInfo, IS_RC_SUPPORTED } from '../utils/purchases';
+import { askServerForPlan } from '../utils/accountApi';
 
 // The wording of each named style lives on the server (api/ai.js), keyed by the
 // ids below, so there is exactly one copy of it. Only a custom prompt is sent
@@ -705,8 +706,9 @@ export default function DreamDetail({ user }) {
   }, [viewerId]);
 
   // When RC CustomerInfo arrives (async, after profile load), upgrade the tier
-  // in aiQuota if RC says the user is Pro but Supabase was still stale.
-  // Also re-sync to Supabase so the server's tier check stays consistent.
+  // in aiQuota if RC says the user is Pro but the profile was still stale. The
+  // server hears about the purchase from RevenueCat; the app asks it to check
+  // when Pro changes on this phone (App.jsx).
   useEffect(() => {
     if (!IS_RC_SUPPORTED || !rcCustomerInfo) return;
     const rcIsPro = isProFromCustomerInfo(rcCustomerInfo);
@@ -715,11 +717,9 @@ export default function DreamDetail({ user }) {
       if (!prev || prev.tier === 'premium') return prev;
       const tierLimit = 30;
       const used = tierLimit - prev.remainingFree;
-      // Supabase was stale, so re-sync and the server sees premium too
-      if (viewerId) syncCustomerInfoToSupabase(viewerId, rcCustomerInfo);
       return { ...prev, tier: 'premium', remainingFree: Math.max(0, tierLimit - used) };
     });
-  }, [rcCustomerInfo, viewerId]);
+  }, [rcCustomerInfo]);
 
   // Same catch-up for the server's answer, which arrives after the profile read
   // and is the only source that knows about comped accounts. Without this the
@@ -1728,11 +1728,11 @@ export default function DreamDetail({ user }) {
 
       if (!response.ok) {
         if (response.status === 403 && payload?.code === 'style_locked') {
-          // If the client already considers this user premium, the server's Supabase
-          // record is stale. Re-sync RC → Supabase so the next attempt succeeds.
+          // The phone says Pro but the server hasn't heard yet. Ask it to
+          // check with RevenueCat now, so the next try works.
           if (aiQuota?.tier === 'premium' && IS_RC_SUPPORTED && rcCustomerInfo && viewerId) {
-            syncCustomerInfoToSupabase(viewerId, rcCustomerInfo);
-            setToast('Subscription sync issue. Your Pro status is being refreshed, so please try again in a moment.');
+            askServerForPlan({ accessToken: idToken, uid: viewerId, refresh: true }).catch(() => {});
+            setToast("Your Pro plan hasn't reached our server yet. Try again in a minute.");
           } else {
             setToast('That insight style is locked. Upgrade to Pro in Settings to unlock all styles and custom prompts.');
           }

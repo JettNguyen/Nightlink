@@ -9,7 +9,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { RevenueCatUI } from '@revenuecat/purchases-capacitor-ui';
-import { supabase } from '../supabase';
 
 /** The RevenueCat entitlement identifier for Nightlink Pro. */
 export const ENTITLEMENT_PRO = 'Nightlink Pro';
@@ -91,59 +90,7 @@ export const restorePurchases = async () => {
  */
 export const presentCustomerCenter = () => RevenueCatUI.presentCustomerCenter();
 
-/**
- * Write the current RC subscription state into the user's Supabase profile.
- * Called after any purchase, restore, or customer-info update so that the
- * rest of the app (AI quota checks, prompt locking, etc.) stays in sync.
- */
-export const syncCustomerInfoToSupabase = async (uid, customerInfo) => {
-  if (!uid || !customerInfo) return;
-
-  const pro = isProFromCustomerInfo(customerInfo);
-  const entitlement = customerInfo.entitlements?.active?.[ENTITLEMENT_PRO];
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription: {
-        tier: pro ? 'premium' : 'free',
-        provider: 'revenuecat',
-        expiresAt: entitlement?.expirationDate ?? null,
-        updatedAt: new Date().toISOString(),
-      },
-    })
-    .eq('id', uid);
-
-  if (error) console.error('RC → Supabase sync failed:', error.message);
-};
-
-/**
- * Atomically add AI credits to the user's profile after a successful
- * credit-pack purchase.
- */
-export const addCreditsToSupabase = async (uid, amount = CREDITS_PER_PACK) => {
-  if (!uid) return;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('ai_usage')
-    .eq('id', uid)
-    .single();
-
-  if (error) {
-    console.error('Credits load failed:', error.message);
-    return;
-  }
-
-  const nextUsage = {
-    ...(data?.ai_usage || {}),
-    creditBalance: Number(data?.ai_usage?.creditBalance || 0) + amount,
-  };
-
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ ai_usage: nextUsage })
-    .eq('id', uid);
-
-  if (updateError) console.error('Credits update failed:', updateError.message);
-};
+// Plans and credits bought here reach the account through the server, never
+// from the app: RevenueCat tells the server (api/revenuecat.js), and the app
+// asks the server to check right after a purchase (askServerForPlan in
+// accountApi.js).

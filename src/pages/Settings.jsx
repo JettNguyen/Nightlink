@@ -17,9 +17,9 @@ import {
   restorePurchases as rcRestorePurchases,
   presentCustomerCenter,
   isProFromCustomerInfo,
-  syncCustomerInfoToSupabase,
-  addCreditsToSupabase,
+  CREDITS_PER_PACK,
 } from '../utils/purchases';
+import { ACCOUNT_ENDPOINT, askServerForPlan } from '../utils/accountApi';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import ProPlansSheet from '../components/ProPlansSheet';
@@ -39,23 +39,6 @@ const DEFAULT_SETTINGS = {
 
 const FREE_ALLOWED_PRESETS = new Set(['balanced', 'coach', 'therapist']);
 const STRIPE_ENDPOINT = import.meta.env.VITE_STRIPE_ENDPOINT || '/api/stripe';
-const DEFAULT_API_ORIGIN = 'https://www.nightlink.dev';
-
-const resolveAccountEndpoint = () => {
-  const configuredEndpoint = (import.meta.env.VITE_ACCOUNT_ENDPOINT || '').trim();
-  if (configuredEndpoint) return configuredEndpoint;
-
-  const configuredApiBase = (import.meta.env.VITE_API_BASE_URL || '').trim();
-  if (configuredApiBase) return `${configuredApiBase.replace(/\/$/, '')}/api/account`;
-
-  if (Capacitor.isNativePlatform()) {
-    return `${DEFAULT_API_ORIGIN}/api/account`;
-  }
-
-  return '/api/account';
-};
-
-const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
 const CHECKOUT_DIDNT_OPEN = "Checkout didn't open. Try again in a minute, and if it still doesn't, write to support@nightlink.dev.";
 
 const PROMPT_PRESETS = [
@@ -274,45 +257,25 @@ export default function Settings({ user }) {
   }, [uid]);
 
 
-  useEffect(() => {
-    if (!uid || !user?.getIdToken) return;
-
-    const syncEffectiveTier = async () => {
-      try {
-        const idToken = await user.getIdToken();
-        if (!idToken) return;
-        const response = await fetch(ACCOUNT_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${idToken}`
-          },
-          body: JSON.stringify({
-            action: 'sync_subscription_tier',
-            uid
-          })
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok || !payload?.success) return;
-        if (!payload?.tier) return;
-        setProfile((prev) => {
-          if (!prev) return prev;
-          if (prev?.subscription?.tier === payload.tier) return prev;
-          return {
-            ...prev,
-            subscription: {
-              ...(prev.subscription || {}),
-              tier: payload.tier
-            }
-          };
-        });
-      } catch (error) {
-        console.error('Tier sync failed', error);
-      }
-    };
-
-    syncEffectiveTier();
+  // Asks the server for the plan and shows its answer. Only the server changes
+  // plans; refresh has it check with RevenueCat first, for right after a
+  // purchase or restore on this phone. Until it answers, Pro bought on this
+  // phone already shows, from RevenueCat's own answer (rcIsPro above).
+  const refreshPlanFromServer = useCallback(async ({ refresh = false } = {}) => {
+    if (!uid || !user?.getIdToken) return null;
+    const accessToken = await user.getIdToken().catch(() => null);
+    const plan = await askServerForPlan({ accessToken, uid, refresh });
+    if (!plan) return null;
+    setProfile((prev) => {
+      if (!prev) return prev;
+      return { ...prev, subscription: plan.subscription || { ...(prev.subscription || {}), tier: plan.tier } };
+    });
+    return plan;
   }, [uid, user]);
+
+  useEffect(() => {
+    refreshPlanFromServer().catch((error) => console.error('Tier sync failed', error));
+  }, [refreshPlanFromServer]);
 
   // On the website, asks the server whether this account has Pro bought here,
   // so Manage plan shows for exactly those people. A failed check leaves it
@@ -713,24 +676,7 @@ export default function Settings({ user }) {
   const handlePlansCustomerInfo = async (info, how) => {
     setRcCustomerInfo(info);
     const isPro = isProFromCustomerInfo(info);
-
-    if (isPro) {
-      // Optimistically update local profile state immediately for instant UI feedback
-      setProfile((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          subscription: {
-            ...(prev.subscription || {}),
-            tier: 'premium',
-            provider: 'revenuecat',
-            updatedAt: new Date().toISOString(),
-          },
-        };
-      });
-    }
-
-    await syncCustomerInfoToSupabase(uid, info);
+    await refreshPlanFromServer({ refresh: true });
     if (!isPro) return;
 
     setPlansOpen(false);
@@ -743,6 +689,7 @@ export default function Settings({ user }) {
 
   const handleBuyCredits = async () => {
     if (!uid || checkoutBusy) return;
+    const balanceBefore = creditBalance;
     setCheckoutBusy(true);
     setBillingStatus('');
     try {
@@ -754,9 +701,11 @@ export default function Settings({ user }) {
       }
       const creditPackage = creditsOffering.availablePackages[0];
       const customerInfo = await purchasePackage(creditPackage);
-      
-      // Optimistically update credit balance immediately for instant feedback
-      const CREDITS_PER_PACK = 10;
+
+      // The server adds the credits when RevenueCat tells it about the
+      // purchase, usually within seconds, and the profile's live update brings
+      // the new balance. Show it now. If that update already came, this
+      // changes nothing, so the pack is never counted twice.
       setProfile((prev) => {
         if (!prev) return prev;
         const currentCredits = Number(prev?.aiUsage?.creditBalance || 0);
@@ -764,15 +713,12 @@ export default function Settings({ user }) {
           ...prev,
           aiUsage: {
             ...(prev.aiUsage || {}),
-            creditBalance: currentCredits + CREDITS_PER_PACK,
+            creditBalance: Math.max(currentCredits, balanceBefore + CREDITS_PER_PACK),
           },
         };
       });
-      
-      await addCreditsToSupabase(uid);
-      await syncCustomerInfoToSupabase(uid, customerInfo);
       setRcCustomerInfo(customerInfo);
-      
+
       setBillingStatus('10 AI credits added to your account!');
     } catch (err) {
       const msg = err?.message || '';
@@ -791,7 +737,7 @@ export default function Settings({ user }) {
     try {
       const customerInfo = await rcRestorePurchases();
       setRcCustomerInfo(customerInfo);
-      await syncCustomerInfoToSupabase(uid, customerInfo);
+      await refreshPlanFromServer({ refresh: true });
       const nowPro = isProFromCustomerInfo(customerInfo);
       setBillingStatus(
         nowPro
@@ -809,26 +755,12 @@ export default function Settings({ user }) {
     if (checkoutBusy) return;
     try {
       await presentCustomerCenter();
-      // Refresh after the sheet closes in case user cancelled or got a refund
+      // Refresh after the sheet closes in case user cancelled or got a refund.
+      // The server decides the plan: canceling here ends only the App Store
+      // part, so Pro from the website or the comp list stays.
       const info = await getCustomerInfo();
       setRcCustomerInfo(info);
-      
-      // Optimistically update local profile state
-      const isPro = isProFromCustomerInfo(info);
-      setProfile((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          subscription: {
-            ...(prev.subscription || {}),
-            tier: isPro ? 'premium' : 'free',
-            provider: 'revenuecat',
-            updatedAt: new Date().toISOString(),
-          },
-        };
-      });
-      
-      await syncCustomerInfoToSupabase(uid, info);
+      await refreshPlanFromServer({ refresh: true });
     } catch (err) {
       console.error('Customer center error:', err?.message || err);
     }

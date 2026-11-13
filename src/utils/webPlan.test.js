@@ -34,3 +34,16 @@ test('the iPhone line shows for Pro from the App Store, once the server says the
   assert.equal(showsIphonePlanNote({ isNativeApp: false, webPlan: false, subscription: { tier: 'premium' } }), false);
   assert.equal(showsIphonePlanNote({ isNativeApp: false, webPlan: false, subscription: null }), false);
 });
+
+test('with plan sources, the iPhone line follows the App Store part alone', () => {
+  const plan = (sources, provider) => ({ tier: 'premium', provider, sources });
+  const show = (subscription) => showsIphonePlanNote({ isNativeApp: false, webPlan: false, subscription });
+
+  assert.equal(show(plan({ apple: { active: true } }, 'revenuecat')), true);
+  assert.equal(show(plan({ apple: { active: true }, comp: { active: true } }, 'revenuecat')), true);
+
+  // Pro from the comp list, or from before, with an App Store plan that ended.
+  assert.equal(show(plan({ apple: { active: false }, comp: { active: true } }, 'comp')), false);
+  assert.equal(show(plan({ apple: { active: false }, legacy: { active: true, provider: 'revenuecat' } }, 'revenuecat')), false);
+  assert.equal(show(plan({ legacy: { active: true } }, 'legacy')), false);
+});

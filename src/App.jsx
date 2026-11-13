@@ -29,19 +29,9 @@ import {
   getCustomerInfo,
   addCustomerInfoUpdateListener,
   removeCustomerInfoUpdateListener,
-  syncCustomerInfoToSupabase,
+  isProFromCustomerInfo,
 } from './utils/purchases';
-
-const DEFAULT_API_ORIGIN = 'https://www.nightlink.dev';
-const resolveAccountEndpoint = () => {
-  const ep = (import.meta.env.VITE_ACCOUNT_ENDPOINT || '').trim();
-  if (ep) return ep;
-  const base = (import.meta.env.VITE_API_BASE_URL || '').trim();
-  if (base) return `${base.replace(/\/$/, '')}/api/account`;
-  if (Capacitor.isNativePlatform()) return `${DEFAULT_API_ORIGIN}/api/account`;
-  return '/api/account';
-};
-const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
+import { askServerForPlan } from './utils/accountApi';
 
 // Every full-screen overlay in the app. Pull-to-refresh reloads the page, so it
 // has to stand down whenever one of these is up, because otherwise dragging on a
@@ -66,25 +56,10 @@ const MODAL_SELECTOR = [
  * unknown, whether offline, failed, or not signed in, which callers treat as "do not
  * claim anything about this account yet".
  */
-const syncSubscriptionTier = async (session) => {
+const syncSubscriptionTier = async (session, { refresh = false } = {}) => {
   if (!session) return null;
-  try {
-    const idToken = session.access_token;
-    if (!idToken) return null;
-    const response = await fetch(ACCOUNT_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ action: 'sync_subscription_tier', uid: session.user.id }),
-    });
-    if (!response.ok) return null;
-    const payload = await response.json().catch(() => null);
-    if (payload?.tier === 'premium') return 'premium';
-    if (payload?.tier === 'free') return 'free';
-    return null;
-  } catch {
-    // Non-critical, so silently ignore network errors on startup
-    return null;
-  }
+  const plan = await askServerForPlan({ accessToken: session.access_token, uid: session.user?.id, refresh });
+  return plan?.tier ?? null;
 };
 
 const Profile = lazy(() => import('./pages/Profile'));
@@ -615,18 +590,35 @@ function App() {
 
     let cancelled = false;
 
+    // When Pro starts or ends on this phone, ask the server to check with
+    // RevenueCat now, so the server agrees before RevenueCat's webhook lands.
+    // The app never writes the plan itself; only the server does.
+    let lastPro = null;
+    const askServerIfProChanged = (info) => {
+      const pro = isProFromCustomerInfo(info);
+      if (lastPro === null || pro === lastPro) {
+        lastPro = pro;
+        return;
+      }
+      lastPro = pro;
+      supabase.auth.getSession()
+        .then(({ data }) => syncSubscriptionTier(data?.session, { refresh: true }))
+        .then((tier) => { if (!cancelled && tier) setAccountTier(tier); })
+        .catch(console.error);
+    };
+
     const setup = async () => {
       try {
         await configurePurchases(user.uid);
         const customerInfo = await getCustomerInfo();
         if (!cancelled) {
           setRcCustomerInfo(customerInfo);
-          syncCustomerInfoToSupabase(user.uid, customerInfo).catch(console.error);
+          askServerIfProChanged(customerInfo);
         }
         const callbackId = await addCustomerInfoUpdateListener((info) => {
           if (!cancelled) {
             setRcCustomerInfo(info);
-            syncCustomerInfoToSupabase(user.uid, info).catch(console.error);
+            askServerIfProChanged(info);
           }
         });
         if (!cancelled) {
