@@ -22,6 +22,10 @@ const getSupabaseAdmin = () => createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+// Every handler reaches Stripe and Supabase through these, so the tests can
+// hand them fakes.
+const deps = { getStripe, getSupabaseAdmin, rawBodyWaitMs: 5000 };
+
 const setCors = (res, origin) => {
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Vary', 'Origin');
@@ -32,7 +36,7 @@ const setCors = (res, origin) => {
 // ── Helpers for updating a user's Supabase profile ──────────────────────────
 
 const addCredits = async (uid, amount) => {
-  const admin = getSupabaseAdmin();
+  const admin = deps.getSupabaseAdmin();
   const { data: row } = await admin.from('profiles').select('ai_usage').eq('id', uid).single();
   const usage = row?.ai_usage || {};
   const current = typeof usage.creditBalance === 'number' ? usage.creditBalance : 0;
@@ -42,7 +46,7 @@ const addCredits = async (uid, amount) => {
 };
 
 const setPremiumTier = async (uid, tier = 'premium') => {
-  const admin = getSupabaseAdmin();
+  const admin = deps.getSupabaseAdmin();
   const { data: row } = await admin.from('profiles').select('subscription').eq('id', uid).single();
   const sub = row?.subscription || {};
   await admin.from('profiles').update({
@@ -65,11 +69,11 @@ const handleCreateCheckout = async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Authentication required' });
-  const admin = getSupabaseAdmin();
+  const admin = deps.getSupabaseAdmin();
   const { data: { user }, error: authErr } = await admin.auth.getUser(token);
   if (authErr || !user || user.id !== uid) return res.status(401).json({ error: 'Invalid session' });
 
-  const stripe = getStripe();
+  const stripe = deps.getStripe();
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode,
@@ -90,16 +94,50 @@ const handleCreateCheckout = async (req, res) => {
 
 // ── Stripe webhook ────────────────────────────────────────────────────────────
 // POST /api/stripe  (raw body, stripe-signature header)
+//
+// Stripe signs the exact bytes it sends, so the check has to see those bytes.
+// Rebuilding them from req.body never matches: Stripe sends indented JSON and
+// JSON.stringify doesn't indent, so every event used to fail the check. This
+// path never touches req.body. On Vercel the platform reads the body before
+// the handler runs and plays the same bytes back to anything listening on the
+// request; the local dev server keeps them on req.rawBody instead.
+
+const readRawBody = (req) => {
+  if (Buffer.isBuffer(req.rawBody)) return Promise.resolve(req.rawBody);
+  if (typeof req.rawBody === 'string') return Promise.resolve(Buffer.from(req.rawBody, 'utf8'));
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    // A body someone else already read never ends. Give up instead of holding
+    // the function open until Vercel stops it.
+    const timer = setTimeout(() => reject(new Error('the request body never arrived')), deps.rawBodyWaitMs);
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    req.on('end', () => { clearTimeout(timer); resolve(Buffer.concat(chunks)); });
+    req.on('error', (err) => { clearTimeout(timer); reject(err); });
+  });
+};
 
 const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   if (!sig) return res.status(400).json({ error: 'Missing stripe-signature' });
 
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error('Webhook refused: STRIPE_WEBHOOK_SECRET is not set.');
+    return res.status(500).json({ error: 'Webhook is not set up' });
+  }
+
+  let rawBody;
+  try {
+    rawBody = await readRawBody(req);
+  } catch (err) {
+    console.error('Webhook body could not be read:', err.message);
+    return res.status(400).json({ error: 'Could not read the request body' });
+  }
+
+  // The signature check needs only the signing secret, not the API key.
   let event;
   try {
-    const stripe = getStripe();
-    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-    event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = Stripe.webhooks.constructEvent(rawBody, sig, secret);
   } catch (err) {
     console.error('Webhook signature failed:', err.message);
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
@@ -155,10 +193,6 @@ const handleWebhook = async (req, res) => {
 // uid. The profile row is no help here, because its owner can write anything
 // into it. A plan bought through a Stripe payment link carries no uid, so it
 // isn't found until `uid` is added to that subscription's metadata in Stripe.
-
-// The billing handlers reach Stripe and Supabase through these, so the tests
-// can hand them fakes.
-const deps = { getStripe, getSupabaseAdmin };
 
 const SITE_ORIGIN = 'https://www.nightlink.dev';
 const OWN_ORIGIN = /^(https:\/\/(www\.)?nightlink\.dev|http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?)$/;
@@ -267,7 +301,9 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  // Distinguish checkout creation (JSON body with action field) from Stripe webhooks
+  // Stripe's webhook is told apart by its signature header alone, before
+  // anything reads req.body: the signature check needs the raw bytes. Stripe's
+  // endpoint stays /api/stripe.
   const contentType = req.headers['content-type'] || '';
   const isWebhook = req.headers['stripe-signature'];
 

@@ -57,6 +57,7 @@ export default defineConfig([
       "eslint.config.{js,ts,mjs,cjs}",
       "api/**/*.{js,ts,mjs,cjs}",
       "scripts/**/*.{js,ts,mjs,cjs}",
+      "test/**/*.{js,ts,mjs,cjs}",
     ],
     languageOptions: {
       globals: {

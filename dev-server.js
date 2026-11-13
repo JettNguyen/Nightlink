@@ -39,7 +39,10 @@ const transcribeLimiter = rateLimit({ windowMs: 60_000, max: 20, standardHeaders
 try { console.log('[dev] dev-server OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY); } catch (e) { void e; }
 
 const app = express();
-app.use(express.json({ limit: '1mb' }));
+// Keeps the body's exact bytes on req.rawBody: Stripe's webhook signature is
+// over those bytes, and express.json has read the stream by the time the
+// handler runs.
+app.use(express.json({ limit: '1mb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
 
 const routeHandler = (label, handler) => async (req, res) => {
   try {
