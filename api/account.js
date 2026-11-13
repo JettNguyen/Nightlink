@@ -1,10 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
+const billing = require('./_lib/billing');
 
 const getSupabaseAdmin = () => createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
+
+// Tests swap these, so nothing reaches Supabase or RevenueCat.
+const deps = { getSupabaseAdmin, fetch: (...args) => fetch(...args) };
 
 const setCors = (res, origin) => {
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
@@ -18,28 +22,89 @@ const verifyCaller = async (req, expectedUid) => {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) throw new Error('Authentication required.');
 
-  const admin = getSupabaseAdmin();
+  const admin = deps.getSupabaseAdmin();
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) throw new Error('Invalid session.');
   if (user.id !== expectedUid) throw new Error('You can only delete your own account.');
-  return admin;
+  return { admin, user };
 };
 
-// PREMIUM_EMAILS is a comp list, so it can only ever *grant* Pro.
+// What the app is told about its own plan. Every app and website page asks on
+// start, so this is also where the comp list and the App Store catch up.
 //
-// It must never downgrade: a paying Stripe or RevenueCat subscriber is not on
-// that list, and this runs on every app start. Returning 'free' for them used
-// to overwrite a legitimately paid tier. Revoking access belongs to the payment
-// providers, namely the Stripe `customer.subscription.deleted` webhook and the
-// RevenueCat customer-info sync, both of which write the tier directly.
-const isComped = (profileEmail, envPremiumEmails) => {
-  const premiumEmails = (envPremiumEmails || '')
-    .split(',')
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-  const email = (profileEmail || '').trim().toLowerCase();
-  if (!email) return false;
-  return premiumEmails.includes(email);
+// A plan has a part per source (api/_lib/billing.js). The comp part follows
+// PREMIUM_EMAILS both ways now: taking an email off the list ends that part
+// and nothing else, so a paying subscriber is never dropped by it.
+//
+// An app that doesn't send clientSchema predates plans with sources: Nightlink
+// 1.3.2 from the App Store, or a website tab opened before this change. Step 3
+// of the profile privacy rollout waits until none has asked for 14 days.
+//
+// Before step 1 of the rollout is in, the database functions this uses don't
+// exist yet; it then does what it always did, which is add Pro for the comp
+// list and never take it away.
+const syncPlan = async (admin, user, body) => {
+  const uid = user.id;
+
+  if (!body?.clientSchema) {
+    const { error } = await admin.rpc('note_old_app', { p_user_id: uid });
+    if (error && !billing.isMissingFunction(error)) console.error('note_old_app failed:', error.message);
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('subscription')
+    .eq('id', uid)
+    .single();
+  if (profileError) throw profileError;
+  let plan = profile?.subscription || {};
+
+  const comped = billing.isComped(user);
+  if (comped !== (plan?.sources?.comp?.active === true)) {
+    try {
+      plan = (await billing.setPlanSource(admin, uid, 'comp', { active: comped, from: 'PREMIUM_EMAILS' })) || plan;
+    } catch (error) {
+      if (!billing.isMissingFunction(error)) throw error;
+      if (comped && plan?.tier !== 'premium') {
+        plan = { ...plan, tier: 'premium' };
+        const { error: updateError } = await admin.from('profiles').update({ subscription: plan }).eq('id', uid);
+        if (updateError) throw updateError;
+      }
+    }
+  }
+
+  // Ask RevenueCat when this is the iPhone app, or the plan has an App Store
+  // part, so a purchase shows up without waiting for RevenueCat's webhook.
+  // Needs REVENUECAT_SECRET_KEY; without it the webhook alone does this.
+  const asksApple = body?.platform === 'ios' || body?.refresh === true || Boolean(plan?.sources?.apple);
+  if (asksApple && process.env.REVENUECAT_SECRET_KEY) {
+    try {
+      plan = (await billing.refreshApplePlan(admin, uid, { fetchImpl: deps.fetch })) || plan;
+    } catch (error) {
+      console.error('RevenueCat check failed:', error.message);
+    }
+  }
+
+  return plan;
+};
+
+// Before step 1 of the rollout: reports go in the reporter's own settings, as
+// they always did.
+const addReportToSettings = async (admin, uid, report) => {
+  const { data: reporter, error: reporterError } = await admin
+    .from('profiles')
+    .select('settings')
+    .eq('id', uid)
+    .single();
+  if (reporterError) throw reporterError;
+
+  const currentSettings = reporter?.settings || {};
+  const currentReports = Array.isArray(currentSettings.safetyReports) ? currentSettings.safetyReports : [];
+  const { error: updateError } = await admin
+    .from('profiles')
+    .update({ settings: { ...currentSettings, safetyReports: [report, ...currentReports].slice(0, 100) } })
+    .eq('id', uid);
+  if (updateError) throw updateError;
 };
 
 module.exports = async function handler(req, res) {
@@ -61,45 +126,24 @@ module.exports = async function handler(req, res) {
   if (!uid) return res.status(400).json({ error: 'Missing uid' });
 
   let admin;
+  let user;
   try {
-    admin = await verifyCaller(req, uid);
+    ({ admin, user } = await verifyCaller(req, uid));
   } catch (error) {
     return res.status(401).json({ error: error.message || 'Unauthorized.' });
   }
 
   if (action === 'sync_subscription_tier') {
     try {
-      const { data: profile, error: profileError } = await admin
-        .from('profiles')
-        .select('email, subscription')
-        .eq('id', uid)
-        .single();
-      if (profileError) throw profileError;
-
-      const currentTier = profile?.subscription?.tier === 'premium' ? 'premium' : 'free';
-      const effectiveTier = (currentTier === 'premium' || isComped(profile?.email, process.env.PREMIUM_EMAILS || ''))
-        ? 'premium'
-        : 'free';
-
-      if (effectiveTier !== currentTier) {
-        const nextSubscription = {
-          ...(profile?.subscription || {}),
-          tier: effectiveTier
-        };
-        const { error: updateError } = await admin
-          .from('profiles')
-          .update({ subscription: nextSubscription })
-          .eq('id', uid);
-        if (updateError) throw updateError;
-      }
-
+      const plan = await syncPlan(admin, user, body);
       return res.status(200).json({
         success: true,
-        tier: effectiveTier
+        tier: plan?.tier === 'premium' ? 'premium' : 'free',
+        subscription: plan
       });
     } catch (error) {
       console.error('sync_subscription_tier failed', error);
-      return res.status(500).json({ error: error.message || 'Failed to sync subscription tier.' });
+      return res.status(500).json({ error: 'Failed to sync subscription tier.' });
     }
   }
 
@@ -110,16 +154,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const { data: reporter, error: reporterError } = await admin
-        .from('profiles')
-        .select('settings')
-        .eq('id', uid)
-        .single();
-      if (reporterError) throw reporterError;
-
       const now = new Date().toISOString();
-      const currentSettings = reporter?.settings || {};
-      const currentReports = Array.isArray(currentSettings.safetyReports) ? currentSettings.safetyReports : [];
       const reportRecord = {
         id: `${now}:${targetType}:${targetId}`,
         createdAt: now,
@@ -132,17 +167,13 @@ module.exports = async function handler(req, res) {
         status: 'submitted'
       };
 
-      const nextReports = [reportRecord, ...currentReports].slice(0, 100);
-      const { error: updateError } = await admin
-        .from('profiles')
-        .update({
-          settings: {
-            ...currentSettings,
-            safetyReports: nextReports
-          }
-        })
-        .eq('id', uid);
-      if (updateError) throw updateError;
+      // Kept where only the server reads them once step 2 of the rollout is
+      // in; anyone signed in could read the reporter's settings before.
+      const { error: reportError } = await admin.rpc('add_safety_report', { p_user_id: uid, p_report: reportRecord });
+      if (reportError) {
+        if (!billing.isMissingFunction(reportError)) throw reportError;
+        await addReportToSettings(admin, uid, reportRecord);
+      }
 
       return res.status(200).json({ success: true });
     } catch (error) {
@@ -234,3 +265,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: error.message || 'Failed to delete account.' });
   }
 };
+
+module.exports.deps = deps;

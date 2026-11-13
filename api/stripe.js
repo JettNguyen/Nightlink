@@ -2,17 +2,19 @@
 //
 // Required env vars (Vercel dashboard):
 //   STRIPE_SECRET_KEY:         your Stripe secret key (sk_live_... or sk_test_...)
-//   STRIPE_WEBHOOK_SECRET:     from `stripe listen` or the Stripe dashboard
+//   STRIPE_WEBHOOK_SECRET:     the signing secret of the /api/stripe endpoint in Stripe
+//   STRIPE_PREMIUM_PRICE_ID:   the Pro subscription's price
+//   STRIPE_CREDIT_PRICE_ID:    the 10 credit pack's price
 //   SUPABASE_URL:              your Supabase project URL
 //   SUPABASE_SERVICE_ROLE_KEY: service role key (never expose on the client)
 //
-// RevenueCat (iOS) posts to /api/revenuecat, so add that endpoint when you build
-// the iOS app. Both payment paths converge on the same Supabase profile updates below.
+// App Store purchases reach the server through RevenueCat's webhook at
+// /api/revenuecat. Both change plans and credits the same way, through
+// api/_lib/billing.js.
 
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
-
-const AI_CREDIT_PACK_SIZE = 10; // credits awarded per $0.99 purchase
+const billing = require('./_lib/billing');
 
 const getStripe = () => Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -31,27 +33,6 @@ const setCors = (res, origin) => {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,stripe-signature');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-};
-
-// ── Helpers for updating a user's Supabase profile ──────────────────────────
-
-const addCredits = async (uid, amount) => {
-  const admin = deps.getSupabaseAdmin();
-  const { data: row } = await admin.from('profiles').select('ai_usage').eq('id', uid).single();
-  const usage = row?.ai_usage || {};
-  const current = typeof usage.creditBalance === 'number' ? usage.creditBalance : 0;
-  await admin.from('profiles').update({
-    ai_usage: { ...usage, creditBalance: current + amount }
-  }).eq('id', uid);
-};
-
-const setPremiumTier = async (uid, tier = 'premium') => {
-  const admin = deps.getSupabaseAdmin();
-  const { data: row } = await admin.from('profiles').select('subscription').eq('id', uid).single();
-  const sub = row?.subscription || {};
-  await admin.from('profiles').update({
-    subscription: { ...sub, tier }
-  }).eq('id', uid);
 };
 
 // ── Shared by the handlers below ─────────────────────────────────────────────
@@ -222,41 +203,65 @@ const handleWebhook = async (req, res) => {
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
   }
 
-  const uid = event.data.object?.client_reference_id
-    || event.data.object?.metadata?.uid;
-
   try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        if (!uid) break;
-        if (session.mode === 'payment') {
-          // One-time credit pack purchase
-          await addCredits(uid, AI_CREDIT_PACK_SIZE);
-          console.log(`Added ${AI_CREDIT_PACK_SIZE} credits to ${uid}`);
-        } else if (session.mode === 'subscription') {
-          await setPremiumTier(uid, 'premium');
-          console.log(`Set premium for ${uid}`);
-        }
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        // Subscription cancelled, so downgrade to free
-        if (uid) {
-          await setPremiumTier(uid, 'free');
-          console.log(`Downgraded ${uid} to free`);
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    const outcome = await applyStripeEvent(deps.getSupabaseAdmin(), event);
+    console.log(`Stripe ${event.type} ${event.id}: ${outcome}`);
   } catch (err) {
-    console.error('Webhook handler error:', err.message);
+    // Stripe retries a failed delivery for up to three days.
+    console.error('Webhook handler error:', event.type, event.id, err.message);
     return res.status(500).json({ error: 'Handler failed' });
   }
 
   res.status(200).json({ received: true });
+};
+
+// Subscription statuses that keep Pro on, and those that end it. incomplete
+// is neither: it's a checkout still being paid, and Stripe follows it with
+// active or incomplete_expired.
+const WEB_PRO_ON = new Set(['active', 'trialing', 'past_due']);
+const WEB_PRO_OFF = new Set(['canceled', 'unpaid', 'incomplete_expired', 'paused']);
+
+// What one Stripe event changes. Returns a word for the log.
+const applyStripeEvent = async (admin, event) => {
+  const object = event.data?.object || {};
+  const eventAt = (event.created || 0) * 1000;
+
+  if (event.type === 'checkout.session.completed') {
+    const uid = object.client_reference_id || object.metadata?.uid;
+    // A payment link purchase names no account. scripts/stripe-link-buyers.mjs
+    // puts one on its subscription, which brings it back here as an update.
+    if (!billing.UUID.test(uid || '')) return 'no account on it';
+    if (object.mode === 'payment') {
+      if (object.payment_status !== 'paid' && object.payment_status !== 'no_payment_required') return 'not paid yet';
+      const result = await billing.grantCredits(admin, {
+        uid,
+        key: `stripe:${object.id}`,
+        source: 'stripe',
+        purchasedAt: new Date(eventAt).toISOString(),
+      });
+      return result?.granted ? `added ${billing.CREDIT_PACK_SIZE} credits` : `no credits added (${result?.reason})`;
+    }
+    if (object.mode === 'subscription') {
+      const plan = await billing.setPlanSource(admin, uid, 'web', {
+        active: true, status: 'active', subscriptionId: object.subscription || null, from: 'stripe', eventAt,
+      });
+      return plan ? 'Pro on' : 'no such account';
+    }
+    return 'nothing to do';
+  }
+
+  if (event.type.startsWith('customer.subscription.')) {
+    const uid = object.metadata?.uid;
+    if (!billing.UUID.test(uid || '')) return 'no account on it';
+    const ended = event.type === 'customer.subscription.deleted' || WEB_PRO_OFF.has(object.status);
+    if (!ended && !WEB_PRO_ON.has(object.status)) return `left as it is (${object.status})`;
+    const plan = await billing.setPlanSource(admin, uid, 'web', {
+      active: !ended, status: object.status, subscriptionId: object.id, from: 'stripe', eventAt,
+    });
+    return plan ? `Pro ${ended ? 'off' : 'on'}` : 'no such account';
+  }
+
+  return 'ignored';
 };
 
 // ── Managing a plan bought on the website ─────────────────────────────────────
@@ -269,9 +274,11 @@ const handleWebhook = async (req, res) => {
 // token in the Authorization header, checked by Supabase. Nothing in the body is
 // read, so a uid or customer id sent there changes nothing. The customer comes
 // from Stripe: the subscription that create_checkout stamped with the caller's
-// uid. The profile row is no help here, because its owner can write anything
-// into it. A plan bought through a Stripe payment link carries no uid, so it
-// isn't found until `uid` is added to that subscription's metadata in Stripe.
+// uid. The profile row is no help here: until step 2 of the profile privacy
+// rollout its owner can write anything into it, and Stripe is where the plan is.
+// A plan bought through a Stripe payment link carries no uid, so it isn't found
+// until `uid` is added to that subscription's metadata in Stripe
+// (scripts/stripe-link-buyers.mjs).
 
 // A plan that will renew comes first, then one already set to end, then any
 // other, newest first among equals.

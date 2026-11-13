@@ -444,6 +444,23 @@ const checks = [
   },
   {
     group: 'The server',
+    name: "an App Store expiry leaves Dana's old Pro alone",
+    who: 'service',
+    sql: `select public.set_plan_source('${DANA}', 'apple', '{"active": false, "from": "revenuecat"}') ->> 'tier' as tier`,
+    ok: (r) => value(r) === 'premium',
+    holds: from('step 1'),
+  },
+  {
+    group: 'The server',
+    name: "a website plan takes over Dana's old Pro and ends it when she cancels",
+    who: 'service',
+    sql: `select public.set_plan_source('${DANA}', 'web', '{"active": true, "eventAt": 1000}');
+          select public.set_plan_source('${DANA}', 'web', '{"active": false, "eventAt": 2000}') ->> 'tier' as tier`,
+    ok: (r) => value(r) === 'free',
+    holds: from('step 1'),
+  },
+  {
+    group: 'The server',
     name: 'adds a website credit pack once, however often Stripe sends it',
     who: 'service',
     sql: `select public.grant_ai_credits('${ELLEN}', 10, 'stripe:cs_1', 'stripe');

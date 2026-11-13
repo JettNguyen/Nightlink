@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const { createClient } = require('@supabase/supabase-js');
 const Astronomy = require('astronomy-engine');
+const billing = require('./_lib/billing');
 
 // Vercel is free to freeze the instance the moment the response is sent, which
 // killed the dream memory update mid-flight most of the time, because it starts a
@@ -206,18 +207,22 @@ const isPromptStyleLockedForTier = (tier, style) => (
   tier !== 'premium' && !FREE_ALLOWED_PROMPT_STYLES.has(normalizePromptStyle(style))
 );
 
-const getSupabaseAdmin = () => createClient(
+const createSupabaseAdmin = () => createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-// Verify user token and return uid
+// Tests swap this, so nothing reaches Supabase.
+const deps = { getSupabaseAdmin: createSupabaseAdmin };
+const getSupabaseAdmin = () => deps.getSupabaseAdmin();
+
+// Verify user token and return the user it belongs to
 const verifyToken = async (token) => {
   const admin = getSupabaseAdmin();
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) throw new Error('Invalid or expired session.');
-  return user.id;
+  return user;
 };
 
 // Atomically check and increment AI quota via Postgres function
@@ -303,33 +308,20 @@ const checkAndIncrementQuotaFallback = async (uid, tier) => {
   };
 };
 
-const getUserTier = async (uid) => {
+// The plan's tier, or premium for the comp list, matched against the email
+// the caller signs in with (see billing.isComped).
+const getUserTier = async (user) => {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from('profiles')
-    .select('subscription, email')
-    .eq('id', uid)
+    .select('subscription')
+    .eq('id', user.id)
     .single();
   if (error) {
     throw new Error(`Could not load subscription: ${error.message}`);
   }
-  const tier = data?.subscription?.tier === 'premium' ? 'premium' : 'free';
-  if (tier === 'premium') return 'premium';
-  
-  // Check if user's email is in the premium_emails env whitelist
-  const premiumEmailsEnv = (process.env.PREMIUM_EMAILS || '').trim();
-  if (premiumEmailsEnv) {
-    const userEmail = (data?.email || '').toLowerCase();
-    const premiumEmails = premiumEmailsEnv
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter((e) => e);
-    if (userEmail && premiumEmails.includes(userEmail)) {
-      return 'premium';
-    }
-  }
-  
-  return 'free';
+  if (data?.subscription?.tier === 'premium') return 'premium';
+  return billing.isComped(user) ? 'premium' : 'free';
 };
 
 // Reverse a quota increment when the AI call fails, so there is no charge on error
@@ -353,15 +345,33 @@ const refundQuota = async (uid, usedCredit) => {
   }
 };
 
-// Read the user's persistent dream memory file
+// Read the user's persistent dream memory file. Step 2 of the profile privacy
+// rollout moves it where only the server reads it, behind these functions;
+// before step 1 they don't exist yet and the column is read directly.
 const getDreamMemory = async (uid) => {
   const admin = getSupabaseAdmin();
+  const { data: memory, error } = await admin.rpc('get_dream_memory', { p_user_id: uid });
+  if (!error) return memory || null;
+  if (!billing.isMissingFunction(error)) throw new Error(error.message);
   const { data } = await admin
     .from('profiles')
     .select('dream_memory')
     .eq('id', uid)
     .single();
   return data?.dream_memory || null;
+};
+
+// Returns the error message when the write failed, or null.
+const saveDreamMemory = async (uid, memory) => {
+  const admin = getSupabaseAdmin();
+  const { error } = await admin.rpc('save_dream_memory', { p_user_id: uid, p_memory: memory });
+  if (!error) return null;
+  if (!billing.isMissingFunction(error)) return error.message;
+  const { error: updateError } = await admin.from('profiles').update({
+    dream_memory: memory,
+    dream_memory_updated_at: new Date().toISOString(),
+  }).eq('id', uid);
+  return updateError ? updateError.message : null;
 };
 
 // Has this dream already contributed to the memory file? Read it rather than
@@ -591,7 +601,11 @@ const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) =>
   // Re-read instead of using the copy fetched at the top of the request: this
   // rewrites the whole file, so building on a stale read would silently discard
   // whatever an overlapping analysis wrote in the meantime.
-  const currentMemory = await getDreamMemory(uid).catch(() => null);
+  // A failed read isn't an empty file: rewriting from nothing would replace
+  // the whole memory with this one dream.
+  let currentMemory;
+  try { currentMemory = await getDreamMemory(uid); }
+  catch (e) { console.error('Dream memory read failed; leaving it as it is:', e.message); return false; }
 
   const userContent = [
     `Current memory:\n${currentMemory || '(empty, this is the first entry)'}`,
@@ -634,12 +648,8 @@ const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) =>
       console.error('Dream memory update came back truncated; keeping the previous file.');
       return false;
     }
-    const admin = getSupabaseAdmin();
-    const { error } = await admin.from('profiles').update({
-      dream_memory: updatedMemory,
-      dream_memory_updated_at: new Date().toISOString(),
-    }).eq('id', uid);
-    if (error) { console.error('Dream memory write failed:', error.message); return false; }
+    const writeError = await saveDreamMemory(uid, updatedMemory);
+    if (writeError) { console.error('Dream memory write failed:', writeError); return false; }
     return true;
   } catch (e) {
     console.error('Dream memory update failed:', e.message);
@@ -776,13 +786,14 @@ module.exports = async function handler(req, res) {
   if (!text) return res.status(400).json({ error: 'Empty dreamText' });
 
   // Verify token
-  let uid;
-  try { uid = await verifyToken(idToken); }
+  let user;
+  try { user = await verifyToken(idToken); }
   catch { return res.status(401).json({ error: 'Invalid or expired session. Please sign in again.' }); }
+  const uid = user.id;
 
   let tier = 'free';
   try {
-    tier = await getUserTier(uid);
+    tier = await getUserTier(user);
   } catch (e) {
     return res.status(500).json({ error: e.message || 'Could not verify subscription tier.' });
   }
@@ -898,3 +909,6 @@ module.exports = async function handler(req, res) {
     usedCredit: quota.usedCredit ?? false
   });
 };
+
+module.exports.deps = deps;
+module.exports.internals = { getUserTier, getDreamMemory, saveDreamMemory };

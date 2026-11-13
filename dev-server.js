@@ -28,6 +28,7 @@ const accountHandler = require('./api/account');
 const stripeHandler = require('./api/stripe');
 const transcribeHandler = require('./api/transcribe');
 const notifyHandler = require('./api/notify');
+const revenuecatHandler = require('./api/revenuecat');
 
 // Per-IP rate limits for dev server (mirrors production platform-level limits)
 const defaultLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false });
@@ -63,6 +64,7 @@ app.post('/api/ai', aiLimiter, routeHandler('ai', aiHandler));
 app.post('/api/account', defaultLimiter, routeHandler('account', accountHandler));
 app.post('/api/stripe', stripeLimiter, routeHandler('stripe', stripeHandler));
 app.post('/api/notify', defaultLimiter, routeHandler('notify', notifyHandler));
+app.post('/api/revenuecat', defaultLimiter, routeHandler('revenuecat', revenuecatHandler));
 // Base64 audio outgrows the shared 1mb parser, so this route gets its own.
 app.post('/api/transcribe', transcribeLimiter, express.json({ limit: '8mb' }), routeHandler('transcribe', transcribeHandler));
 

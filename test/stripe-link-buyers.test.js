@@ -58,12 +58,14 @@ test('applying writes only filled-in uids, and never replaces an account already
     { subscription: 'sub_link_ended', uid: '' },
     { subscription: 'sub_checkout_dana', uid: SAM },
     { subscription: 'sub_link_ended', uid: 'sam@example.com' },
+    { subscription: 'sub_link_ended', uid: DANA },
   ];
 
   const { writes, skipped } = await planWrites(stripe, entries);
   assert.deepEqual(writes, [{ subscription: 'sub_link_sam', uid: SAM }]);
-  assert.deepEqual(skipped.map((s) => s.subscription), ['sub_checkout_dana', 'sub_link_ended']);
+  assert.deepEqual(skipped.map((s) => s.subscription), ['sub_checkout_dana', 'sub_link_ended', 'sub_link_ended']);
   assert.match(skipped[0].why, /another account/);
+  assert.match(skipped[2].why, /has ended/, 'an ended plan gets no account: there is no Pro to turn on');
   assert.equal(stripe.updates.length, 0, 'planning writes nothing');
 
   await applyWrites(stripe, writes);

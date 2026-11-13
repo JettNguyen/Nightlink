@@ -83,6 +83,10 @@ export async function planWrites(stripe, entries) {
     const current = sub.metadata?.uid;
     if (current === uid) {
       skipped.push({ subscription: sub.id, why: 'already has this uid' });
+    } else if (ENDED.has(sub.status)) {
+      // Nothing to turn on, and putting an account on it would only end Pro
+      // given by hand from before.
+      skipped.push({ subscription: sub.id, why: `it has ended (${sub.status}), so there's no Pro to turn on` });
     } else if (current) {
       skipped.push({ subscription: sub.id, why: `already names another account (${current}), left as it is` });
     } else {

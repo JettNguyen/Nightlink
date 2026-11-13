@@ -35,30 +35,31 @@ const sign = (event, secret = SECRET) => {
   return { payload, header: Stripe.webhooks.generateTestHeaderString({ payload, secret }) };
 };
 
-// The Supabase calls the webhook makes, recorded. Sam starts with 5 credits.
+// The database functions the webhook calls, recorded. Sam starts with 5
+// credits and a free plan. grant_ai_credits adds a pack once per key, the way
+// the real one does.
 const fakeSupabase = () => {
-  const updates = [];
-  const rows = { [SAM]: { ai_usage: { monthYear: '2026-11', monthlyCount: 1, creditBalance: 5 }, subscription: { tier: 'free' } } };
-  const from = (table) => {
-    let id;
-    let patch;
-    const builder = {
-      select() { return builder; },
-      update(values) { patch = values; return builder; },
-      eq(_column, value) {
-        id = value;
-        if (patch) {
-          updates.push({ table, id, patch });
-          rows[id] = { ...rows[id], ...patch };
-          return Promise.resolve({ error: null });
-        }
-        return builder;
-      },
-      single: async () => ({ data: rows[id] || null, error: null }),
-    };
-    return builder;
+  const calls = [];
+  const granted = new Set();
+  const rows = { [SAM]: { credits: 5, sources: {} } };
+  const rpc = async (name, args) => {
+    calls.push({ name, args });
+    if (name === 'grant_ai_credits') {
+      if (granted.has(args.p_key)) return { data: { granted: false, reason: 'already_granted' }, error: null };
+      granted.add(args.p_key);
+      if (!rows[args.p_user_id]) return { data: { granted: false, reason: 'no_account' }, error: null };
+      rows[args.p_user_id].credits += args.p_amount;
+      return { data: { granted: true, creditBalance: rows[args.p_user_id].credits }, error: null };
+    }
+    if (name === 'set_plan_source') {
+      const row = rows[args.p_user_id];
+      if (!row) return { data: null, error: null };
+      row.sources[args.p_source] = args.p_state;
+      return { data: { tier: Object.values(row.sources).some((s) => s.active) ? 'premium' : 'free' }, error: null };
+    }
+    return { data: null, error: { code: 'PGRST202', message: `Could not find the function public.${name}` } };
   };
-  return { updates, rows, admin: { from } };
+  return { calls, rows, admin: { rpc } };
 };
 
 const withFakes = (t) => {
@@ -131,7 +132,7 @@ test("a webhook Stripe signed is accepted from its raw bytes, however they're ha
 
     assert.equal(res.statusCode, 200, `${name}: ${JSON.stringify(res.body)}`);
     assert.deepEqual(res.body, { received: true });
-    assert.equal(supabase.rows[SAM].ai_usage.creditBalance, 15, `${name}: the pack's 10 credits land`);
+    assert.equal(supabase.rows[SAM].credits, 15, `${name}: the pack's 10 credits land`);
     if (name === 'Vercel') assert.equal(req.bodyReads, 0, 'nothing reads req.body on the webhook path');
   }
 });
@@ -165,7 +166,7 @@ test('a changed byte, another secret or no signature is turned away and changes 
   await stripeRoute({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.parse(payload) }, res3);
   assert.equal(res3.statusCode, 400);
 
-  assert.equal(supabase.updates.length, 0);
+  assert.equal(supabase.calls.length, 0);
 });
 
 test('without STRIPE_WEBHOOK_SECRET the webhook refuses and the log says which setting', async (t) => {
@@ -178,7 +179,7 @@ test('without STRIPE_WEBHOOK_SECRET the webhook refuses and the log says which s
   await stripeRoute(vercelRequest(payload, header), res);
   assert.equal(res.statusCode, 500);
   assert.match(String(logged.mock.calls[0].arguments[0]), /STRIPE_WEBHOOK_SECRET/);
-  assert.equal(supabase.updates.length, 0);
+  assert.equal(supabase.calls.length, 0);
 });
 
 test('a body that never arrives is given up on instead of held open', async (t) => {
@@ -193,4 +194,78 @@ test('a body that never arrives is given up on instead of held open', async (t) 
   const res = response();
   await stripeRoute(silent, res);
   assert.equal(res.statusCode, 400);
+});
+
+const deliver = async (event) => {
+  const { payload, header } = sign(event);
+  const res = response();
+  await stripeRoute(vercelRequest(payload, header), res);
+  return res;
+};
+
+test('a credit pack is added once, however many times Stripe delivers it', async (t) => {
+  const supabase = withFakes(t);
+  for (let i = 0; i < 3; i += 1) assert.equal((await deliver(creditPackEvent())).statusCode, 200);
+  assert.equal(supabase.rows[SAM].credits, 15);
+  const grants = supabase.calls.filter((c) => c.name === 'grant_ai_credits');
+  assert.equal(grants.length, 3);
+  assert.ok(grants.every((c) => c.args.p_key === 'stripe:cs_test_credit_pack' && c.args.p_source === 'stripe'));
+});
+
+test("a checkout that isn't paid yet, or names no account, adds nothing", async (t) => {
+  const supabase = withFakes(t);
+  await deliver(creditPackEvent({ payment_status: 'unpaid' }));
+  // What a payment link sends: no account anywhere on it.
+  await deliver(creditPackEvent({ client_reference_id: null, metadata: {} }));
+  assert.equal(supabase.calls.length, 0);
+  assert.equal(supabase.rows[SAM].credits, 5);
+});
+
+const subscriptionEvent = (type, status, { created = 1794583518, uid = SAM } = {}) => ({
+  id: `evt_${type}_${status}_${created}`,
+  object: 'event',
+  type,
+  created,
+  data: { object: { id: 'sub_test_sam', object: 'subscription', status, customer: 'cus_test_sam', metadata: uid ? { uid } : {} } },
+});
+
+test("a website subscription sets the plan's web part from Stripe's status", async (t) => {
+  const supabase = withFakes(t);
+  const webStates = () => supabase.calls.filter((c) => c.name === 'set_plan_source').map((c) => [c.args.p_source, c.args.p_state.active, c.args.p_state.status]);
+
+  await deliver({
+    id: 'evt_checkout_pro',
+    object: 'event',
+    type: 'checkout.session.completed',
+    created: 1794583518,
+    data: { object: { id: 'cs_test_pro', object: 'checkout.session', mode: 'subscription', payment_status: 'paid', client_reference_id: SAM, metadata: { uid: SAM } } },
+  });
+  await deliver(subscriptionEvent('customer.subscription.updated', 'past_due'));
+  await deliver(subscriptionEvent('customer.subscription.updated', 'unpaid'));
+  await deliver(subscriptionEvent('customer.subscription.deleted', 'canceled'));
+  assert.deepEqual(webStates(), [
+    ['web', true, 'active'],
+    ['web', true, 'past_due'],
+    ['web', false, 'unpaid'],
+    ['web', false, 'canceled'],
+  ]);
+  const last = supabase.calls.at(-1).args.p_state;
+  assert.equal(last.eventAt, 1794583518000, "Stripe's event time goes along, so an older event can't undo a newer one");
+});
+
+test("a checkout still being paid leaves the plan alone, and a subscription with no account is skipped", async (t) => {
+  const supabase = withFakes(t);
+  await deliver(subscriptionEvent('customer.subscription.created', 'incomplete'));
+  await deliver(subscriptionEvent('customer.subscription.updated', 'active', { uid: null }));
+  assert.equal(supabase.calls.length, 0);
+});
+
+test('a database error makes Stripe try again later', async (t) => {
+  withFakes(t);
+  t.mock.method(console, 'error', () => {});
+  t.mock.method(stripeRoute.deps, 'getSupabaseAdmin', () => ({
+    rpc: async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function public.grant_ai_credits' } }),
+  }));
+  const res = await deliver(creditPackEvent());
+  assert.equal(res.statusCode, 500);
 });

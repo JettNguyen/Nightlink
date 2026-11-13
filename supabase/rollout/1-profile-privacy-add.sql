@@ -235,6 +235,9 @@ for each row execute function public.profiles_guard_billing();
 -- older than the one already applied for that source changes nothing, since
 -- Stripe and RevenueCat don't promise to send events in order. Returns the
 -- plan, or null when there's no such profile.
+--
+-- To end Pro that's on record from before sources (the legacy part), for one
+-- account: select public.set_plan_source('<uid>', 'legacy', '{"active": false}');
 create or replace function public.set_plan_source(p_user_id uuid, p_source text, p_state jsonb)
 returns jsonb
 language plpgsql
@@ -265,6 +268,17 @@ begin
 
   v_plan := public.plan_with_source(v_plan, p_source,
     coalesce(p_state, '{}'::jsonb) || jsonb_build_object('updatedAt', now()));
+
+  -- Pro from before sources ends with a website plan that takes it over. That
+  -- covers payment link buyers who were given Pro by hand: once their
+  -- subscription names their account (scripts/stripe-link-buyers.mjs), Stripe
+  -- says whether it's paid for, and canceling ends Pro.
+  if p_source = 'web' and p_state -> 'active' = 'true'::jsonb
+     and v_plan -> 'sources' -> 'legacy' -> 'active' = 'true'::jsonb then
+    v_plan := public.plan_with_source(v_plan, 'legacy',
+      (v_plan -> 'sources' -> 'legacy') || jsonb_build_object('active', false, 'endedBy', 'web', 'updatedAt', now()));
+  end if;
+
   update public.profiles set subscription = v_plan where id = p_user_id;
   return v_plan;
 end;
