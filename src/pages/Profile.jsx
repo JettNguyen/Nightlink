@@ -530,7 +530,7 @@ export default function Profile({ user }) {
   if (profileLoading || !targetUserId || !userData) {
     if (!targetUserId && !routeHandle) return <div className="page-container">Profile unavailable.</div>;
     return (
-      <div className="page-container stream-page">
+      <div className="page-container stream-page profile-page">
         <ProfilePageSkeleton own={!routeHandle || viewingOwnProfile} showSettings={!isNativeIOS} />
       </div>
     );
@@ -629,7 +629,7 @@ export default function Profile({ user }) {
   };
 
   return (
-    <div className="page-container stream-page">
+    <div className="page-container stream-page profile-page">
       <div className="profile-top">
         <div className="profile-top-main">
           <div className="profile-header">

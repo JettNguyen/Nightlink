@@ -648,7 +648,7 @@ export default function DreamJournal({ user }) {
   };
 
   return (
-    <div className="page-container stream-page">
+    <div className="page-container stream-page journal-page">
       <div className="page-header journal-header">
         <div className="journal-header-top">
           <div>

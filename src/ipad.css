@@ -1,0 +1,243 @@
+/* ── iPad ──────────────────────────────────────────────────────────────────────
+ * The app on an iPad used to be the phone's layout run wide: a line of a dream
+ * ran to 150 characters, and only the profile used the width, in two columns.
+ *
+ * Here a line of text stays around 50 to 75 characters, and the width goes to
+ * showing more at once. The journal, the feed, search results and a profile's
+ * dreams come in columns, two on an iPad held upright and three across a large
+ * one held sideways. A dream and its analysis sit beside the conversation about
+ * it. A page that is one list or one form keeps to one column in the middle.
+ *
+ * Everything here is under html[data-ipad], which main.jsx sets only inside the
+ * native app on an iPad, so phones and the website are exactly as they were.
+ * A window under 700pt wide (Split View, Slide Over, a small window) keeps the
+ * phone's layout, which was made for that width.
+ * --------------------------------------------------------------------------- */
+
+/* The header in the tab bar's row. iPadOS draws its tabs in the middle of a row
+   across the top of the screen and grows the top inset to hold that row (see
+   statusCorner.js). The header fills the row from edge to edge, behind the
+   tabs, and keeps its own controls to either side of them: the back button and
+   the name at the leading end, settings at the trailing end, the way a native
+   iPad screen does. The row sits 40pt above the bottom of the inset, where the
+   name lines up with the tab titles on iPadOS 27, and the page under it starts
+   where the inset ends. --tab-row-inset is that inset, measured while the tabs
+   show and kept while a sheet hides them, so nothing behind the sheet moves. */
+html[data-tab-row] .nav-ios-header,
+html[data-tab-row] .app-main--with-nav,
+html[data-tab-row] .pull-refresh-indicator,
+html[data-tab-row] .offline-indicator {
+  --safe-top: max(0px, calc(var(--tab-row-inset, env(safe-area-inset-top)) - 66px));
+  --nav-extra: 14px;
+}
+
+/* Held sideways, iPadOS 27 lifts the tabs into the clock's row and the inset
+   is 74pt (statusCorner.js). Level with the tabs, the name would sit on the
+   time, so the header's row goes under the clock, at the bottom of the inset. */
+html[data-tab-row][data-tabs-beside-clock] .nav-ios-header,
+html[data-tab-row][data-tabs-beside-clock] .app-main--with-nav,
+html[data-tab-row][data-tabs-beside-clock] .pull-refresh-indicator,
+html[data-tab-row][data-tabs-beside-clock] .offline-indicator {
+  --safe-top: max(0px, calc(var(--tab-row-inset, env(safe-area-inset-top)) - 52px));
+  --nav-extra: 0px;
+}
+
+/* The tabs stay put as you scroll, so the header does too. */
+html[data-tab-row] .nav-ios-header {
+  transform: none !important;
+  padding-left: calc(env(safe-area-inset-left) + 8px);
+  padding-right: calc(env(safe-area-inset-right) + 8px);
+}
+
+html[data-tab-row] .nav-ios-header-side,
+html[data-tab-row] .nav-ios-header-center {
+  opacity: 1 !important;
+}
+
+html[data-tab-row] .nav-ios-header-side {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* With no back button, the name sits on the page's own margin, over the
+   heading below it. */
+html[data-tab-row] .nav-ios-header-left:empty {
+  width: calc(var(--page-gutter) - 8px);
+}
+
+html[data-tab-row] .nav-ios-header-center {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}
+
+/* A step up, as on the Duo, since the row is deeper than the phone's bar. */
+html[data-tab-row] .nav-ios-logo-icon {
+  width: 30px;
+  height: 30px;
+}
+
+html[data-tab-row] .nav-ios-logo-text {
+  font-size: 1.3rem;
+}
+
+html[data-tab-row] .nav-ios-back-btn {
+  font-size: calc(var(--fs-lg) * 1.15);
+}
+
+@media (min-width: 700px) {
+  html[data-ipad] {
+    /* The phone's smaller type is for a phone's width; an iPad mini held
+       upright is under 769pt too. */
+    --type-scale: 1;
+    /* The iPad's own margin. */
+    --page-gutter: 1.5rem;
+    /* Columns at least 360pt wide, which keeps a line of a preview between 50
+       and 75 characters, and never more than three across. */
+    --ipad-columns: repeat(auto-fill, minmax(max(360px, calc(100% / 3 - 1px)), 1fr));
+  }
+
+  /* Pages of many dreams take the whole width; their columns hold the measure. */
+  html[data-ipad] .journal-page,
+  html[data-ipad] .feed-page,
+  html[data-ipad] .search-page,
+  html[data-ipad] .profile-page {
+    max-width: none;
+  }
+
+  /* ── Journal ── */
+  html[data-ipad] .journal-page .dreams-list {
+    display: grid;
+    grid-template-columns: var(--ipad-columns);
+  }
+
+  html[data-ipad] .journal-page .dreams-year-header {
+    grid-column: 1 / -1;
+  }
+
+  /* ── Feed ── */
+  html[data-ipad] .feed-list {
+    display: grid;
+    grid-template-columns: var(--ipad-columns);
+  }
+
+  /* On the phone the last post has no line under it. In columns the last row
+     can be one post short, so every post keeps its line and the rows match. */
+  html[data-ipad] .feed-post:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* A post has its avatar beside it, so two of them side by side need more
+     than an iPad mini held upright has. There it is one column in the middle. */
+  @media (max-width: 799px) {
+    html[data-ipad] .feed-page {
+      max-width: 640px;
+    }
+
+    html[data-ipad] .feed-list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ── Search ── */
+  html[data-ipad] .search-page .people-grid,
+  html[data-ipad] .search-page .dream-grid {
+    display: grid;
+    grid-template-columns: var(--ipad-columns);
+    gap: 0;
+  }
+
+  /* ── Profile ── */
+  html[data-ipad] .profile-page .profile-dream-grid {
+    display: grid;
+    grid-template-columns: var(--ipad-columns);
+    max-width: none;
+  }
+
+  /* ── A dream ──
+     One column in the middle while the window is narrower than 1000pt. A
+     dream is set larger than the rest, so its column is narrower. */
+  html[data-ipad] .dream-detail-page {
+    max-width: 680px;
+  }
+
+  /* ── One list or one form ── */
+  html[data-ipad] .activity-page,
+  html[data-ipad] .connections-page,
+  html[data-ipad] .edit-profile-page,
+  html[data-ipad] .settings-page,
+  html[data-ipad] .legal-page {
+    max-width: 760px;
+  }
+
+  /* ── New dream ──
+     A wider sheet, and a writing space that is a real share of the screen. */
+  html[data-ipad] .modal-content {
+    max-width: 640px;
+  }
+
+  html[data-ipad] .dream-textarea {
+    min-height: 30dvh;
+  }
+}
+
+/* A dream on a window at least 1000pt wide: the title across the top, and under
+   it the dream and what it might mean on one side, the conversation on the
+   other, so the comments are in view while you read. DreamDetail.jsx wraps the
+   two sides, and the wrappers are display: contents everywhere else. */
+@media (min-width: 1000px) {
+  /* The month and the day you picked, side by side rather than one under the
+     other. The day's dreams are one column, at the measure of the rest. */
+  html[data-ipad] .journal-calendar-shell {
+    grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 2rem;
+  }
+
+  html[data-ipad] .calendar-day-panel {
+    border-top: none;
+    border-left: 1px solid var(--border);
+    padding: 0.5rem 0 0 1.5rem;
+  }
+
+  html[data-ipad] .dream-detail-page {
+    max-width: 1240px;
+  }
+
+  html[data-ipad] .dream-detail-page .detail-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "main side";
+    align-items: start;
+    column-gap: 3rem;
+    row-gap: 1.5rem;
+  }
+
+  html[data-ipad] .dream-detail-page .detail-head {
+    grid-area: head;
+  }
+
+  html[data-ipad] .dream-detail-page .detail-main,
+  html[data-ipad] .dream-detail-page .detail-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  html[data-ipad] .dream-detail-page .detail-main {
+    grid-area: main;
+  }
+
+  html[data-ipad] .dream-detail-page .detail-side {
+    grid-area: side;
+  }
+
+  /* The comments open their column, so the line over them has nothing above it
+     to separate. */
+  html[data-ipad] .dream-detail-page .detail-side > .detail-comments:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+}

@@ -40,6 +40,9 @@ export const setNativeTabsShown = (value) => {
   sendVisibility();
 };
 
+/** Whether a full screen overlay is hiding the bar right now. */
+export const nativeTabsCovered = () => covers > 0;
+
 /** Hides the bar until the returned function is called. */
 export const coverNativeTabs = () => {
   covers += 1;

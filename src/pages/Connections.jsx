@@ -295,14 +295,14 @@ export default function Connections({ user }) {
   if (profileLoading || !targetUserId || !userData) {
     if (!targetUserId && !routeHandle) return <div className="page-container">Connections unavailable.</div>;
     return (
-      <div className="page-container">
+      <div className="page-container connections-page">
         <div className="connections-loading loading-slot"><LoadingIndicator label="Loading connections…" size="lg" /></div>
       </div>
     );
   }
 
   return (
-    <div className="page-container stream-page">
+    <div className="page-container stream-page connections-page">
       {!isNativeIOS && (
         <button type="button" className="page-back-btn" onClick={() => navigate(-1)}>
           Back

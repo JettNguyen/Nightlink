@@ -135,7 +135,7 @@ export default function Search({ user }) {
 
   return (
     <>
-    <div className="page-container stream-page">
+    <div className="page-container stream-page search-page">
       <div className="page-header search-header">
         <div className="search-header-top">
           <h1>Search</h1>

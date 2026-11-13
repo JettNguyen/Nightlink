@@ -1525,3 +1525,10 @@
     animation: none;
   }
 }
+
+/* The two sides of the page on an iPad (ipad.css). Everywhere else the layout
+   looks straight through them, so the page is one column as before. */
+.detail-main,
+.detail-side {
+  display: contents;
+}

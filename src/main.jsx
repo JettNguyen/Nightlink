@@ -4,9 +4,11 @@ import { Capacitor } from '@capacitor/core';
 import App from './App';
 import setupKeyboard from './utils/keyboard';
 import watchStatusCorner from './utils/statusCorner';
-import { nativeTabsActive } from './plugins/nativeTabs';
+import { nativeTabsActive, nativeTabsCovered } from './plugins/nativeTabs';
 import { lockZoomInNativeApp } from './utils/viewport';
+import { isIpad } from './utils/device';
 import './index.css';
+import './ipad.css';
 
 // First, before anything renders: the website keeps pinch zoom, the app doesn't.
 lockZoomInNativeApp(document, Capacitor.isNativePlatform());
@@ -25,9 +27,13 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
   // The tab bar is UIKit's (AppShell.swift), and the page leaves room for it
   // through the bottom safe area inset rather than a fixed height.
   if (nativeTabsActive) document.documentElement.dataset.nativeTabs = '';
+  // The iPad gets its own layout (ipad.css). Only the app is marked, so the
+  // website looks the same on an iPad as it always has.
+  const ipad = isIpad(navigator);
+  if (ipad) document.documentElement.dataset.ipad = '';
 
   setupKeyboard();
-  watchStatusCorner();
+  watchStatusCorner({ ipad, tabsCovered: nativeTabsCovered });
 
   // Native app shell should not be controlled by a web service worker.
   if ('serviceWorker' in navigator) {

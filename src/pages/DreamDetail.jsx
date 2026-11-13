@@ -2374,6 +2374,11 @@ export default function DreamDetail({ user }) {
           </div>
         </div>
 
+        {/* Two wrappers that the layout looks straight through (display:
+            contents), except on an iPad, where they are its two columns: the
+            dream and what it might mean, and beside it the conversation. The
+            blocks inside keep the indent they had without them. */}
+        <div className="detail-main">
         {!isOwner && (showAuthorIdentity || viewerId) && (
           <div className="detail-author-block">
             {showAuthorIdentity && (
@@ -2757,7 +2762,9 @@ export default function DreamDetail({ user }) {
             </button>
           </div>
         ) : null}
+        </div>
 
+        <div className="detail-side">
         {dream.visibility !== 'private' && <div className="detail-comments" ref={commentsSectionRef}>
           <div className="detail-section-head">
             <p className="detail-label">Comments{commentCountLabel}</p>
@@ -3018,6 +3025,7 @@ export default function DreamDetail({ user }) {
               {deleting ? 'Deleting…' : 'Delete dream'}
             </button>
           )}
+        </div>
         </div>
       </div>
 

@@ -203,14 +203,14 @@ export default function EditProfile({ user }) {
 
   if (pageLoading) {
     return (
-      <div className="page-container">
+      <div className="page-container edit-profile-page">
         <div className="profile-loading loading-slot"><LoadingIndicator label="Loading…" size="lg" /></div>
       </div>
     );
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container edit-profile-page">
       {!isNativeIOS && (
         <button type="button" className="page-back-btn" onClick={() => navigate('/profile')}>
           Profile
