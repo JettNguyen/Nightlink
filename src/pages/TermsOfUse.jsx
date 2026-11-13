@@ -10,7 +10,7 @@ export default function TermsOfUse() {
       </button>
       <article className="legal-card">
         <h1>Terms of Use</h1>
-        <p className="legal-updated">Last updated: September 6, 2026</p>
+        <p className="legal-updated">Last updated: November 13, 2026</p>
 
         <section>
           <h2>1. Acceptance</h2>
@@ -111,7 +111,7 @@ export default function TermsOfUse() {
         <section>
           <h2>8. Copyright complaints</h2>
           <p>
-            If you believe content on Nightlink infringes your copyright, email us at jettuf26@gmail.com with
+            If you believe content on Nightlink infringes your copyright, email us at support@nightlink.dev with
             a description of the work, a link to the content, your contact details, and a statement that you
             hold the rights or act for the person who does. We remove infringing content and terminate accounts
             of repeat infringers.
@@ -221,7 +221,7 @@ export default function TermsOfUse() {
         <section>
           <h2>18. Contact</h2>
           <p>
-            For policy and safety reports, contact Jett Nguyen at jettuf26@gmail.com.
+            For policy and safety reports, contact Jett Nguyen at support@nightlink.dev.
           </p>
         </section>
       </article>

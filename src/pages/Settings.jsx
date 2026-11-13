@@ -1119,7 +1119,7 @@ export default function Settings({ user }) {
                 <button type="button" className="ghost-btn legal-link-btn" onClick={() => navigate('/support')}>Support</button>
               </div>
               <p className="settings-footnote">
-                Safety reporting contact: <a href="mailto:jettuf26@gmail.com">Jett Nguyen (jettuf26@gmail.com)</a>
+                Safety reporting contact: <a href="mailto:support@nightlink.dev">Jett Nguyen (support@nightlink.dev)</a>
               </p>
             </div>
           </section>

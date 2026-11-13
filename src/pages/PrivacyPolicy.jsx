@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
       </button>
       <article className="legal-card">
         <h1>Privacy Policy</h1>
-        <p className="legal-updated">Last updated: September 6, 2026</p>
+        <p className="legal-updated">Last updated: November 13, 2026</p>
 
         <section>
           <h2>1. Who we are</h2>
@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
             Nightlink is operated by Jett Nguyen, an individual developer based in Florida, United States
             (&quot;we&quot;, &quot;us&quot;). For the purposes of the EU and UK General Data Protection
             Regulation, we are the data controller for the personal data described below. You can reach us
-            at any time at jettuf26@gmail.com.
+            at any time at support@nightlink.dev.
           </p>
         </section>
 
@@ -224,7 +224,7 @@ export default function PrivacyPolicy() {
         <section>
           <h2>14. Contact</h2>
           <p>
-            For privacy or safety questions, contact Jett Nguyen at jettuf26@gmail.com.
+            For privacy or safety questions, contact Jett Nguyen at support@nightlink.dev.
           </p>
         </section>
       </article>
