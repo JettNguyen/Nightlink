@@ -10,9 +10,10 @@ Jett says so in that session.**
    link to it): `MARKETING_VERSION` (1.3, 1.4 and so on) and `CURRENT_PROJECT_VERSION` (back to 1
    for a new version, up by one for another upload of the same version). Commit it.
 2. Check `.env`. Every `VITE_` value is baked into the bundle at build time: the Supabase URL and
-   anon key, the Stripe price ids and payment links (live ones, not `test_`), and the RevenueCat
-   iOS key (starts with `appl_`). The build ships whatever `.env` holds right then. The OpenAI and
-   Supabase service role keys have no `VITE_` prefix and stay out of the bundle.
+   anon key, and the RevenueCat iOS key (starts with `appl_`). The build ships whatever `.env` holds
+   right then. Stripe isn't in the bundle: the server picks the price for anything bought on the
+   website. The OpenAI, Stripe and Supabase service role keys have no `VITE_` prefix and stay out
+   of the bundle.
 3. `./scripts/release-ios.sh` builds the web bundle, copies it into the iOS project, archives,
    exports, validates and uploads. About five minutes.
 4. On App Store Connect: make the version, write What's New, pick the build once Apple has

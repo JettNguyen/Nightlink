@@ -56,10 +56,7 @@ const resolveAccountEndpoint = () => {
 };
 
 const ACCOUNT_ENDPOINT = resolveAccountEndpoint();
-const PREMIUM_PRICE_ID = import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID || '';
-const CREDIT_PRICE_ID = import.meta.env.VITE_STRIPE_CREDIT_PRICE_ID || '';
-const PREMIUM_PAYMENT_LINK = import.meta.env.VITE_STRIPE_PREMIUM_LINK || '';
-const CREDIT_PAYMENT_LINK = import.meta.env.VITE_STRIPE_CREDIT_LINK || '';
+const CHECKOUT_DIDNT_OPEN = "Checkout didn't open. Try again in a minute, and if it still doesn't, write to support@nightlink.dev.";
 
 const PROMPT_PRESETS = [
   { id: 'balanced', title: 'Balanced Guide', description: 'Mix meaningful symbols with grounded actions you can take today.' },
@@ -632,25 +629,18 @@ export default function Settings({ user }) {
     setPromptError('');
   };
 
-  const handleStartCheckout = async (mode, priceId, paymentLink) => {
+  // Buying on the website always goes through the server's checkout, which puts
+  // this account on the purchase so the plan or the credits land on it. Stripe's
+  // payment links couldn't, so they're no longer used. The server picks the price.
+  const handleStartCheckout = async (plan) => {
     if (!uid || checkoutBusy) return;
     setCheckoutBusy(true);
     setBillingStatus('');
-    
+
     try {
-      if (paymentLink) {
-        window.location.assign(paymentLink);
-        return;
-      }
-
-      if (!priceId) {
-        setBillingStatus('Billing is not configured yet. Add Stripe price IDs or payment links in your environment first.');
-        return;
-      }
-
       const idToken = await user?.getIdToken?.();
       if (!idToken) {
-        setBillingStatus('Please sign in again and retry checkout.');
+        setBillingStatus('Sign in again, then try once more.');
         return;
       }
 
@@ -660,23 +650,17 @@ export default function Settings({ user }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`
         },
-        body: JSON.stringify({
-          action: 'create_checkout',
-          uid,
-          priceId,
-          mode,
-          successUrl: `${window.location.origin}/settings?payment=success`,
-          cancelUrl: `${window.location.origin}/settings?payment=cancelled`
-        })
+        body: JSON.stringify({ action: 'create_checkout', plan })
       });
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload?.url) {
-        throw new Error(payload?.error || 'Unable to start checkout.');
+        setBillingStatus(payload?.error || CHECKOUT_DIDNT_OPEN);
+        return;
       }
       window.location.assign(payload.url);
-    } catch (error) {
-      setBillingStatus(error.message || 'Unable to start checkout.');
+    } catch {
+      setBillingStatus(CHECKOUT_DIDNT_OPEN);
     } finally {
       setCheckoutBusy(false);
     }
@@ -1032,7 +1016,7 @@ export default function Settings({ user }) {
                     <button
                       type="button"
                       className="primary-btn"
-                      onClick={() => handleStartCheckout('subscription', PREMIUM_PRICE_ID, PREMIUM_PAYMENT_LINK)}
+                      onClick={() => handleStartCheckout('pro')}
                       disabled={checkoutBusy || tier === 'premium'}
                     >
                       {tier === 'premium' ? 'Pro active' : (checkoutBusy ? 'Opening checkout...' : 'Subscribe to Pro')}
@@ -1041,7 +1025,7 @@ export default function Settings({ user }) {
                   <button
                     type="button"
                     className="ghost-btn"
-                    onClick={() => handleStartCheckout('payment', CREDIT_PRICE_ID, CREDIT_PAYMENT_LINK)}
+                    onClick={() => handleStartCheckout('credits')}
                     disabled={checkoutBusy}
                   >
                     {checkoutBusy ? 'Opening checkout...' : 'Buy 10 AI credits'}

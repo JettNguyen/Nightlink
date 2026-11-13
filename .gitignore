@@ -17,3 +17,6 @@ netlify/.netlify
 
 # supabase cli cache
 supabase/.temp/
+
+# made by scripts/stripe-link-buyers.mjs; holds buyers' emails
+link-buyers.json

@@ -54,42 +54,121 @@ const setPremiumTier = async (uid, tier = 'premium') => {
   }).eq('id', uid);
 };
 
+// ── Shared by the handlers below ─────────────────────────────────────────────
+
+const SITE_ORIGIN = 'https://www.nightlink.dev';
+const OWN_ORIGIN = /^(https:\/\/(www\.)?nightlink\.dev|http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?)$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Statuses where a plan is still going and can be canceled or paid.
+const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'paused']);
+
+// Shown on screen as they are, so they're plain and say what to do.
+const SIGN_IN_AGAIN = 'Sign in again, then try once more.';
+const NO_WEB_PLAN = "We couldn't find a plan bought on nightlink.dev for this account. "
+  + 'If you got Pro in the iPhone app, change or cancel it on your iPhone: open the Settings app, '
+  + 'tap your name, then Subscriptions. If you paid on nightlink.dev, write to support@nightlink.dev '
+  + "from the email you paid with and we'll cancel it for you.";
+const NOT_READY = "Managing your plan here isn't ready yet. Write to support@nightlink.dev from the "
+  + "email you paid with and we'll cancel or change it for you.";
+const TRY_AGAIN = "Your plan didn't open. Try again in a minute, and if it still doesn't, write to "
+  + 'support@nightlink.dev.';
+const CHECKOUT_NOT_READY = "Buying on the website isn't working right now. Try again later, or write to "
+  + "support@nightlink.dev and we'll sort it out.";
+const CHECKOUT_FAILED = "Checkout didn't open. Try again in a minute, and if it still doesn't, write to "
+  + 'support@nightlink.dev.';
+const UNKNOWN_PRODUCT = "That isn't something we sell. Reload the page and try again.";
+
+const getCaller = async (req) => {
+  const header = req.headers?.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!token) return null;
+  const { data, error } = await deps.getSupabaseAdmin().auth.getUser(token);
+  const user = data?.user;
+  return !error && user?.id ? user : null;
+};
+
 // ── Checkout session creation ─────────────────────────────────────────────────
-// POST /api/stripe  { action: 'create_checkout', uid, priceId, mode }
+// POST /api/stripe  { action: 'create_checkout', plan: 'pro' | 'credits' }
+//
+// Every purchase on the website goes through here, because this is what ties
+// it to the Nightlink account: the uid from the caller's sign-in goes on the
+// checkout and, for Pro, on the subscription, where the webhook and Manage plan
+// find it. Stripe's payment links can't do that, which is why buying through
+// them never turned Pro on.
+//
+// The price comes from the server's settings, never from the request, so a
+// request can't buy something else or name its own price. Pages from before
+// 11/13/2026 send { priceId, mode } instead of plan; their price still has to
+// be one of these two, and the mode comes from the price.
 
-const handleCreateCheckout = async (req, res) => {
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'Invalid JSON' }); }
+const PRODUCTS = {
+  pro: { mode: 'subscription', priceSettings: ['STRIPE_PREMIUM_PRICE_ID', 'VITE_STRIPE_PREMIUM_PRICE_ID'] },
+  credits: { mode: 'payment', priceSettings: ['STRIPE_CREDIT_PRICE_ID', 'VITE_STRIPE_CREDIT_PRICE_ID'] },
+};
+
+const priceFor = (product) => product.priceSettings
+  .map((name) => String(process.env[name] || '').trim())
+  .find(Boolean) || '';
+
+const productFor = (body) => {
+  if (typeof body?.plan === 'string' && Object.hasOwn(PRODUCTS, body.plan)) return body.plan;
+  if (typeof body?.priceId === 'string' && body.priceId) {
+    return Object.keys(PRODUCTS).find((key) => priceFor(PRODUCTS[key]) === body.priceId) || null;
   }
-  const { uid, priceId, successUrl, cancelUrl, mode = 'payment' } = body || {};
-  if (!uid || !priceId) return res.status(400).json({ error: 'Missing uid or priceId' });
+  return null;
+};
 
-  // Verify the caller is authenticated and matches the uid
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'Authentication required' });
-  const admin = deps.getSupabaseAdmin();
-  const { data: { user }, error: authErr } = await admin.auth.getUser(token);
-  if (authErr || !user || user.id !== uid) return res.status(401).json({ error: 'Invalid session' });
+const handleCreateCheckout = async (req, res, body) => {
+  let caller = null;
+  try {
+    caller = await getCaller(req);
+  } catch (err) {
+    console.error('Caller check failed:', err.message);
+  }
+  // A uid in the body that isn't the caller's means the page is out of date.
+  if (!caller || (body?.uid && body.uid !== caller.id)) return res.status(401).json({ error: SIGN_IN_AGAIN });
 
-  const stripe = deps.getStripe();
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode,
-    line_items: [{ price: priceId, quantity: 1 }],
-    client_reference_id: uid,
-    // `client_reference_id` only lives on the checkout session. Later
-    // subscription events (notably customer.subscription.deleted) carry the
-    // subscription object instead, so stamp the uid onto it here, because without this
-    // a cancellation has no user to downgrade and silently does nothing.
-    metadata: { uid },
-    ...(mode === 'subscription' ? { subscription_data: { metadata: { uid } } } : {}),
-    success_url: successUrl || `${req.headers.origin}/settings?payment=success`,
-    cancel_url:  cancelUrl  || `${req.headers.origin}/settings?payment=cancelled`,
-  });
+  const key = productFor(body);
+  if (!key) return res.status(400).json({ error: UNKNOWN_PRODUCT });
+  const { mode } = PRODUCTS[key];
+  const price = priceFor(PRODUCTS[key]);
+  if (!price) {
+    console.error(`Checkout refused: no price set for ${key} (STRIPE_${key === 'pro' ? 'PREMIUM' : 'CREDIT'}_PRICE_ID).`);
+    return res.status(503).json({ error: CHECKOUT_NOT_READY });
+  }
 
-  res.status(200).json({ url: session.url });
+  let stripe;
+  try {
+    stripe = deps.getStripe();
+  } catch (err) {
+    console.error('Stripe is not set up:', err.message);
+    return res.status(503).json({ error: CHECKOUT_NOT_READY });
+  }
+
+  const uid = caller.id;
+  const origin = String(req.headers?.origin || '');
+  const site = OWN_ORIGIN.test(origin) ? origin : SITE_ORIGIN;
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode,
+      line_items: [{ price, quantity: 1 }],
+      client_reference_id: uid,
+      // `client_reference_id` only lives on the checkout session. Later
+      // subscription events (notably customer.subscription.deleted) carry the
+      // subscription object instead, so the uid goes on that too. Without it a
+      // cancellation has no account to change, and Manage plan can't find it.
+      metadata: { uid, product: key },
+      ...(mode === 'subscription' ? { subscription_data: { metadata: { uid } } } : {}),
+      success_url: `${site}/settings?payment=success`,
+      cancel_url: `${site}/settings?payment=cancelled`,
+    });
+    return res.status(200).json({ url: session.url });
+  } catch (err) {
+    console.error('Checkout failed:', err.message);
+    return res.status(502).json({ error: CHECKOUT_FAILED });
+  }
 };
 
 // ── Stripe webhook ────────────────────────────────────────────────────────────
@@ -194,33 +273,6 @@ const handleWebhook = async (req, res) => {
 // into it. A plan bought through a Stripe payment link carries no uid, so it
 // isn't found until `uid` is added to that subscription's metadata in Stripe.
 
-const SITE_ORIGIN = 'https://www.nightlink.dev';
-const OWN_ORIGIN = /^(https:\/\/(www\.)?nightlink\.dev|http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?)$/;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Statuses where a plan is still going and can be canceled or paid.
-const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'paused']);
-
-// Shown on screen as they are, so they're plain and say what to do.
-const SIGN_IN_AGAIN = 'Sign in again, then try once more.';
-const NO_WEB_PLAN = "We couldn't find a plan bought on nightlink.dev for this account. "
-  + 'If you got Pro in the iPhone app, change or cancel it on your iPhone: open the Settings app, '
-  + 'tap your name, then Subscriptions. If you paid on nightlink.dev, write to support@nightlink.dev '
-  + "from the email you paid with and we'll cancel it for you.";
-const NOT_READY = "Managing your plan here isn't ready yet. Write to support@nightlink.dev from the "
-  + "email you paid with and we'll cancel or change it for you.";
-const TRY_AGAIN = "Your plan didn't open. Try again in a minute, and if it still doesn't, write to "
-  + 'support@nightlink.dev.';
-
-const getCaller = async (req) => {
-  const header = req.headers?.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-  if (!token) return null;
-  const { data, error } = await deps.getSupabaseAdmin().auth.getUser(token);
-  const user = data?.user;
-  return !error && user?.id ? user : null;
-};
-
 // A plan that will renew comes first, then one already set to end, then any
 // other, newest first among equals.
 const planRank = (sub) => {
@@ -314,7 +366,7 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'Invalid JSON' }); }
   }
 
-  if (body?.action === 'create_checkout') return handleCreateCheckout(req, res);
+  if (body?.action === 'create_checkout') return handleCreateCheckout(req, res, body);
   if (body?.action === 'plan_status' || body?.action === 'manage_plan') {
     return handleManagePlan(req, res, body.action);
   }
