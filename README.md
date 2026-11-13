@@ -71,7 +71,7 @@ npm install
 npm run dev       # the app at http://localhost:3000
 npm run dev:api   # the /api functions at http://localhost:3001, in a second terminal
 npm test          # lint, then the unit tests (the *.test.js files, run by Node's test runner)
-npm run test:db   # the profile privacy rollout on a throwaway Postgres (needs postgresql@16 or newer)
+npm run test:db   # the files in supabase/rollout on a throwaway Postgres (needs postgresql@16 or newer)
 npm run build
 ```
 

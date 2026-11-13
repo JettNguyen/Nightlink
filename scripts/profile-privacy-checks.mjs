@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Tests the profile privacy rollout (supabase/rollout) on a throwaway Postgres
-// made for the run and deleted after it. Never touches the live database.
+// Tests the profile privacy rollout and reactions-as-yourself.sql (both in
+// supabase/rollout) on a throwaway Postgres made for the run and deleted after
+// it. Never touches the live database.
 //
 //   npm run test:db
 //
@@ -9,10 +10,14 @@
 // It loads supabase/schema.sql on top of the parts of Supabase it leans on
 // (supabase/tests/supabase-stubs.sql) and three made-up people
 // (supabase/tests/seed.sql), then runs every check below as each phase lands:
-// before any step, after step 1, step 2 and step 3. A check runs as anon (signed
-// out), as Sam, Dana or Ellen (signed in, with PostgREST's request.jwt.claims
-// set the way it sets them), or as the server's service key, and is rolled back
-// after, so checks never see each other's writes.
+// before any step, after step 1, after reactions-as-yourself.sql, after step 2
+// and after step 3. The reactions file doesn't depend on the steps and can run
+// live in any order with them; here it runs between steps 1 and 2.
+//
+// A check runs as anon (signed out), as Sam, Dana or Ellen (signed in, with
+// PostgREST's request.jwt.claims set the way it sets them), or as the server's
+// service key, and is rolled back after, so checks never see each other's
+// writes.
 //
 // Every check says, for every phase, whether it should hold. The run fails if
 // any check does something else, so the table shows the holes open before the
@@ -35,13 +40,18 @@ const PEOPLE = {
 };
 const { sam: SAM, dana: DANA, ellen: ELLEN, mike: MIKE } = PEOPLE;
 
-const PHASES = ['before', 'step 1', 'step 2', 'step 3'];
+const PHASES = ['before', 'step 1', 'reactions', 'step 2', 'step 3'];
 const all = (value) => Object.fromEntries(PHASES.map((p) => [p, value]));
 const from = (first) => Object.fromEntries(PHASES.map((p) => [p, PHASES.indexOf(p) >= PHASES.indexOf(first)]));
 const until = (last) => Object.fromEntries(PHASES.map((p) => [p, PHASES.indexOf(p) <= PHASES.indexOf(last)]));
 
 const PUBLIC_COLUMNS = 'id, display_name, username, normalized_username, photo_url, avatar_icon, '
   + 'avatar_background, avatar_color, account_visibility, following_ids, follower_ids, bio, tier';
+
+// Sam's public dream "Open sky", with Dana's 💙 on it, and his comment on it
+// that Dana hearted.
+const OPEN_SKY = '22222222-2222-4222-8222-222222222222';
+const SAMS_COMMENT = '44444444-4444-4444-8444-444444444444';
 
 // ── The checks ───────────────────────────────────────────────────────────────
 // sql:   what runs as `who`. Its rows come back as `rows`.
@@ -53,6 +63,7 @@ const denied = ({ error }) => /permission denied/.test(error || '');
 const value = ({ rows }) => rows?.[0] && Object.values(rows[0])[0];
 const hidden = (result) => denied(result) || (!result.error && (result.rows || []).every((row) => Object.values(row).every((v) => v === null || (Array.isArray(v) && !v.length))));
 const works = ({ error }) => !error;
+const refused = ({ error }) => /permission denied|as yourself|Sign in/.test(error || '');
 
 const checks = [
   // Signed out, with only the website's public key.
@@ -222,6 +233,40 @@ const checks = [
     holds: from('step 1'),
   },
 
+  // Reactions and comment hearts in someone else's name (reactions-as-yourself.sql).
+  {
+    group: "Reacting in someone else's name",
+    name: "Ellen reacts to Sam's dream as Dana (toggle_dream_reaction)",
+    who: 'ellen',
+    sql: `select public.toggle_dream_reaction('${OPEN_SKY}', '${DANA}', '😮') as answer`,
+    ok: refused,
+    holds: from('reactions'),
+  },
+  {
+    group: "Reacting in someone else's name",
+    name: "Ellen takes Dana's heart off Sam's comment (toggle_comment_heart)",
+    who: 'ellen',
+    sql: `select public.toggle_comment_heart('${SAMS_COMMENT}', '${DANA}') as answer`,
+    ok: refused,
+    holds: from('reactions'),
+  },
+  {
+    group: "Reacting in someone else's name",
+    name: "someone signed out reacts to Sam's dream as Ellen",
+    who: 'anon',
+    sql: `select public.toggle_dream_reaction('${OPEN_SKY}', '${ELLEN}', '😮') as answer`,
+    ok: refused,
+    holds: from('reactions'),
+  },
+  {
+    group: "Reacting in someone else's name",
+    name: "someone signed out hearts Sam's comment as Ellen",
+    who: 'anon',
+    sql: `select public.toggle_comment_heart('${SAMS_COMMENT}', '${ELLEN}') as answer`,
+    ok: refused,
+    holds: from('reactions'),
+  },
+
   // What Nightlink 1.3.2 (bc21746) runs. These must keep working until step 3.
   {
     group: '1.3.2 keeps working',
@@ -353,6 +398,46 @@ const checks = [
     sql: `select public.request_follow('${SAM}') as answer`,
     after: `select '${DANA}' = any(follower_ids) as following from public.profiles where id = '${SAM}'`,
     ok: ({ error, after }) => !error && after?.[0]?.following === true,
+    holds: all(true),
+  },
+  {
+    group: '1.3.2 keeps working',
+    name: 'react to a dream as yourself (toggle_dream_reaction)',
+    who: 'ellen',
+    sql: `select public.toggle_dream_reaction('${OPEN_SKY}', '${ELLEN}', '💙') ->> 'added' as added`,
+    after: `select viewer_reactions -> '${ELLEN}' as mine, reaction_counts ->> '💙' as hearts from public.dreams where id = '${OPEN_SKY}'`,
+    ok: ({ error, rows, after }) => !error && rows[0]?.added === 'true'
+      && after?.[0]?.mine?.includes('💙') && after?.[0]?.hearts === '2',
+    holds: all(true),
+  },
+  {
+    group: '1.3.2 keeps working',
+    name: 'clear your own reactions to a dream (p_emoji null)',
+    who: 'dana',
+    sql: `select public.toggle_dream_reaction('${OPEN_SKY}', '${DANA}', null) ->> 'changed' as changed`,
+    after: `select viewer_reactions ? '${DANA}' as reacted, reaction_counts ->> '💙' as hearts from public.dreams where id = '${OPEN_SKY}'`,
+    ok: ({ error, rows, after }) => !error && rows[0]?.changed === 'true'
+      && after?.[0]?.reacted === false && after?.[0]?.hearts === '0',
+    holds: all(true),
+  },
+  {
+    group: '1.3.2 keeps working',
+    name: 'heart a comment as yourself (toggle_comment_heart)',
+    who: 'ellen',
+    sql: `select public.toggle_comment_heart('${SAMS_COMMENT}', '${ELLEN}') ->> 'heartCount' as hearts`,
+    after: `select '${ELLEN}' = any(heart_user_ids) as hearted, heart_count from public.comments where id = '${SAMS_COMMENT}'`,
+    ok: ({ error, rows, after }) => !error && rows[0]?.hearts === '2'
+      && after?.[0]?.hearted === true && after?.[0]?.heart_count === 2,
+    holds: all(true),
+  },
+  {
+    group: '1.3.2 keeps working',
+    name: 'take your own heart back off a comment',
+    who: 'dana',
+    sql: `select public.toggle_comment_heart('${SAMS_COMMENT}', '${DANA}') ->> 'added' as added`,
+    after: `select '${DANA}' = any(heart_user_ids) as hearted, heart_count from public.comments where id = '${SAMS_COMMENT}'`,
+    ok: ({ error, rows, after }) => !error && rows[0]?.added === 'false'
+      && after?.[0]?.hearted === false && after?.[0]?.heart_count === 0,
     holds: all(true),
   },
 
@@ -590,6 +675,25 @@ try {
   runFile('supabase/rollout/1-profile-privacy-add.sql', 'Step 1, run a second time');
   runAll('step 1');
 
+  // The reactions file stops, changing nothing, on a database it doesn't fit:
+  // here one of the columns it uses is missing and there's a second
+  // toggle_comment_heart, which would stay open.
+  psql(`alter table public.comments rename column heart_count to heart_total;
+        create function public.toggle_comment_heart(p_comment_id text, p_user_id text) returns jsonb
+          language sql as $$ select '{}'::jsonb $$;`);
+  const misfit = psql(readFileSync(file('supabase/rollout/reactions-as-yourself.sql'), 'utf8'));
+  const untouched = psql("select has_function_privilege('anon', 'public.toggle_dream_reaction(uuid, uuid, text)', 'execute');");
+  if (misfit.status === 0 || !/Nothing was changed/.test(misfit.stderr) || !/comments\.heart_count/.test(misfit.stderr)
+      || !/toggle_comment_heart\(p_comment_id text, p_user_id text\)/.test(misfit.stderr) || untouched.stdout.trim() !== 't') {
+    throw new Error(`reactions-as-yourself.sql didn't stop on a database it doesn't fit:\n${misfit.stderr}`);
+  }
+  psql(`alter table public.comments rename column heart_total to heart_count;
+        drop function public.toggle_comment_heart(text, text);`);
+
+  runFile('supabase/rollout/reactions-as-yourself.sql', 'reactions-as-yourself.sql');
+  runFile('supabase/rollout/reactions-as-yourself.sql', 'reactions-as-yourself.sql, run a second time');
+  runAll('reactions');
+
   // Step 2 waits for RevenueCat to reach the server.
   const early = psql(readFileSync(file('supabase/rollout/2-profile-privacy-lock.sql'), 'utf8'));
   if (early.status === 0 || !/RevenueCat hasn't reached the server/.test(early.stderr)) {
@@ -648,5 +752,5 @@ const mismatches = checks.flatMap((check) => PHASES
   .map((phase) => `${check.group} / ${check.name} / ${phase}: ${JSON.stringify(results.get(check)[phase].result).slice(0, 400)}`));
 if (mismatches.length) console.log(`\nUnexpected:\n  ${mismatches.join('\n  ')}`);
 
-console.log(failed ? '\nFAILED' : `\nAll ${checks.length} checks behaved as promised in all four phases.`);
+console.log(failed ? '\nFAILED' : `\nAll ${checks.length} checks behaved as promised in all ${PHASES.length} phases.`);
 process.exitCode = failed ? 1 : 0;

@@ -42,3 +42,13 @@ insert into public.dreams (id, user_id, title, content, visibility) values
   ('11111111-1111-4111-8111-111111111111', '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61', 'Red door', 'A red door again.', 'followers'),
   ('22222222-2222-4222-8222-222222222222', '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61', 'Open sky', 'Flying.', 'public'),
   ('33333333-3333-4333-8333-333333333333', 'f2a9c4d1-7e3b-4c55-8a10-9b8c7d6e5f42', 'Falling', 'Falling again.', 'private');
+
+-- For the reaction checks: Dana's 💙 on Sam's "Open sky", and a comment of
+-- Sam's on it that Dana hearted.
+update public.dreams
+set viewer_reactions = '{"f2a9c4d1-7e3b-4c55-8a10-9b8c7d6e5f42": ["💙"]}', reaction_counts = '{"💙": 1}'
+where id = '22222222-2222-4222-8222-222222222222';
+
+insert into public.comments (id, dream_id, dream_owner_id, user_id, content, heart_user_ids, heart_count) values
+  ('44444444-4444-4444-8444-444444444444', '22222222-2222-4222-8222-222222222222', '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61',
+   '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61', 'Same sky every time.', '{f2a9c4d1-7e3b-4c55-8a10-9b8c7d6e5f42}', 1);
