@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findLinkPurchases, planWrites, applyWrites } from '../scripts/stripe-link-buyers.mjs';
+import { findLinkPurchases, planWrites, applyWrites, stripeFor } from '../scripts/stripe-link-buyers.mjs';
 
 // The script Jett runs for people who bought through the old payment links,
 // against a fake Stripe.
@@ -75,4 +75,14 @@ test('applying writes only filled-in uids, and never replaces an account already
   const again = await planWrites(stripe, entries);
   assert.equal(again.writes.length, 0);
   assert.match(again.skipped[0].why, /already has this uid/);
+});
+
+// The other tests use a fake Stripe, so they never started a real one, and the
+// script stopped on Jett's first live run with "Class constructor Stripe cannot
+// be invoked without 'new'". Starting the client makes no request.
+test('the script starts a real Stripe client', async () => {
+  const stripe = await stripeFor('sk_test_not_a_real_key');
+  assert.equal(typeof stripe.subscriptions.list, 'function');
+  assert.equal(typeof stripe.subscriptions.update, 'function');
+  assert.equal(typeof stripe.checkout.sessions.list, 'function');
 });

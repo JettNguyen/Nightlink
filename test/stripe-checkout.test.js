@@ -206,3 +206,18 @@ test('the website reads no Stripe payment link or price', () => {
     assert.doesNotMatch(readFileSync(file, 'utf8'), /VITE_STRIPE_(PREMIUM|CREDIT)_(LINK|PRICE_ID)/, file);
   }
 });
+
+// The other tests here swap in a fake Stripe. This one starts the server's real
+// client, which makes no request, so a broken start shows up here first.
+test("the server's own Stripe client starts", () => {
+  const saved = process.env.STRIPE_SECRET_KEY;
+  process.env.STRIPE_SECRET_KEY = 'sk_test_not_a_real_key';
+  try {
+    const stripe = stripeRoute.deps.getStripe();
+    assert.equal(typeof stripe.checkout.sessions.create, 'function');
+    assert.equal(typeof stripe.billingPortal.sessions.create, 'function');
+  } finally {
+    if (saved === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = saved;
+  }
+});

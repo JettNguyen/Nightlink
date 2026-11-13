@@ -112,6 +112,15 @@ const keyMode = (key) => {
   return 'unknown';
 };
 
+/**
+ * Stripe's client for `key`. stripe-node's ES module build is a class, so it
+ * needs `new`; without it the script stopped before doing anything.
+ */
+export async function stripeFor(key) {
+  const { default: Stripe } = await import('stripe');
+  return new Stripe(key);
+}
+
 async function main(argv) {
   const { config } = await import('dotenv');
   config({ path: '.env.local', quiet: true });
@@ -122,8 +131,7 @@ async function main(argv) {
     console.error('Set STRIPE_SECRET_KEY first, for example: STRIPE_SECRET_KEY=sk_live_... node scripts/stripe-link-buyers.mjs');
     return 1;
   }
-  const { default: Stripe } = await import('stripe');
-  const stripe = Stripe(key);
+  const stripe = await stripeFor(key);
   console.log(`Using a ${keyMode(key)} mode key.`);
 
   const applyAt = argv.indexOf('--apply');

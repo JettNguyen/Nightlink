@@ -16,7 +16,8 @@ const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const billing = require('./_lib/billing');
 
-const getStripe = () => Stripe(process.env.STRIPE_SECRET_KEY);
+// `new` works with every build of stripe-node; without it only the CommonJS one runs.
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const getSupabaseAdmin = () => createClient(
   process.env.SUPABASE_URL,
