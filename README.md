@@ -70,7 +70,7 @@
 npm install
 npm run dev       # the app at http://localhost:3000
 npm run dev:api   # the /api functions at http://localhost:3001, in a second terminal
-npm run lint
+npm test          # lint, then the unit tests (the *.test.js files, run by Node's test runner)
 npm run build
 ```
 
@@ -79,7 +79,7 @@ functions also need `OPENAI_API_KEY`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_
 
 ## CI/CD Flow
 
-1. **GitHub Actions**: Lint and build on Node 20 and 22 for every push.
+1. **GitHub Actions**: Lint, unit tests and build on Node 20 and 22 for every push.
 2. **CodeQL**: Security scanning for JavaScript/TypeScript.
 3. **Deploy**: Vercel hooks (GH Pages workflow available for static fallback).
 

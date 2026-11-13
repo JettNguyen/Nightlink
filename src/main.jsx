@@ -5,7 +5,11 @@ import App from './App';
 import setupKeyboard from './utils/keyboard';
 import watchStatusCorner from './utils/statusCorner';
 import { nativeTabsActive } from './plugins/nativeTabs';
+import { lockZoomInNativeApp } from './utils/viewport';
 import './index.css';
+
+// First, before anything renders: the website keeps pinch zoom, the app doesn't.
+lockZoomInNativeApp(document, Capacitor.isNativePlatform());
 
 // When a lazy chunk 404s after a new deployment, reload once to pick up the new index.html.
 window.addEventListener('vite:preloadError', () => {
