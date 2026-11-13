@@ -68,3 +68,29 @@ export const askServerForPlan = async ({
     return null;
   }
 };
+
+/**
+ * Signs in with a username: the server finds the email that goes with it,
+ * which the app can't read, and signs in. Resolves the session's tokens for
+ * supabase.auth.setSession. Rejects with an Error whose message is the
+ * server's code (invalid_credentials, email_not_confirmed, not_set_up,
+ * try_again), or try_again when the server can't be reached.
+ */
+export const signInWithUsername = async ({ username, password, endpoint = ACCOUNT_ENDPOINT, fetchImpl = fetch }) => {
+  let response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sign_in_with_username', username, password }),
+    });
+  } catch {
+    throw new Error('try_again');
+  }
+  const payload = await response.json().catch(() => null);
+  const session = payload?.session;
+  if (response.ok && session?.access_token && session?.refresh_token) {
+    return { access_token: session.access_token, refresh_token: session.refresh_token };
+  }
+  throw new Error(payload?.code || 'try_again');
+};

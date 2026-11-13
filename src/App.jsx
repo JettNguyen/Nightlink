@@ -32,6 +32,7 @@ import {
   isProFromCustomerInfo,
 } from './utils/purchases';
 import { askServerForPlan } from './utils/accountApi';
+import { fetchOwnProfile } from './utils/profileReads';
 
 // Every full-screen overlay in the app. Pull-to-refresh reloads the page, so it
 // has to stand down whenever one of these is up, because otherwise dragging on a
@@ -129,12 +130,8 @@ function AppContent({ user, loading, ready }) {
   // from the user's Supabase profile so they don't have to re-accept every login.
   useEffect(() => {
     if (!user?.uid || termsAccepted) return;
-    supabase
-      .from('profiles')
-      .select('settings')
-      .eq('id', user.uid)
-      .single()
-      .then(({ data }) => {
+    fetchOwnProfile(user.uid)
+      .then((data) => {
         if (data?.settings?.termsVersion === TERMS_VERSION) {
           markTermsAccepted();
           setTermsAccepted(true);
@@ -390,13 +387,11 @@ function AppContent({ user, loading, ready }) {
               setTermsAccepted(true);
               // Persist to Supabase so acceptance survives localStorage eviction on iOS.
               if (user?.uid) {
-                supabase
-                  .from('profiles')
-                  .select('settings')
-                  .eq('id', user.uid)
-                  .single()
-                  .then(({ data }) => {
-                    const updated = { ...(data?.settings || {}), termsVersion: TERMS_VERSION };
+                fetchOwnProfile(user.uid)
+                  .then((data) => {
+                    // Unreadable: writing only termsVersion would wipe the other settings.
+                    if (!data) return null;
+                    const updated = { ...(data.settings || {}), termsVersion: TERMS_VERSION };
                     return supabase.from('profiles').update({ settings: updated }).eq('id', user.uid);
                   })
                   .catch(() => {});

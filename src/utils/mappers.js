@@ -16,7 +16,10 @@ export const mapProfile = (row) => {
     isAnonymous: row.is_anonymous || false,
     accountVisibility: row.account_visibility || row.settings?.accountVisibility || 'private',
     settings: row.settings || {},
-    subscription: row.subscription || { tier: 'free' },
+    // Other people's profiles come with bio and tier only, not the settings
+    // and plan they come from (see utils/profileReads.js).
+    bio: row.bio ?? (typeof row.settings?.bio === 'string' ? row.settings.bio.trim() || null : null),
+    subscription: row.subscription || { tier: row.tier === 'premium' ? 'premium' : 'free' },
     aiUsage: row.ai_usage || {},
     premiumEmails: row.premium_emails || [],
     dreamMemory: row.dream_memory || null,

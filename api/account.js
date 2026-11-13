@@ -7,8 +7,16 @@ const getSupabaseAdmin = () => createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+// Signs in as the person, with the website's public key, the way the app would.
+const getSupabaseAnon = () => {
+  const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  if (!key || !url) return null;
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false } });
+};
+
 // Tests swap these, so nothing reaches Supabase or RevenueCat.
-const deps = { getSupabaseAdmin, fetch: (...args) => fetch(...args) };
+const deps = { getSupabaseAdmin, getSupabaseAnon, fetch: (...args) => fetch(...args) };
 
 const setCors = (res, origin) => {
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
@@ -88,6 +96,53 @@ const syncPlan = async (admin, user, body) => {
   return plan;
 };
 
+// Signing in with a username instead of an email. Emails aren't something the
+// app may read about other people, and from step 3 of the profile privacy
+// rollout nobody signed out can read profiles at all, so the server finds the
+// email for the username and signs in with it. Every failure gets the same
+// answer, so this tells nobody whether a username exists or what its email is.
+// The password is never logged.
+const SIGN_IN_FAILED = 'We could not sign you in. Check your details and try again.';
+
+const signInWithUsername = async (body) => {
+  const username = String(body?.username || '').trim().toLowerCase();
+  const password = typeof body?.password === 'string' ? body.password : '';
+  const refused = { status: 401, json: { error: SIGN_IN_FAILED, code: 'invalid_credentials' } };
+  if (!/^[a-z0-9_]{3,20}$/.test(username) || !password) return refused;
+
+  const anon = deps.getSupabaseAnon();
+  if (!anon) {
+    console.error('Username sign in refused: SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY) is not set.');
+    return {
+      status: 503,
+      json: { error: "Signing in with a username isn't working right now. Sign in with your email instead.", code: 'not_set_up' },
+    };
+  }
+
+  const admin = deps.getSupabaseAdmin();
+  const { data: row, error } = await admin.from('profiles').select('id').eq('normalized_username', username).maybeSingle();
+  if (error) throw error;
+  if (!row?.id) return refused;
+
+  // The email they sign in with, not profiles.email, which apps can write.
+  const { data: found, error: userError } = await admin.auth.admin.getUserById(row.id);
+  if (userError) throw userError;
+  const email = found?.user?.email;
+  if (!email) return refused;
+
+  const { data, error: signInError } = await anon.auth.signInWithPassword({ email, password });
+  if (signInError || !data?.session) {
+    if (/email not confirmed/i.test(signInError?.message || '')) {
+      return { status: 403, json: { error: 'Please confirm your email before signing in.', code: 'email_not_confirmed' } };
+    }
+    return refused;
+  }
+  return {
+    status: 200,
+    json: { session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } },
+  };
+};
+
 // Before step 1 of the rollout: reports go in the reporter's own settings, as
 // they always did.
 const addReportToSettings = async (admin, uid, report) => {
@@ -123,6 +178,17 @@ module.exports = async function handler(req, res) {
 
   const { action, uid, confirmText } = body || {};
   if (!action) return res.status(400).json({ error: 'Missing action' });
+
+  if (action === 'sign_in_with_username') {
+    try {
+      const { status, json } = await signInWithUsername(body);
+      return res.status(status).json(json);
+    } catch (error) {
+      console.error('sign_in_with_username failed:', error?.message || error);
+      return res.status(500).json({ error: 'Signing in failed. Try again in a minute.', code: 'try_again' });
+    }
+  }
+
   if (!uid) return res.status(400).json({ error: 'Missing uid' });
 
   let admin;

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
+import { readPublicProfiles } from '../utils/profileReads';
 import { DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR } from '../constants/avatarOptions';
 import AvatarDisplay from '../components/AvatarDisplay';
 import ProBadge from '../components/ProBadge';
@@ -112,11 +113,7 @@ export default function Connections({ user }) {
     setUserData(null);
     setConnectionProfiles([]);
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', targetUserId)
-      .single()
+    readPublicProfiles((columns) => supabase.from('profiles').select(columns).eq('id', targetUserId).maybeSingle())
       .then(({ data }) => {
         if (!data) {
           setProfileNotFound(true);
@@ -143,10 +140,7 @@ export default function Connections({ user }) {
     }
 
     setConnectionLoading(true);
-    supabase
-      .from('profiles')
-      .select('id, display_name, username, photo_url, avatar_icon, avatar_background, avatar_color, subscription')
-      .in('id', ids)
+    readPublicProfiles((columns) => supabase.from('profiles').select(columns).in('id', ids))
       .then(({ data }) => {
         const mapped = (data || []).map(mapProfile);
         mapped.sort((a, b) => {
@@ -218,10 +212,9 @@ export default function Connections({ user }) {
           return;
         }
 
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, display_name, username, photo_url, avatar_icon, avatar_background, avatar_color, subscription')
-          .in('id', requesterIds);
+        const { data: profiles } = await readPublicProfiles((columns) => (
+          supabase.from('profiles').select(columns).in('id', requesterIds)
+        ));
 
         if (cancelled) return;
 

@@ -5,6 +5,7 @@ import { Browser } from '@capacitor/browser';
 import { App as CapacitorApp } from '@capacitor/app';
 import { SignInWithApple } from '@capacitor-community/apple-sign-in';
 import { supabase } from '../supabase';
+import { signInWithUsername } from '../utils/accountApi';
 import './AuthPage.css';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
@@ -35,7 +36,9 @@ const friendlyMsg = (e) => {
   if (!msg) return 'Something went wrong. Please try again.';
   if (msg.includes('username-taken') || msg.includes('already been registered') || msg.includes('User already registered')) return 'That account already exists.';
   if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials') || msg.includes('username-not-found')) return 'We could not sign you in. Check your details and try again.';
-  if (msg.includes('Email not confirmed')) return 'Please confirm your email before signing in.';
+  if (msg.includes('Email not confirmed') || msg.includes('email_not_confirmed')) return 'Please confirm your email before signing in.';
+  if (msg.includes('not_set_up')) return "Signing in with a username isn't working right now. Sign in with your email instead.";
+  if (msg.includes('try_again')) return 'Signing in failed. Try again in a minute.';
   if (msg.includes('identifier-required')) return 'Enter your email or username.';
   return 'Something went wrong. Please try again.';
 };
@@ -76,18 +79,18 @@ export default function AuthPage() {
   }, [isSignUp, username, displayName, email, identifier]);
 
 
-  // Resolve a login identifier to an email. Supports raw email or username lookup.
-  const resolveEmail = async (val) => {
-    const v = val.trim();
-    if (!v) throw new Error('identifier-required');
-    if (v.includes('@')) return v;
-    const { data, error: qErr } = await supabase
+  // Whether a username is in use. Runs before there's an account, so it goes
+  // through username_taken(): signed-out visitors can't read profiles.
+  const isUsernameTaken = async (normalized) => {
+    const { data, error: rpcErr } = await supabase.rpc('username_taken', { p_username: normalized });
+    if (!rpcErr) return data === true;
+    // Before step 1 of the profile privacy rollout, the function doesn't exist.
+    const { data: existing } = await supabase
       .from('profiles')
-      .select('email')
-      .eq('normalized_username', v.toLowerCase())
-      .single();
-    if (qErr || !data?.email) throw new Error('username-not-found');
-    return data.email;
+      .select('id')
+      .eq('normalized_username', normalized)
+      .maybeSingle();
+    return Boolean(existing);
   };
 
   const handleSignUp = async (e) => {
@@ -109,12 +112,7 @@ export default function AuthPage() {
     try {
       const normalized = name.toLowerCase();
 
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('normalized_username', normalized)
-        .single();
-      if (existing) throw new Error('username-taken');
+      if (await isUsernameTaken(normalized)) throw new Error('username-taken');
 
       const { data: authData, error: signUpErr } = await supabase.auth.signUp({
         email: email.trim(),
@@ -180,9 +178,17 @@ export default function AuthPage() {
     setNotice('');
     setLoading(true);
     try {
-      const mail = await resolveEmail(identifier);
-      const { error: err } = await supabase.auth.signInWithPassword({ email: mail, password });
-      if (err) throw err;
+      const id = identifier.trim();
+      if (!id) throw new Error('identifier-required');
+      if (id.includes('@')) {
+        const { error: err } = await supabase.auth.signInWithPassword({ email: id, password });
+        if (err) throw err;
+      } else {
+        // The app can't look up someone's email, so the server signs in for it.
+        const tokens = await signInWithUsername({ username: id, password });
+        const { error: err } = await supabase.auth.setSession(tokens);
+        if (err) throw err;
+      }
     } catch (err) {
       setError(friendlyMsg(err));
     }

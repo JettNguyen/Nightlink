@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabase';
 import { mapDream, mapProfile } from '../utils/mappers';
+import { readPublicProfiles } from '../utils/profileReads';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { JournalSkeleton } from '../components/SkeletonLoader';
 import Toast from '../components/Toast';
@@ -213,11 +214,9 @@ export default function DreamJournal({ user }) {
     const loadFollowing = async () => {
       setAudienceLoading(true);
       try {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.uid)
-          .single();
+        const { data: profileData } = await readPublicProfiles((columns) => (
+          supabase.from('profiles').select(columns).eq('id', user.uid).maybeSingle()
+        ));
         const profile = profileData ? mapProfile(profileData) : null;
         if (!cancelled && profile) {
           setViewerProfile({ id: profile.id, username: profile.username, displayName: profile.displayName });

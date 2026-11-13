@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { supabase } from '../supabase';
+import { fetchOwnProfile } from './profileReads';
 
 const DREAM_REMINDER_ID = 99001;
 
@@ -41,11 +42,9 @@ const activityIdToNotificationId = (activityId = '') => {
 
 const upsertUserPushToken = async (userId, token) => {
   if (!userId || !token) return;
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('fcm_tokens, settings')
-    .eq('id', userId)
-    .single();
+  const profile = await fetchOwnProfile(userId);
+  // Unreadable: writing these back would wipe the other tokens and settings.
+  if (!profile) return;
 
   const existingTokens = Array.isArray(profile?.fcm_tokens) ? profile.fcm_tokens : [];
   const nextTokens = [...new Set([...existingTokens, token])];
@@ -72,11 +71,8 @@ const upsertUserPushToken = async (userId, token) => {
 
 const removeUserPushToken = async (userId, token) => {
   if (!userId || !token) return;
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('fcm_tokens')
-    .eq('id', userId)
-    .single();
+  const profile = await fetchOwnProfile(userId);
+  if (!profile) return;
   const existingTokens = Array.isArray(profile?.fcm_tokens) ? profile.fcm_tokens : [];
   const nextTokens = existingTokens.filter((value) => value !== token);
   await supabase
@@ -162,17 +158,13 @@ export async function requestNotificationPermission(userId) {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return null;
 
-  if (userId) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('settings')
-      .eq('id', userId)
-      .single();
+  const profile = userId ? await fetchOwnProfile(userId) : null;
+  if (profile) {
     await supabase
       .from('profiles')
       .update({
         settings: {
-          ...(profile?.settings || {}),
+          ...(profile.settings || {}),
           notificationsEnabled: true,
         },
       })
@@ -198,14 +190,10 @@ export async function disableNotifications(userId) {
       return;
     }
 
-    if (userId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('settings')
-        .eq('id', userId)
-        .single();
+    const profile = userId ? await fetchOwnProfile(userId) : null;
+    if (profile) {
       const nextSettings = {
-        ...(profile?.settings || {}),
+        ...(profile.settings || {}),
         notificationsEnabled: false,
       };
 

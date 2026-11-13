@@ -32,6 +32,7 @@ import { buildReactionCluster } from '../utils/reactions';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED } from '../utils/purchases';
 import { askServerForPlan } from '../utils/accountApi';
+import { fetchOwnProfile, readPublicProfiles } from '../utils/profileReads';
 
 // The wording of each named style lives on the server (api/ai.js), keyed by the
 // ids below, so there is exactly one copy of it. Only a custom prompt is sent
@@ -670,7 +671,7 @@ export default function DreamDetail({ user }) {
     let cancelled = false;
     const loadViewerProfile = async () => {
       try {
-        const { data: row } = await supabase.from('profiles').select('*').eq('id', viewerId).single();
+        const row = await fetchOwnProfile(viewerId);
         if (cancelled) return;
         const data = row ? mapProfile(row) : null;
         setViewerProfile(data);
@@ -755,7 +756,9 @@ export default function DreamDetail({ user }) {
       let resolvedAuthorProfile = null;
       if (ownerId) {
         try {
-          const { data: authorRow } = await supabase.from('profiles').select('*').eq('id', ownerId).single();
+          const { data: authorRow } = await readPublicProfiles((columns) => (
+            supabase.from('profiles').select(columns).eq('id', ownerId).maybeSingle()
+          ));
           resolvedAuthorProfile = authorRow ? mapProfile(authorRow) : null;
         } catch { resolvedAuthorProfile = null; }
       }
@@ -1983,7 +1986,9 @@ export default function DreamDetail({ user }) {
   const handleBlockAuthor = useCallback(async () => {
     if (!viewerId || !dream?.userId || dream.userId === viewerId) return;
     try {
-      const currentSettings = userSettings || {};
+      // Without your own settings loaded, writing them back would wipe the rest.
+      if (!userSettings) throw new Error('own settings not loaded');
+      const currentSettings = userSettings;
       const currentBlocked = Array.isArray(currentSettings.blockedUserIds) ? currentSettings.blockedUserIds : [];
       const nextBlocked = [...new Set([...currentBlocked, dream.userId])];
       const { error: updateError } = await supabase

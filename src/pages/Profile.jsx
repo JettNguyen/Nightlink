@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { mapProfile, mapDream } from '../utils/mappers';
+import { fetchOwnProfile, readPublicProfiles } from '../utils/profileReads';
 import { AVATAR_ICONS, AVATAR_BACKGROUNDS, AVATAR_COLORS, DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR, getAvatarIconById } from '../constants/avatarOptions';
 import AvatarDisplay from '../components/AvatarDisplay';
 import SwapText from '../components/SwapText';
@@ -162,8 +163,8 @@ export default function Profile({ user }) {
   // Load viewer's own profile (for following state)
   useEffect(() => {
     if (!viewerId) { setViewerData(null); return; }
-    supabase.from('profiles').select('following_ids, follower_ids, username, settings').eq('id', viewerId).single()
-      .then(({ data }) => setViewerData(data ? mapProfile(data) : null));
+    fetchOwnProfile(viewerId)
+      .then((data) => setViewerData(data ? mapProfile(data) : null));
   }, [viewerId]);
 
   useEffect(() => {
@@ -179,7 +180,7 @@ export default function Profile({ user }) {
     setFollowRequestState('none');
     setProfileMenuOpen(false);
 
-    supabase.from('profiles').select('*').eq('id', targetUserId).single()
+    readPublicProfiles((columns) => supabase.from('profiles').select(columns).eq('id', targetUserId).maybeSingle())
       .then(({ data }) => {
         if (!data) { setProfileNotFound(true); setProfileLoading(false); return; }
         setUserData(mapProfile(data));
@@ -340,7 +341,9 @@ export default function Profile({ user }) {
     if (!viewerId || !targetUserId || viewingOwnProfile || followAction.type) return;
     setFollowAction({ type: 'block' });
     try {
-      const currentSettings = viewerData?.settings || {};
+      // Without your own settings loaded, writing them back would wipe the rest.
+      if (!viewerData) throw new Error('own profile not loaded');
+      const currentSettings = viewerData.settings || {};
       const currentBlocked = Array.isArray(currentSettings.blockedUserIds) ? currentSettings.blockedUserIds : [];
       const nextBlocked = [...new Set([...currentBlocked, targetUserId])];
       const { error } = await supabase
@@ -370,7 +373,9 @@ export default function Profile({ user }) {
     if (!viewerId || !targetUserId || viewingOwnProfile || followAction.type) return;
     setFollowAction({ type: 'unblock' });
     try {
-      const currentSettings = viewerData?.settings || {};
+      // Without your own settings loaded, writing them back would wipe the rest.
+      if (!viewerData) throw new Error('own profile not loaded');
+      const currentSettings = viewerData.settings || {};
       const currentBlocked = Array.isArray(currentSettings.blockedUserIds) ? currentSettings.blockedUserIds : [];
       const nextBlocked = currentBlocked.filter((id) => id !== targetUserId);
       const { error } = await supabase
@@ -684,7 +689,7 @@ export default function Profile({ user }) {
               )}
             </div>
 
-            {userData.settings?.bio && <p className="profile-bio">{userData.settings.bio}</p>}
+            {userData.bio && <p className="profile-bio">{userData.bio}</p>}
           </div>
 
           <div className="profile-stats">

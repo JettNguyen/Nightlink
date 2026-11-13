@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
+import { readPublicProfiles } from '../utils/profileReads';
 
 // Cap prevents unbounded memory growth across long sessions.
 const MAX_CACHE_SIZE = 200;
@@ -31,10 +32,9 @@ export const fetchUserSummaries = async (rawIds = []) => {
   const pending = ids.filter((id) => !userSummaryCache.has(id));
   if (pending.length) {
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, display_name, username, photo_url, avatar_icon, avatar_background, avatar_color, subscription')
-        .in('id', pending);
+      const { data } = await readPublicProfiles((columns) => (
+        supabase.from('profiles').select(columns).in('id', pending)
+      ));
       (data || []).forEach((row) => {
         userSummaryCache.set(row.id, normalizeProfile(row));
       });

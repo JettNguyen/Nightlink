@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { mapDream } from '../utils/mappers';
+import { readPublicProfiles } from '../utils/profileReads';
 import { DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR } from '../constants/avatarOptions';
 import AvatarDisplay from '../components/AvatarDisplay';
 import ProBadge from '../components/ProBadge';
@@ -49,12 +50,12 @@ export default function Search({ user }) {
     try {
       const lower = `%${term.toLowerCase()}%`;
       if (filter === 'people') {
-        const { data } = await supabase
+        const { data } = await readPublicProfiles((columns) => supabase
           .from('profiles')
-          .select('id, display_name, username, photo_url, avatar_icon, avatar_background, avatar_color, subscription')
+          .select(columns)
           .or(`display_name.ilike.${lower},username.ilike.${lower}`)
           .neq('id', currentUserId || '00000000-0000-0000-0000-000000000000')
-          .limit(15);
+          .limit(15));
         setUserResults((data || []).map((r) => ({
           id: r.id,
           displayName: r.display_name || 'Dreamer',
@@ -63,7 +64,7 @@ export default function Search({ user }) {
           avatarIcon: r.avatar_icon,
           avatarBackground: r.avatar_background,
           avatarColor: r.avatar_color,
-          subscription: r.subscription || { tier: 'free' },
+          subscription: r.subscription || { tier: r.tier === 'premium' ? 'premium' : 'free' },
         })));
         setDreamResults([]);
       } else {

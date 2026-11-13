@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { askServerForPlan, CLIENT_SCHEMA, resolveAccountEndpoint } from './accountApi.js';
+import { askServerForPlan, CLIENT_SCHEMA, resolveAccountEndpoint, signInWithUsername } from './accountApi.js';
 
 const SAM = '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61';
 
@@ -38,4 +38,20 @@ test('the account route is found the way every page found it before', () => {
   assert.equal(resolveAccountEndpoint({ VITE_API_BASE_URL: 'https://example.com/' }, true), 'https://example.com/api/account');
   assert.equal(resolveAccountEndpoint({}, true), 'https://www.nightlink.dev/api/account');
   assert.equal(resolveAccountEndpoint({}, false), '/api/account');
+});
+
+test('signing in with a username hands back the tokens, or the reason as the error', async () => {
+  const answer = (status, payload) => async () => ({ ok: status === 200, status, json: async () => payload });
+  const tokens = await signInWithUsername({
+    username: 'sam', password: 'pw', endpoint: '/api/account',
+    fetchImpl: answer(200, { session: { access_token: 'a', refresh_token: 'r' } }),
+  });
+  assert.deepEqual(tokens, { access_token: 'a', refresh_token: 'r' });
+
+  const reason = async (fetchImpl) => signInWithUsername({ username: 'sam', password: 'pw', endpoint: '/api/account', fetchImpl })
+    .then(() => 'signed in', (error) => error.message);
+  assert.equal(await reason(answer(401, { code: 'invalid_credentials' })), 'invalid_credentials');
+  assert.equal(await reason(answer(403, { code: 'email_not_confirmed' })), 'email_not_confirmed');
+  assert.equal(await reason(answer(502, null)), 'try_again');
+  assert.equal(await reason(async () => { throw new Error('offline'); }), 'try_again');
 });

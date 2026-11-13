@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart, faPlus, faComment, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabase';
 import { mapDream, mapProfile } from '../utils/mappers';
+import { fetchOwnProfile, readPublicProfiles } from '../utils/profileReads';
 import { DEFAULT_AVATAR_BACKGROUND, DEFAULT_AVATAR_COLOR } from '../constants/avatarOptions';
 import AvatarDisplay from '../components/AvatarDisplay';
 import ProBadge from '../components/ProBadge';
@@ -73,7 +74,9 @@ export default function Feed({ user }) {
   const customEmojiInputRef = useRef(null);
   const userSummariesRef = useRef(userSummaries);
   // viewerSettings only drives persistViewerSafetySettings, so no render dependency
-  const viewerSettingsRef = useRef({});
+  // Your own settings, or null until they're read. Never written back while null,
+  // since writing only the part that changed would wipe the rest.
+  const viewerSettingsRef = useRef(null);
   const navigate = useNavigate();
   const defaultReaction = '💙';
   const viewerId = user?.uid || null;
@@ -100,27 +103,28 @@ export default function Feed({ user }) {
       setFollowingIdsLoaded(true);
       return;
     }
-    supabase.from('profiles').select('following_ids, settings').eq('id', user.uid).single()
-      .then(({ data }) => {
-        setFollowingIds(data?.following_ids || []);
-        const settings = data?.settings || {};
-        viewerSettingsRef.current = settings;
-        setBlockedUserIds(Array.isArray(settings.blockedUserIds) ? settings.blockedUserIds : []);
-        setHiddenDreamIds(Array.isArray(settings.hiddenDreamIds) ? settings.hiddenDreamIds : []);
-        setFollowingIdsLoaded(true);
-      });
+    let cancelled = false;
+    const loadOwnProfile = () => fetchOwnProfile(user.uid).then((data) => {
+      if (cancelled) return;
+      setFollowingIds(data?.following_ids || []);
+      const settings = data?.settings || {};
+      viewerSettingsRef.current = data ? settings : null;
+      setBlockedUserIds(Array.isArray(settings.blockedUserIds) ? settings.blockedUserIds : []);
+      setHiddenDreamIds(Array.isArray(settings.hiddenDreamIds) ? settings.hiddenDreamIds : []);
+      setFollowingIdsLoaded(true);
+    });
+    loadOwnProfile();
+    // A live update carries only the columns anyone may read, so it's a cue to
+    // read the whole row again.
     const channel = supabase
       .channel(`feed-profile:${user.uid}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.uid}` },
-        (payload) => {
-          setFollowingIds(payload.new?.following_ids || []);
-          const settings = payload.new?.settings || {};
-          viewerSettingsRef.current = settings;
-          setBlockedUserIds(Array.isArray(settings.blockedUserIds) ? settings.blockedUserIds : []);
-          setHiddenDreamIds(Array.isArray(settings.hiddenDreamIds) ? settings.hiddenDreamIds : []);
-        })
+        () => { loadOwnProfile(); })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [user?.uid]);
 
   useEffect(() => {
@@ -128,7 +132,7 @@ export default function Feed({ user }) {
       setFollowingProfiles({});
       return;
     }
-    supabase.from('profiles').select('*').in('id', followingIds)
+    readPublicProfiles((columns) => supabase.from('profiles').select(columns).in('id', followingIds))
       .then(({ data }) => {
         const map = {};
         (data || []).forEach((row) => { map[row.id] = mapProfile(row); });
@@ -280,6 +284,7 @@ export default function Feed({ user }) {
   const persistViewerSafetySettings = useCallback(async (nextSettings) => {
     if (!viewerId) return;
     const previous = viewerSettingsRef.current;
+    if (!previous) throw new Error('Your settings have not loaded yet.');
     const merged = { ...previous, ...(nextSettings || {}) };
     viewerSettingsRef.current = merged;
     // Supabase returns the failure rather than throwing, so surface it as one.

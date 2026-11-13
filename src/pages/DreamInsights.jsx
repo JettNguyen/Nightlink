@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { supabase } from '../supabase';
 import { InsightsSkeleton } from '../components/SkeletonLoader';
 import { appUserPropType } from '../propTypes';
 import { useRcCustomerInfo } from '../contexts/SubscriptionContext';
 import { isProFromCustomerInfo, IS_RC_SUPPORTED } from '../utils/purchases';
 import { askServerForPlan } from '../utils/accountApi';
+import { fetchOwnDreamMemory, fetchOwnProfile } from '../utils/profileReads';
 import './DreamInsights.css';
 
 const SECTION_ORDER = [
@@ -109,13 +109,9 @@ export default function DreamInsights({ user }) {
     const load = async () => {
       setLoading(true);
       try {
-        const { data, error: err } = await supabase
-          .from('profiles')
-          .select('subscription, dream_memory, dream_memory_updated_at')
-          .eq('id', user.uid)
-          .single();
-
-        if (err) throw err;
+        const [profile, memoryRow] = await Promise.all([fetchOwnProfile(user.uid), fetchOwnDreamMemory(user.uid)]);
+        if (!profile || !memoryRow) throw new Error('Could not read your profile.');
+        const data = { subscription: profile.subscription, ...memoryRow };
 
         // Check RevenueCat (iOS native) first
         const rcPro = IS_RC_SUPPORTED && isProFromCustomerInfo(rcCustomerInfo);

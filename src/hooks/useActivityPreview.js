@@ -3,6 +3,7 @@ import useRefreshSignal from './useRefreshSignal';
 import { supabase } from '../supabase';
 import { mapProfile, mapActivity, mapDream } from '../utils/mappers';
 import { markActivityEntriesRead } from '../services/ActivityService';
+import { fetchOwnProfile } from '../utils/profileReads';
 
 const DEFAULT_INBOX_LIMIT = 25;
 const MAX_FOLLOWING_RESULTS = 20;
@@ -58,20 +59,27 @@ export default function useActivityPreview(viewerId, options = {}) {
       return;
     }
     setProfileLoading(true);
+    let cancelled = false;
 
-    supabase.from('profiles').select('*').eq('id', viewerId).single()
-      .then(({ data }) => {
-        setViewerProfile(data ? mapProfile(data) : null);
-        setProfileLoading(false);
-      });
+    const loadOwnProfile = () => fetchOwnProfile(viewerId).then((data) => {
+      if (cancelled) return;
+      setViewerProfile(data ? mapProfile(data) : null);
+      setProfileLoading(false);
+    });
+    loadOwnProfile();
 
+    // A live update carries only the columns anyone may read, so it's a cue to
+    // read the whole row again rather than the row itself.
     const channel = supabase
       .channel(`profile:${viewerId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${viewerId}` },
-        (payload) => setViewerProfile(mapProfile(payload.new)))
+        () => { loadOwnProfile(); })
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [viewerId, refreshKey]);
 
   useEffect(() => {

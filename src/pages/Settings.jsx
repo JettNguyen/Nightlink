@@ -20,6 +20,7 @@ import {
   CREDITS_PER_PACK,
 } from '../utils/purchases';
 import { ACCOUNT_ENDPOINT, askServerForPlan } from '../utils/accountApi';
+import { fetchOwnProfile } from '../utils/profileReads';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import ProPlansSheet from '../components/ProPlansSheet';
@@ -193,8 +194,10 @@ export default function Settings({ user }) {
       return;
     }
 
+    let cancelled = false;
     const fetchProfile = async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+      const data = await fetchOwnProfile(uid);
+      if (cancelled) return;
       setLoading(false);
       if (!data) {
         setProfile(null);
@@ -225,11 +228,15 @@ export default function Settings({ user }) {
 
     fetchProfile();
 
+    // A live update carries only the columns anyone may read, so it's a cue to
+    // read the whole row again.
     const channel = supabase
       .channel(`settings:${uid}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${uid}` },
-        (payload) => {
-          const p = mapProfile(payload.new);
+        async () => {
+          const data = await fetchOwnProfile(uid);
+          if (cancelled || !data) return;
+          const p = mapProfile(data);
           setProfile(p);
           const incoming = p.settings || {};
           const incomingTier = p?.subscription?.tier === 'premium' ? 'premium' : 'free';
@@ -253,7 +260,10 @@ export default function Settings({ user }) {
         })
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [uid]);
 
 
@@ -370,7 +380,7 @@ export default function Settings({ user }) {
       if (uid) {
         const fetchFresh = async () => {
           try {
-            const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+            const data = await fetchOwnProfile(uid);
             if (data) {
               const p = mapProfile(data);
               setProfile(p);
@@ -513,15 +523,18 @@ export default function Settings({ user }) {
         if (error) throw error;
         setHasPasswordLogin(true);
         // Persist this for refreshes, especially for OAuth users who add a password later.
-        const persistedSettings = { ...(profile?.settings || {}), hasPasswordLogin: true };
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ settings: persistedSettings })
-          .eq('id', uid);
-        if (profileError) {
-          console.error('Failed to persist hasPasswordLogin flag', profileError);
-        } else {
-          setProfile((prev) => (prev ? { ...prev, settings: persistedSettings } : prev));
+        // Only with your settings loaded: writing just this flag would wipe the rest.
+        if (profile) {
+          const persistedSettings = { ...(profile.settings || {}), hasPasswordLogin: true };
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ settings: persistedSettings })
+            .eq('id', uid);
+          if (profileError) {
+            console.error('Failed to persist hasPasswordLogin flag', profileError);
+          } else {
+            setProfile((prev) => (prev ? { ...prev, settings: persistedSettings } : prev));
+          }
         }
         await supabase.auth.refreshSession();
         const { data: { session } } = await supabase.auth.getSession();
@@ -536,7 +549,7 @@ export default function Settings({ user }) {
     } finally {
       setPasswordBusy(false);
     }
-  }, [passwordForm, hasPasswordLogin, user?.email, profile?.settings, uid]);
+  }, [passwordForm, hasPasswordLogin, user?.email, profile, uid]);
 
   const notificationPermissionLabel = useMemo(() => {
     if (notificationPermission === 'granted') return 'Permission granted';
@@ -545,11 +558,13 @@ export default function Settings({ user }) {
   }, [notificationPermission]);
 
   const canSave = useMemo(() => {
+    // Saving without your settings loaded would replace them with the defaults.
+    if (!profile) return false;
     if (!hasChanges) return false;
     if (isPresetLocked(tier, settings.aiPromptPreset)) return false;
     if (settings.aiPromptPreset === 'custom' && !isPromptSafe(settings.aiPromptCustom)) return false;
     return true;
-  }, [hasChanges, settings.aiPromptPreset, settings.aiPromptCustom, tier]);
+  }, [profile, hasChanges, settings.aiPromptPreset, settings.aiPromptCustom, tier]);
 
   const handleSave = async () => {
     if (!uid || saving || !canSave) return;

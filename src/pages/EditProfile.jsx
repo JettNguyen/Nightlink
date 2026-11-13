@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
 import { mapProfile } from '../utils/mappers';
+import { fetchOwnProfile } from '../utils/profileReads';
 import { AVATAR_ICONS, AVATAR_BACKGROUNDS, AVATAR_COLORS } from '../constants/avatarOptions';
 import LoadingIndicator from '../components/LoadingIndicator';
 import Toast from '../components/Toast';
@@ -88,8 +89,8 @@ export default function EditProfile({ user }) {
 
   useEffect(() => {
     if (!user?.uid) { navigate('/profile', { replace: true }); return; }
-    supabase.from('profiles').select('*').eq('id', user.uid).single()
-      .then(({ data }) => {
+    fetchOwnProfile(user.uid)
+      .then((data) => {
         if (!data) { navigate('/profile', { replace: true }); return; }
         const p = mapProfile(data);
         setUserData(p);
