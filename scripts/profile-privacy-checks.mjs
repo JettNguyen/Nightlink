@@ -116,14 +116,6 @@ const checks = [
   },
   {
     group: 'Ellen, about Sam',
-    name: "can read Dana's premium_emails",
-    who: 'ellen',
-    sql: `select premium_emails from public.profiles where id = '${DANA}'`,
-    ok: hidden,
-    holds: from('step 2'),
-  },
-  {
-    group: 'Ellen, about Sam',
     name: "can read Sam's email",
     who: 'ellen',
     sql: `select email from public.profiles where id = '${SAM}'`,
@@ -206,10 +198,10 @@ const checks = [
     group: 'Apps writing their own row',
     name: 'a new account starts on Pro with credits',
     who: 'mike',
-    sql: `insert into public.profiles (id, email, display_name, username, normalized_username, subscription, ai_usage, premium_emails)
-          values ('${MIKE}', 'mike@example.com', 'Mike', 'mike', 'mike', '{"tier": "premium"}', '{"creditBalance": 500}', '{mike@example.com}')`,
-    after: `select subscription ->> 'tier' as tier, ai_usage -> 'creditBalance' as credits, premium_emails from public.profiles where id = '${MIKE}'`,
-    ok: ({ after }) => after?.[0]?.tier === 'free' && Number(after?.[0]?.credits) === 0 && !after?.[0]?.premium_emails?.length,
+    sql: `insert into public.profiles (id, email, display_name, username, normalized_username, subscription, ai_usage)
+          values ('${MIKE}', 'mike@example.com', 'Mike', 'mike', 'mike', '{"tier": "premium"}', '{"creditBalance": 500}')`,
+    after: `select subscription ->> 'tier' as tier, ai_usage -> 'creditBalance' as credits from public.profiles where id = '${MIKE}'`,
+    ok: ({ after }) => after?.[0]?.tier === 'free' && Number(after?.[0]?.credits) === 0,
     holds: from('step 1'),
   },
   {

@@ -59,7 +59,6 @@ create table if not exists public.profile_private (
   dream_memory            text,
   dream_memory_updated_at timestamptz,
   safety_reports          jsonb not null default '[]',
-  premium_emails          text[] not null default '{}',
   old_app_seen_at         timestamptz,
   updated_at              timestamptz not null default now()
 );
@@ -186,7 +185,7 @@ where jsonb_typeof(subscription -> 'sources') is distinct from 'object';
 -- roles PostgREST uses for them; the service key, the dashboard and this
 -- database's own security definer functions run as other roles and pass.
 -- A new row starts on the free plan with no credits, whatever the app sent.
--- premium_emails is never the app's to change. A plan the app writes is what
+-- A plan the app writes is what
 -- Apple says, which 1.3.2 sends on every start: it becomes the apple part and
 -- nothing else. Step 2 replaces this function with one that ignores plan,
 -- credit and usage writes from apps altogether.
@@ -203,11 +202,8 @@ begin
   if tg_op = 'INSERT' then
     new.subscription := public.plan_with_sources('{}'::jsonb, '{}'::jsonb);
     new.ai_usage := '{"monthYear": "", "monthlyCount": 0, "creditBalance": 0}'::jsonb;
-    new.premium_emails := '{}';
     return new;
   end if;
-
-  new.premium_emails := old.premium_emails;
 
   if new.subscription is distinct from old.subscription then
     new.subscription := public.plan_with_source(

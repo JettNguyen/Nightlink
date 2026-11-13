@@ -35,13 +35,14 @@ create table if not exists public.profiles (
   account_visibility   text not null default 'private'
                          check (account_visibility in ('private','public')),
   allow_anonymous_sharing boolean not null default true,
-  premium_emails       text[] not null default '{}',
   created_at           timestamptz not null default now(),
   updated_at           timestamptz not null default now()
 );
 
 alter table public.profiles add column if not exists dream_memory text;
 alter table public.profiles add column if not exists dream_memory_updated_at timestamptz;
+-- When you started following each person, by their id. The app reads your own.
+alter table public.profiles add column if not exists following_since jsonb;
 alter table public.profiles add column if not exists account_visibility text;
 update public.profiles set account_visibility = coalesce(account_visibility, 'private');
 alter table public.profiles alter column account_visibility set default 'private';

@@ -15,7 +15,7 @@ insert into auth.users (id, email) values
 insert into public.profiles (
   id, email, display_name, username, normalized_username, account_visibility,
   settings, subscription, ai_usage, fcm_tokens, following_ids, follower_ids,
-  premium_emails, dream_memory, dream_memory_updated_at
+  dream_memory, dream_memory_updated_at
 ) values (
   '6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61', 'sam@example.com', 'Sam', 'Sam', 'sam', 'public',
   '{"bio": "Lucid most nights.", "accountVisibility": "public", "blockedUserIds": ["f2a9c4d1-7e3b-4c55-8a10-9b8c7d6e5f42"],
@@ -23,19 +23,19 @@ insert into public.profiles (
   '{"tier": "premium", "provider": "revenuecat", "expiresAt": "2099-01-01T00:00:00Z", "updatedAt": "2026-11-01T00:00:00Z"}',
   '{"monthYear": "2026-11", "monthlyCount": 3, "creditBalance": 5}',
   '{apns-token-sam}', '{}', '{0c1d2e3f-4a5b-4c6d-8e7f-a1b2c3d4e5f6}',
-  '{}', 'Sam keeps dreaming about a red door.', '2026-11-01T00:00:00Z'
+  'Sam keeps dreaming about a red door.', '2026-11-01T00:00:00Z'
 ), (
   'f2a9c4d1-7e3b-4c55-8a10-9b8c7d6e5f42', 'dana@example.com', 'Dana', 'dana', 'dana', 'private',
   '{"bio": "Night owl.", "safetyReports": [{"targetId": "y", "reason": "harassment", "details": "about Sam"}]}',
   '{"tier": "premium"}',
   '{"monthYear": "2026-11", "monthlyCount": 1, "creditBalance": 0}',
   '{apns-token-dana}', '{}', '{}',
-  '{dana@example.com}', 'Dana dreams of falling.', '2026-11-02T00:00:00Z'
+  'Dana dreams of falling.', '2026-11-02T00:00:00Z'
 ), (
   '0c1d2e3f-4a5b-4c6d-8e7f-a1b2c3d4e5f6', 'ellen@example.com', 'Ellen', 'ellen', 'ellen', 'private',
   '{}', '{"tier": "free"}', '{"monthYear": "", "monthlyCount": 0, "creditBalance": 0}',
   '{}', '{6b0f8f8e-2d4c-4b8a-9f43-1c2d3e4f5a61}', '{}',
-  '{}', null, null
+  null, null
 );
 
 insert into public.dreams (id, user_id, title, content, visibility) values

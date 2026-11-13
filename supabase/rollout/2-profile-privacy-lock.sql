@@ -12,7 +12,7 @@
 -- What it does
 --
 -- 1. Apps can no longer change their plan, AI credits or usage. A write of
---    subscription, ai_usage or premium_emails from an app keeps the value
+--    subscription or ai_usage from an app keeps the value
 --    that was there, without an error, so 1.3.2's App Store sync and its
 --    credit pack write quietly do nothing. The server sets plans from Stripe's
 --    and RevenueCat's webhooks and adds credits once per purchase.
@@ -25,9 +25,6 @@
 --
 -- 3. Safety reports leave settings for profile_private, where only the server
 --    reads them. Anyone signed in could read who reported whom before.
---
--- 4. premium_emails moves to profile_private too and is emptied on profiles.
---    Nothing reads it.
 --
 -- Signed-in people can still read the rest of other people's rows (email,
 -- settings, plan, usage, push tokens) until step 3, because 1.3.2 reads whole
@@ -69,14 +66,12 @@ begin
   if tg_op = 'INSERT' then
     new.subscription := public.plan_with_sources('{}'::jsonb, '{}'::jsonb);
     new.ai_usage := '{"monthYear": "", "monthlyCount": 0, "creditBalance": 0}'::jsonb;
-    new.premium_emails := '{}';
     new.settings := coalesce(new.settings, '{}'::jsonb) - 'safetyReports';
     return new;
   end if;
 
   new.subscription := old.subscription;
   new.ai_usage := old.ai_usage;
-  new.premium_emails := old.premium_emails;
   -- An app that loaded settings before this step would write the reports back.
   new.settings := coalesce(new.settings, '{}'::jsonb) - 'safetyReports';
   return new;
@@ -102,6 +97,10 @@ drop function if exists public.save_dream_memory(uuid, text);
 alter table public.profiles
   drop column if exists dream_memory,
   drop column if exists dream_memory_updated_at;
+
+-- The first version of step 1 gave profile_private a premium_emails column
+-- for a profiles column the live database never had. Nothing uses it.
+alter table public.profile_private drop column if exists premium_emails;
 
 create or replace function public.dream_memory(p public.profiles)
 returns text
@@ -206,16 +205,5 @@ as $$
       ), '[]'::jsonb),
       updated_at = now()
 $$;
-
--- ── premium_emails ───────────────────────────────────────────────────────────
-
-insert into public.profile_private (id, premium_emails)
-select id, premium_emails
-from public.profiles
-where premium_emails <> '{}'
-on conflict (id) do update
-set premium_emails = excluded.premium_emails, updated_at = now();
-
-update public.profiles set premium_emails = '{}' where premium_emails <> '{}';
 
 commit;
