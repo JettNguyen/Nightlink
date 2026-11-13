@@ -1773,6 +1773,21 @@ html[data-native-platform='ios'] .save-bar {
     font-size: 16px;
   }
 
+  /* Most fields take their size from the type scale, which outranks the rule
+     above, so on a phone they come out at 13.3px. The website lets people pinch
+     zoom, and iOS Safari also zooms the page in whenever a field under 16px is
+     tapped, so on the website the small steps of the scale stop at 16px inside
+     a field. Larger steps, like the dream title's, keep their size. The iPhone
+     app keeps zoom locked, so its fields keep the sizes they were drawn at.
+     These are the steps from :root again, so change both together. */
+  html:not([data-native-platform='ios']) :is(input, textarea, select) {
+    --fs-micro: max(16px, calc(0.7rem * var(--type-scale)));
+    --fs-xs: max(16px, calc(0.78rem * var(--type-scale)));
+    --fs-sm: max(16px, calc(0.85rem * var(--type-scale)));
+    --fs-base: max(16px, calc(0.95rem * var(--type-scale)));
+    --fs-md: max(16px, calc(1.1rem * var(--type-scale)));
+  }
+
   .app-main.app-main--with-nav {
     padding-top: calc(74px + var(--safe-top));
   }

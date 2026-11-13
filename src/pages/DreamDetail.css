@@ -194,6 +194,15 @@
   font-size: var(--fs-base);
 }
 
+/* On the website a phone draws this field at 16px (index.css explains why),
+   which widens it just enough to push Save and Cancel onto a second line.
+   Less padding at the sides keeps all three on one. */
+@media (max-width: 768px) {
+  html:not([data-native-platform='ios']) .detail-date-input {
+    padding-inline: 0.5rem;
+  }
+}
+
 .detail-date-input:focus {
   border-color: var(--primary);
 }
