@@ -58,6 +58,29 @@ export const updateNativeTabs = (options) => {
   NativeTabs.update(options).catch(() => {});
 };
 
+/**
+ * What a `select` event asks the page to do. `reselect` is true when the tap
+ * was on the tab already selected. `currentTab` is the id of the tab the page
+ * counts itself under (someone else's profile counts as Profile), or nothing
+ * on a page outside the tabs.
+ *
+ * Returns null to do nothing, 'top' to go back to the top of this page, or
+ * the path to open.
+ *
+ * A tap on the tab you're on always comes with `reselect`. So the tab you're
+ * on without it is the bar reporting a change the page made itself, and is
+ * ignored. AppShell.swift no longer sends those, and this keeps one from ever
+ * counting as a tap: it used to send you from someone else's profile to your
+ * own.
+ */
+export const nativeTabTap = ({ id, reselect } = {}, { pathname, currentTab } = {}) => {
+  const path = NATIVE_TAB_PATHS[id];
+  if (!path) return null;
+  if (!reselect && id === currentTab) return null;
+  if (reselect && pathname === path) return 'top';
+  return path;
+};
+
 /** `handler({ id, reselect })` runs when a tab is tapped. Returns a remover. */
 export const onNativeTabSelect = (handler) => {
   if (!nativeTabsActive) return () => {};

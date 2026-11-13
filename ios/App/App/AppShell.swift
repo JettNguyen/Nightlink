@@ -32,6 +32,8 @@ class AppShellViewController: UIViewController {
     private var tabController: UITabBarController?
     private var hosts: [String: UIViewController] = [:]
     private var barVisible = false
+    /// True while `selectTab` changes the tab because the page asked.
+    private var selectingForPage = false
 
     var usesNativeTabs: Bool { tabController != nil }
 
@@ -95,10 +97,18 @@ class AppShellViewController: UIViewController {
     // MARK: - Driven by the web side
 
     /// Selects a tab without telling the web side, which asked for it.
+    ///
+    /// Setting `selectedTab` calls `didSelectTab` below before it returns, the
+    /// same as a tap does, so `selectingForPage` marks the change as the page's
+    /// own. Without it the change went back to the page as a tap on that tab:
+    /// opening someone else's profile, which the page counts as the Profile
+    /// tab, then went on to your own profile.
     func selectTab(_ id: String) {
         guard #available(iOS 18.0, *), let controller = tabController else { return }
         guard let tab = controller.tab(forIdentifier: id), tab !== controller.selectedTab else { return }
+        selectingForPage = true
         controller.selectedTab = tab
+        selectingForPage = false
         if let host = hosts[id] { move(bridgeController, into: host) }
     }
 
@@ -138,6 +148,8 @@ extension AppShellViewController: UITabBarControllerDelegate {
     func tabBarController(_ tabBarController: UITabBarController, didSelectTab selectedTab: UITab, previousTab: UITab?) {
         guard selectedTab !== previousTab else { return }
         if let host = hosts[selectedTab.identifier] { move(bridgeController, into: host) }
+        // Only taps go to the page. A change the page asked for comes here too.
+        guard !selectingForPage else { return }
         bridgeController.tabsPlugin?.notifySelect(selectedTab.identifier, reselect: false)
     }
 }

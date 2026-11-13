@@ -8,8 +8,8 @@ import { appUserPropType, activityPreviewPropType } from '../propTypes';
 import { persistFeedSeenTimestamp } from '../services/UserService';
 import { triggerLightHaptic } from '../utils/haptics';
 import {
-  nativeTabsActive, NATIVE_TAB_IDS, NATIVE_TAB_PATHS,
-  setNativeTabsShown, updateNativeTabs, onNativeTabSelect,
+  nativeTabsActive, NATIVE_TAB_IDS,
+  setNativeTabsShown, updateNativeTabs, onNativeTabSelect, nativeTabTap,
 } from '../plugins/nativeTabs';
 
 const COMPACT_ENTER = 110;
@@ -167,17 +167,17 @@ function Navigation({ user, activityPreview }) {
   }, [hasNewFeed, newFeedCount, hasUnread, unreadCount]);
 
   const nativeTabTapRef = useRef(null);
-  nativeTabTapRef.current = ({ id, reselect }) => {
-    const path = NATIVE_TAB_PATHS[id];
-    if (!path) return;
-    if (path === '/feed') markFeedSeen();
+  nativeTabTapRef.current = (event) => {
+    const action = nativeTabTap(event, { pathname: location.pathname, currentTab: NATIVE_TAB_IDS[currentPath] });
+    if (!action) return;
+    if (event.id === 'feed') markFeedSeen();
     // Same as the web bar: tapping the tab you are on goes back to its top.
-    if (reselect && location.pathname === path) {
+    if (action === 'top') {
       const w = getWin();
       if (w && w.scrollY > 0) w.scrollTo(0, 0);
       return;
     }
-    navigate(path);
+    navigate(action);
   };
 
   useEffect(() => onNativeTabSelect((event) => nativeTabTapRef.current?.(event)), []);
