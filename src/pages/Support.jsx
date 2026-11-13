@@ -44,8 +44,14 @@ export default function Support() {
             If Pro doesn&apos;t show up on a new iPhone, open Settings in Nightlink and tap Restore purchases.
           </p>
           <p>
-            <strong>Bought on nightlink.dev:</strong> the website has no cancel button, so write to{' '}
-            <a href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</a> from the email on your account and ask us to cancel it.
+            <strong>Bought on nightlink.dev:</strong> sign in on nightlink.dev, go to your profile and open
+            Settings, then choose Manage plan under Billing. A page from Stripe, who handles our payments, opens.
+            There you can cancel, change your card or see past payments. When you cancel, Pro stays on until the
+            end of the period you paid for, and you aren&apos;t charged again.
+          </p>
+          <p>
+            If Manage plan isn&apos;t there, write to <a href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</a> from the email
+            you paid with and we&apos;ll cancel it for you.
           </p>
           <p>Deleting your account doesn&apos;t cancel a plan, so cancel it first.</p>
         </section>

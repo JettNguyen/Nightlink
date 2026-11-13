@@ -81,9 +81,12 @@ export default function TermsOfUse() {
           </p>
           <p>
             Subscriptions renew automatically at the end of each period unless you cancel at least 24 hours
-            before it ends. You can manage or cancel a subscription in the Subscriptions section of your Apple
-            Account settings. Deleting the app does not cancel it. Payment is charged to your Apple Account at
-            confirmation of purchase, and again at each renewal.
+            before it ends. A subscription bought in the iOS app is charged to your Apple Account at
+            confirmation of purchase, and again at each renewal, and you can manage or cancel it in the
+            Subscriptions section of your Apple Account settings. A subscription bought on the Nightlink website
+            is charged through Stripe at purchase, and again at each renewal, and you can manage or cancel it
+            from Settings on the website, or by writing to support@nightlink.dev. Deleting the app does not
+            cancel a subscription.
           </p>
           <p>
             Refunds for purchases made through the App Store are handled by Apple under its own refund policy,
