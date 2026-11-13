@@ -78,9 +78,28 @@ Deno.serve(async (req) => {
     return json({ ok: true, skipped: 'type_disabled' });
   }
 
-  const { title, body } = getNotificationCopy(payload);
+  // Who the push says it's from comes from the caller's own profile. Anyone
+  // signed in can call this, and the payload could name anyone ("Sam reacted
+  // to your dream" when Sam didn't). The dream title and emoji still come from
+  // the app, cut short.
+  const { data: sender } = await admin
+    .from('profiles')
+    .select('display_name, username')
+    .eq('id', user.id)
+    .single();
+
+  const trusted = {
+    ...payload,
+    actorId: user.id,
+    actorDisplayName: sender?.display_name || sender?.username || 'Someone',
+    actorUsername: sender?.username ?? null,
+    dreamTitleSnapshot: short(payload.dreamTitleSnapshot, 120),
+    emoji: short(payload.emoji, 16),
+  };
+
+  const { title, body } = getNotificationCopy(trusted);
   const results = await Promise.all(
-    tokens.map(t => sendApns(t, title, body, { activityType: payload.type, actorId: payload.actorId }))
+    tokens.map(t => sendApns(t, title, body, { activityType: trusted.type, actorId: trusted.actorId }))
   );
 
   // Remove tokens APNs reported as invalid (BadDeviceToken).
@@ -92,6 +111,12 @@ Deno.serve(async (req) => {
 
   return json({ ok: true, results });
 });
+
+/** A string from the app cut to `max` characters, counting an emoji as one, or null. */
+function short(value: unknown, max: number): string | null {
+  if (typeof value !== 'string' || !value) return null;
+  return Array.from(value).slice(0, max).join('');
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
