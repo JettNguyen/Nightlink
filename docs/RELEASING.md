@@ -103,3 +103,9 @@ line, so turning the Duo upright or sideways is done by hand in Xcode.
 Changes to `supabase/schema.sql` don't apply themselves. Run the changed part in the Supabase SQL
 editor for project `iogvbtqelbhutfqodwlp`. The `supabase` command on this Mac is an Intel build
 and won't run.
+
+**The first version after 1.3.2 waits for the profile privacy rollout** (`supabase/rollout`). It
+no longer adds App Store credit packs itself; the server does, from RevenueCat's webhook, but only
+once `2-profile-privacy-lock.sql` is in. Before that, a pack bought in a new build, TestFlight
+included, would never be added. So don't upload that build until step 2 has run. Step 3 comes
+only after 1.3.2 is gone, and its file says how to tell.
