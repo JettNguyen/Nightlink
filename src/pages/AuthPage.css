@@ -70,6 +70,8 @@ html[data-native-platform='ios'] .auth-page {
 .auth-title-icon img {
   width: 100%;
   height: 100%;
+  /* The span's radius doesn't clip its image, so the icon showed square corners. */
+  border-radius: inherit;
   object-fit: cover;
   filter: drop-shadow(0px 2px 20px rgba(255, 255, 255, 0.2));
 }
@@ -313,10 +315,13 @@ html[data-native-platform='ios'] .auth-page {
   margin: -0.5rem 0 0;
 }
 
+/* Dark type, as on the landing page's Create account button. Near white on
+   this gradient was 2.6:1 in the middle of the button, under the 4.5:1 its
+   text needs; dark type is 5.1:1 at the dark end and 9.3:1 at the light one. */
 .auth-submit {
   padding: 1rem;
   background: linear-gradient(120deg, #9d6fd4 0%, #c9a7f0 100%);
-  color: #f4fbff;
+  color: #120d24;
   border-radius: 14px;
   font-weight: 600;
   font-size: var(--fs-base);
