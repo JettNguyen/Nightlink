@@ -142,6 +142,124 @@ const handleWebhook = async (req, res) => {
   res.status(200).json({ received: true });
 };
 
+// ── Managing a plan bought on the website ─────────────────────────────────────
+// POST /api/stripe  { action: 'plan_status' }  answers { webPlan: true | false }
+// POST /api/stripe  { action: 'manage_plan' }  answers { url } of Stripe's billing
+//                                              page, to cancel, change the card or
+//                                              see past payments
+//
+// Both answer for the caller only. Who that is comes from the Supabase access
+// token in the Authorization header, checked by Supabase. Nothing in the body is
+// read, so a uid or customer id sent there changes nothing. The customer comes
+// from Stripe: the subscription that create_checkout stamped with the caller's
+// uid. The profile row is no help here, because its owner can write anything
+// into it. A plan bought through a Stripe payment link carries no uid, so it
+// isn't found until `uid` is added to that subscription's metadata in Stripe.
+
+// The billing handlers reach Stripe and Supabase through these, so the tests
+// can hand them fakes.
+const deps = { getStripe, getSupabaseAdmin };
+
+const SITE_ORIGIN = 'https://www.nightlink.dev';
+const OWN_ORIGIN = /^(https:\/\/(www\.)?nightlink\.dev|http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?)$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Statuses where a plan is still going and can be canceled or paid.
+const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'paused']);
+
+// Shown on screen as they are, so they're plain and say what to do.
+const SIGN_IN_AGAIN = 'Sign in again, then try once more.';
+const NO_WEB_PLAN = "We couldn't find a plan bought on nightlink.dev for this account. "
+  + 'If you got Pro in the iPhone app, change or cancel it on your iPhone: open the Settings app, '
+  + 'tap your name, then Subscriptions. If you paid on nightlink.dev, write to support@nightlink.dev '
+  + "from the email you paid with and we'll cancel it for you.";
+const NOT_READY = "Managing your plan here isn't ready yet. Write to support@nightlink.dev from the "
+  + "email you paid with and we'll cancel or change it for you.";
+const TRY_AGAIN = "Your plan didn't open. Try again in a minute, and if it still doesn't, write to "
+  + 'support@nightlink.dev.';
+
+const getCaller = async (req) => {
+  const header = req.headers?.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!token) return null;
+  const { data, error } = await deps.getSupabaseAdmin().auth.getUser(token);
+  const user = data?.user;
+  return !error && user?.id ? user : null;
+};
+
+// A plan that will renew comes first, then one already set to end, then any
+// other, newest first among equals.
+const planRank = (sub) => {
+  if (!LIVE_STATUSES.has(sub.status)) return 0;
+  return sub.cancel_at_period_end || sub.cancel_at ? 1 : 2;
+};
+
+// The caller's web plan, or null. Only subscriptions stamped with this uid
+// count, and each result is checked again in case the search ever returns more.
+const findWebPlan = async (stripe, uid) => {
+  if (!UUID.test(uid)) return null;
+  const { data } = await stripe.subscriptions.search({ query: `metadata['uid']:'${uid}'`, limit: 100 });
+  const best = (data || [])
+    .filter((sub) => sub?.metadata?.uid === uid && sub.customer)
+    .sort((a, b) => planRank(b) - planRank(a) || (b.created || 0) - (a.created || 0))[0];
+  if (!best) return null;
+  const customer = typeof best.customer === 'string' ? best.customer : best.customer.id;
+  return customer ? { customer, live: LIVE_STATUSES.has(best.status) } : null;
+};
+
+// Stripe refuses to open the billing page until it has been set up once in the
+// Dashboard, separately for test mode and live mode.
+const isBillingPageOff = (err) => (
+  err?.type === 'StripeInvalidRequestError'
+  && /configuration|settings\/billing\/portal/i.test(err?.message || '')
+);
+
+const handleManagePlan = async (req, res, action) => {
+  let caller = null;
+  try {
+    caller = await getCaller(req);
+  } catch (err) {
+    console.error('Caller check failed:', err.message);
+  }
+  if (!caller) return res.status(401).json({ error: SIGN_IN_AGAIN });
+
+  let stripe;
+  try {
+    stripe = deps.getStripe();
+  } catch (err) {
+    console.error('Stripe is not set up:', err.message);
+    return res.status(503).json({ error: NOT_READY });
+  }
+
+  let plan;
+  try {
+    plan = await findWebPlan(stripe, caller.id);
+  } catch (err) {
+    console.error('Web plan lookup failed:', err.message);
+    return res.status(502).json({ error: TRY_AGAIN });
+  }
+
+  if (action === 'plan_status') return res.status(200).json({ webPlan: Boolean(plan?.live) });
+  if (!plan) return res.status(404).json({ error: NO_WEB_PLAN, code: 'no_web_plan' });
+
+  const origin = String(req.headers?.origin || '');
+  try {
+    const page = await stripe.billingPortal.sessions.create({
+      customer: plan.customer,
+      return_url: `${OWN_ORIGIN.test(origin) ? origin : SITE_ORIGIN}/settings`,
+    });
+    return res.status(200).json({ url: page.url });
+  } catch (err) {
+    if (isBillingPageOff(err)) {
+      // The message names the Dashboard page where it gets turned on.
+      console.error('Stripe billing page is not turned on:', err.message);
+      return res.status(503).json({ error: NOT_READY, code: 'billing_page_off' });
+    }
+    console.error('Stripe billing page failed:', err.message);
+    return res.status(502).json({ error: TRY_AGAIN });
+  }
+};
+
 // ── Router ────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -161,6 +279,11 @@ module.exports = async function handler(req, res) {
   }
 
   if (body?.action === 'create_checkout') return handleCreateCheckout(req, res);
+  if (body?.action === 'plan_status' || body?.action === 'manage_plan') {
+    return handleManagePlan(req, res, body.action);
+  }
 
   return res.status(400).json({ error: 'Unknown action' });
 };
+
+module.exports.deps = deps;
