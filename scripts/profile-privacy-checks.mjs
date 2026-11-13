@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Tests the profile privacy rollout and reactions-as-yourself.sql (both in
-// supabase/rollout) on a throwaway Postgres made for the run and deleted after
-// it. Never touches the live database.
+// Tests the profile privacy rollout, reactions-as-yourself.sql and
+// notices-as-yourself.sql (all in supabase/rollout) on a throwaway Postgres
+// made for the run and deleted after it. Never touches the live database.
 //
 //   npm run test:db
 //
@@ -10,9 +10,10 @@
 // It loads supabase/schema.sql on top of the parts of Supabase it leans on
 // (supabase/tests/supabase-stubs.sql) and three made-up people
 // (supabase/tests/seed.sql), then runs every check below as each phase lands:
-// before any step, after step 1, after reactions-as-yourself.sql, after step 2
-// and after step 3. The reactions file doesn't depend on the steps and can run
-// live in any order with them; here it runs between steps 1 and 2.
+// before any step, after step 1, after reactions-as-yourself.sql, after
+// notices-as-yourself.sql, after step 2 and after step 3. The reactions and
+// notices files don't depend on the steps and can run live in any order with
+// them; here they run between steps 1 and 2.
 //
 // A check runs as anon (signed out), as Sam, Dana or Ellen (signed in, with
 // PostgREST's request.jwt.claims set the way it sets them), or as the server's
@@ -40,7 +41,7 @@ const PEOPLE = {
 };
 const { sam: SAM, dana: DANA, ellen: ELLEN, mike: MIKE } = PEOPLE;
 
-const PHASES = ['before', 'step 1', 'reactions', 'step 2', 'step 3'];
+const PHASES = ['before', 'step 1', 'reactions', 'notices', 'step 2', 'step 3'];
 const all = (value) => Object.fromEntries(PHASES.map((p) => [p, value]));
 const from = (first) => Object.fromEntries(PHASES.map((p) => [p, PHASES.indexOf(p) >= PHASES.indexOf(first)]));
 const until = (last) => Object.fromEntries(PHASES.map((p) => [p, PHASES.indexOf(p) <= PHASES.indexOf(last)]));
@@ -53,6 +54,15 @@ const PUBLIC_COLUMNS = 'id, display_name, username, normalized_username, photo_u
 const OPEN_SKY = '22222222-2222-4222-8222-222222222222';
 const SAMS_COMMENT = '44444444-4444-4444-8444-444444444444';
 
+// A reaction notice for Sam about "Open sky", as the app writes one, from
+// whoever `from` is, under the name and username the page had to hand.
+const sqlText = (value) => (value === null ? 'null' : `'${value}'`);
+const notice = ({ from: actor, name, username }) => `insert into public.activity (
+    target_user_id, actor_id, actor_display_name, actor_username, type, emoji, dream_id, dream_owner_id, dream_title_snapshot
+  ) values ('${SAM}', '${actor}', ${sqlText(name)}, ${sqlText(username)}, 'reaction', '💙', '${OPEN_SKY}', '${SAM}', 'Open sky')`;
+const noticeTo = (target, actor) => `select actor_display_name, actor_username, dream_title_snapshot, emoji
+  from public.activity where target_user_id = '${target}' and actor_id = '${actor}'`;
+
 // ── The checks ───────────────────────────────────────────────────────────────
 // sql:   what runs as `who`. Its rows come back as `rows`.
 // after: optional, runs as postgres once `sql` is done. Its rows come back as `after`.
@@ -64,6 +74,7 @@ const value = ({ rows }) => rows?.[0] && Object.values(rows[0])[0];
 const hidden = (result) => denied(result) || (!result.error && (result.rows || []).every((row) => Object.values(row).every((v) => v === null || (Array.isArray(v) && !v.length))));
 const works = ({ error }) => !error;
 const refused = ({ error }) => /permission denied|as yourself|Sign in/.test(error || '');
+const rowRefused = ({ error }) => /row-level security|permission denied/.test(error || '');
 
 const checks = [
   // Signed out, with only the website's public key.
@@ -267,6 +278,43 @@ const checks = [
     holds: from('reactions'),
   },
 
+  // Notices in someone else's name (notices-as-yourself.sql). Each adds a
+  // reaction notice for Sam about his dream "Open sky".
+  {
+    group: "Notices in someone else's name",
+    name: 'Ellen sends Sam a notice from Dana',
+    who: 'ellen',
+    sql: notice({ from: DANA, name: 'Dana', username: 'dana' }),
+    ok: rowRefused,
+    holds: from('notices'),
+  },
+  {
+    group: "Notices in someone else's name",
+    name: "Ellen puts Dana's name on her own notice to Sam",
+    who: 'ellen',
+    sql: notice({ from: ELLEN, name: 'Dana', username: 'dana' }),
+    after: noticeTo(SAM, ELLEN),
+    ok: ({ error, after }) => !error && after?.[0]?.actor_display_name === 'Ellen' && after?.[0]?.actor_username === 'ellen',
+    holds: from('notices'),
+  },
+  {
+    group: "Notices in someone else's name",
+    name: "a page that has no name to hand puts Ellen's email on her notice",
+    who: 'ellen',
+    sql: notice({ from: ELLEN, name: 'ellen@example.com', username: null }),
+    after: noticeTo(SAM, ELLEN),
+    ok: ({ error, after }) => !error && after?.[0]?.actor_display_name === 'Ellen',
+    holds: from('notices'),
+  },
+  {
+    group: "Notices in someone else's name",
+    name: 'someone signed out sends Sam a notice from Ellen',
+    who: 'anon',
+    sql: notice({ from: ELLEN, name: 'Ellen', username: 'ellen' }),
+    ok: rowRefused,
+    holds: all(true),
+  },
+
   // What Nightlink 1.3.2 (bc21746) runs. These must keep working until step 3.
   {
     group: '1.3.2 keeps working',
@@ -418,6 +466,16 @@ const checks = [
     after: `select viewer_reactions ? '${DANA}' as reacted, reaction_counts ->> '💙' as hearts from public.dreams where id = '${OPEN_SKY}'`,
     ok: ({ error, rows, after }) => !error && rows[0]?.changed === 'true'
       && after?.[0]?.reacted === false && after?.[0]?.hearts === '0',
+    holds: all(true),
+  },
+  {
+    group: '1.3.2 keeps working',
+    name: "a reaction notice for the dream's owner (logActivityEvent)",
+    who: 'dana',
+    sql: notice({ from: DANA, name: 'Dana', username: 'dana' }),
+    after: noticeTo(SAM, DANA),
+    ok: ({ error, after }) => !error && after?.[0]?.actor_display_name === 'Dana'
+      && after?.[0]?.dream_title_snapshot === 'Open sky' && after?.[0]?.emoji === '💙',
     holds: all(true),
   },
   {
@@ -693,6 +751,21 @@ try {
   runFile('supabase/rollout/reactions-as-yourself.sql', 'reactions-as-yourself.sql');
   runFile('supabase/rollout/reactions-as-yourself.sql', 'reactions-as-yourself.sql, run a second time');
   runAll('reactions');
+
+  // The notices file stops, changing nothing, when another policy would still
+  // let apps add any notice.
+  psql('create policy "activity_insert_any" on public.activity for insert with check (true);');
+  const noticesMisfit = psql(readFileSync(file('supabase/rollout/notices-as-yourself.sql'), 'utf8'));
+  const oldPolicy = psql("select pg_get_expr(polwithcheck, polrelid) from pg_policy where polrelid = 'public.activity'::regclass and polname = 'activity_insert';");
+  if (noticesMisfit.status === 0 || !/Nothing was changed/.test(noticesMisfit.stderr)
+      || !/activity_insert_any/.test(noticesMisfit.stderr) || /actor_id/.test(oldPolicy.stdout)) {
+    throw new Error(`notices-as-yourself.sql didn't stop on a database it doesn't fit:\n${noticesMisfit.stderr}`);
+  }
+  psql('drop policy "activity_insert_any" on public.activity;');
+
+  runFile('supabase/rollout/notices-as-yourself.sql', 'notices-as-yourself.sql');
+  runFile('supabase/rollout/notices-as-yourself.sql', 'notices-as-yourself.sql, run a second time');
+  runAll('notices');
 
   // Step 2 waits for RevenueCat to reach the server.
   const early = psql(readFileSync(file('supabase/rollout/2-profile-privacy-lock.sql'), 'utf8'));
