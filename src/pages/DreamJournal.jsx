@@ -18,6 +18,7 @@ import useRefreshSignal from '../hooks/useRefreshSignal';
 import VoiceInput, { VoiceField } from '../components/VoiceInput';
 import Overlay from '../components/Overlay';
 import { requestDreamAnalysis } from '../services/AiService';
+import { askForReviewAfterSave } from '../utils/appReview';
 import './DreamJournal.css';
 import { appUserPropType } from '../propTypes';
 
@@ -521,6 +522,8 @@ export default function DreamJournal({ user }) {
       tags: [],
     };
 
+    // The account's saved dreams before this one, leaving out any still on their way.
+    const savedBefore = dreams.filter((dream) => !dream.id.startsWith('local-')).length;
     setDreams((prev) => [optimistic, ...prev]);
 
     try {
@@ -548,6 +551,8 @@ export default function DreamJournal({ user }) {
       setShowNewDream(false);
       resetForm();
       void triggerSuccessHaptic();
+      // Apple's rating prompt, in the iPhone app once the account has three. It never rejects.
+      void askForReviewAfterSave(savedBefore + 1);
     } catch {
       setDreams((prev) => prev.filter((d) => d.id !== optimistic.id));
       void triggerErrorHaptic();
