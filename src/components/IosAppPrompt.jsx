@@ -8,6 +8,11 @@ import './IosAppPrompt.css';
 export const APP_STORE_URL =
   'https://apps.apple.com/us/app/nightlink-social/id6768789704?ppid=51e85a05-3f4b-4016-a6f3-34fd77ba46df';
 
+// The newest APK on the repo's releases. GitHub keeps this link pointing at
+// the latest one, so a new release needs no change here.
+export const ANDROID_APK_URL =
+  'https://github.com/JettNguyen/Nightlink/releases/latest/download/Nightlink.apk';
+
 const DISMISS_KEY = 'nightlink_ios_app_prompt';
 
 // Long enough that the prompt arrives after the page has settled, short enough
@@ -33,38 +38,61 @@ function markDismissed() {
 }
 
 /**
- * True on an iPhone or iPad running the site in a browser.
+ * `ios` on an iPhone or iPad running the site in a browser, `android` on an
+ * Android phone or tablet, and null anywhere else.
  *
- * Inside the shipped app Capacitor reports a native platform, so the prompt
- * never points someone at a store page for the app they are already in. iPadOS
- * 13 and up sends the desktop Safari user agent, and the only tell left is a
- * Mac that takes touch.
+ * Inside the shipped apps Capacitor reports a native platform, so the prompt
+ * never points someone at the app they are already in. iPadOS 13 and up sends
+ * the desktop Safari user agent, and the only tell left is a Mac that takes
+ * touch.
  */
-function isIosBrowser() {
-  if (Capacitor.isNativePlatform()) return false;
-  if (typeof navigator === 'undefined') return false;
+function browserPlatform() {
+  if (Capacitor.isNativePlatform()) return null;
+  if (typeof navigator === 'undefined') return null;
   const ua = navigator.userAgent || '';
-  if (/iPhone|iPad|iPod/.test(ua)) return true;
-  return /Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return null;
 }
 
+// The Android app is a file from the repo's releases, not a Play Store
+// listing, so its card says how to install one.
+const COPY = {
+  ios: {
+    title: 'Nightlink is on your iPhone',
+    message: 'The same journal, ready the moment you wake up, with a nightly reminder to write your dream down before it fades.',
+    action: 'Get the app',
+    href: APP_STORE_URL,
+  },
+  android: {
+    title: 'Nightlink is on Android',
+    message: 'The same journal, ready the moment you wake up. It downloads as a file, not from the Play Store: open it when it finishes, and let your browser install it if Android asks.',
+    action: 'Download',
+    href: ANDROID_APK_URL,
+  },
+};
+
 export default function IosAppPrompt() {
-  const [visible, setVisible] = useState(false);
+  const [platform, setPlatform] = useState(null);
+  const visible = platform !== null;
 
   useEffect(() => {
-    if (!isIosBrowser() || wasDismissed()) return undefined;
-    const timer = setTimeout(() => setVisible(true), SHOW_DELAY_MS);
+    const found = browserPlatform();
+    if (!found || wasDismissed()) return undefined;
+    const timer = setTimeout(() => setPlatform(found), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
   const close = () => {
     markDismissed();
-    setVisible(false);
+    setPlatform(null);
   };
 
   useEscapeKey(close, visible);
 
   if (!visible) return null;
+  const copy = COPY[platform];
 
   return (
     <Overlay>
@@ -78,19 +106,16 @@ export default function IosAppPrompt() {
         <div className="ios-app-prompt" onClick={(e) => e.stopPropagation()}>
           <img className="ios-app-prompt-icon" src="/AppIcon-1024.png" alt="" />
           <h3 className="ios-app-prompt-title" id="ios-app-prompt-title">
-            Nightlink is on your iPhone
+            {copy.title}
           </h3>
-          <p className="ios-app-prompt-message">
-            The same journal, ready the moment you wake up, with a nightly reminder
-            to write your dream down before it fades.
-          </p>
+          <p className="ios-app-prompt-message">{copy.message}</p>
           <div className="ios-app-prompt-actions">
             <button type="button" className="secondary-btn" onClick={close}>
               Not now
             </button>
             <a
               className="primary-btn ios-app-prompt-get"
-              href={APP_STORE_URL}
+              href={copy.href}
               target="_blank"
               rel="noreferrer"
               onClick={() => {
@@ -98,7 +123,7 @@ export default function IosAppPrompt() {
                 close();
               }}
             >
-              Get the app
+              {copy.action}
             </a>
           </div>
         </div>
