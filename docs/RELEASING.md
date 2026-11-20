@@ -1,4 +1,6 @@
-# Releasing Nightlink on iOS
+# Releasing Nightlink
+
+iOS first, then [Android](#android) at the end.
 
 Nightlink is built on this Mac and uploaded straight to App Store Connect. Nothing goes through EAS
 or Xcode's cloud signing. Uploading is fine at any time; **submitting for App Review waits until
@@ -109,3 +111,52 @@ no longer adds App Store credit packs itself; the server does, from RevenueCat's
 once `2-profile-privacy-lock.sql` is in. Before that, a pack bought in a new build, TestFlight
 included, would never be added. So don't upload that build until step 2 has run. Step 3 comes
 only after 1.3.2 is gone, and its file says how to tell.
+
+## Android
+
+Added November 20, 2026. The Android app isn't on the Play Store: it's an APK on the repo's
+GitHub releases, and every download link (the README, nightlink.dev's prompt for Android
+visitors, Jett's site and profile) points at
+`https://github.com/JettNguyen/Nightlink/releases/latest/download/Nightlink.apk`, so a new
+release needs no link changes.
+
+1. Set the version in the Xcode project as for iOS. `android/app/build.gradle` reads
+   `MARKETING_VERSION` from it, and the version code follows (1.4.1 is 10401).
+2. `./scripts/build-apk.sh` builds the web bundle, syncs it into `android/`, and builds and
+   checks a signed APK. About two minutes, or five the first time while Gradle downloads.
+3. Publish it, named exactly `Nightlink.apk` and marked latest:
+   `gh release create android-1.4.1 /path/to/Nightlink.apk --title "Nightlink 1.4.1 for Android" --latest`
+
+### The key
+
+| | |
+| --- | --- |
+| Keystore | `../nightlink-android.jks`, outside the repo, alias `nightlink`, made November 20, 2026, good for 30 years |
+| Its password | In the login keychain, item `nightlink-android-keystore` (the script reads it) |
+| Certificate SHA-256 | `8D:51:8F:E1:01:38:AB:B9:8B:2C:30:FC:E1:72:4B:A4:1B:96:9F:92:A1:4F:DE:04:F4:1B:E6:33:12:22:69:C6` |
+
+**Every APK has to be signed with this key.** Android won't install an update signed with a
+different one over the app people already have, so a lost key means everyone uninstalls and
+starts over. Keep a backup of the file and its password somewhere other than this Mac.
+
+### What's different on Android
+
+- **Dictation** records and uploads to `/api/transcribe`, as on the website. Apple's live
+  recognizer is iOS only. The screen is held on while recording by `keepAwake` in
+  `android/app/src/main/java/dev/nightlink/NativeSpeechPlugin.java`, registered in
+  `MainActivity`, since Android's web view has no screen wake lock.
+- **No server pushes.** Pushes go through Apple's service, and Android's push plugin needs a
+  Firebase setup this app doesn't have; calling its `register()` without one crashes the app.
+  `src/utils/notificationHelpers.js` keeps Android to alerts the phone makes itself: the dream
+  reminder, and alerts while the app is open.
+- **Pro and credits** are bought through Stripe, as on the website, since RevenueCat is set up
+  for the App Store only.
+- **Sign-in** is email or Google. Google comes back through `dev.nightlink://auth/callback`,
+  which the manifest registers.
+- **The tab bar** is the website's, since Apple's native tabs are iOS only.
+
+`python3 scripts/android-art.py` remakes the launcher icons and splash screens from the iOS icon.
+
+To try a build, the `apk-check` emulator (Android 16) runs without a window:
+`$ANDROID_HOME/emulator/emulator -avd apk-check -no-window -gpu swiftshader_indirect`, then
+`adb install -r` the APK.

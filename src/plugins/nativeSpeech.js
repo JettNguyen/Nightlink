@@ -3,8 +3,10 @@ import { registerPlugin, Capacitor } from '@capacitor/core';
 /**
  * Bridge to `NativeSpeechPlugin.swift`, which wraps Apple's Speech framework.
  *
- * Only the iOS shell implements it. Everywhere else this stays unavailable and
- * voice input falls back to the record-then-upload path in `useVoiceCapture`.
+ * Only the iOS shell implements dictation. Everywhere else voice input falls
+ * back to the record-then-upload path in `useVoiceCapture`. The Android shell
+ * has `keepAwake` alone (`NativeSpeechPlugin.java`), to hold the screen on
+ * while that recording runs.
  */
 const NativeSpeech = registerPlugin('NativeSpeech');
 

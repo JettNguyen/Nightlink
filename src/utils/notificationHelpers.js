@@ -7,6 +7,10 @@ import { fetchOwnProfile } from './profileReads';
 const DREAM_REMINDER_ID = 99001;
 
 const isNative = () => Capacitor.isNativePlatform();
+// Pushes go out through Apple's service only. On Android the push plugin needs
+// Firebase, which this app has no setup for, and `register()` crashes the app
+// without it. Android keeps the reminders and alerts the phone makes itself.
+const hasNativePush = () => isNative() && Capacitor.getPlatform() === 'ios';
 
 const getActivityNotificationCopy = (entry = {}) => {
   const actor = entry.actorDisplayName || 'Someone';
@@ -121,6 +125,12 @@ const registerNativePushToken = async () => {
 
 export async function getNotificationPermissionStatus() {
   if (isNative()) {
+    if (!hasNativePush()) {
+      const local = await LocalNotifications.checkPermissions();
+      if (local.display === 'granted') return 'granted';
+      if (local.display === 'denied') return 'denied';
+      return 'default';
+    }
     const push = await PushNotifications.checkPermissions();
     if (push.receive === 'granted') return 'granted';
     if (push.receive === 'denied') return 'denied';
@@ -139,6 +149,10 @@ export async function getNotificationPermissionStatus() {
  */
 export async function requestNotificationPermission(userId) {
   if (isNative()) {
+    if (!hasNativePush()) {
+      const localPermission = await LocalNotifications.requestPermissions();
+      return localPermission.display === 'granted' ? 'enabled-local-only' : null;
+    }
     const pushPermission = await PushNotifications.requestPermissions();
     const localPermission = await LocalNotifications.requestPermissions();
     if (pushPermission.receive !== 'granted' && localPermission.display !== 'granted') {

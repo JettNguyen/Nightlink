@@ -169,6 +169,9 @@ export default function Settings({ user }) {
   const savedRef = useRef(JSON.stringify(DEFAULT_SETTINGS));
   const uid = user?.uid || null;
   const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  // The Android app has no server pushes, only alerts the phone makes itself:
+  // reminders it schedules, and alerts while the app is open.
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
   // Merge Supabase tier with live RC state, since RC is authoritative on iOS.
   // Using the most-permissive value means UI unlocks immediately after a
@@ -1058,7 +1061,7 @@ export default function Settings({ user }) {
               <p>Stay in the loop with morning reminders, feed drops, and activity alerts.</p>
             </div>
             <div className="settings-section-body">
-              {!isNativeIOS && (
+              {!isNativeIOS && !isNativeAndroid && (
                 <div className="notification-support">
                   <span className={`notification-chip${notificationsSupported ? ' success' : ' warn'}`}>
                     {notificationsSupported ? 'Browser supports push' : 'Push not supported'}
@@ -1072,7 +1075,11 @@ export default function Settings({ user }) {
                 <p className="notification-hint">Push notifications require a modern browser with Service Worker support.</p>
               )}
               <div className="toggle-row">
-                <div className="toggle-label"><strong>Push notifications</strong><span>Receive updates even when Nightlink is closed.</span></div>
+                {isNativeAndroid ? (
+                  <div className="toggle-label"><strong>Notifications</strong><span>Dream reminders come even when Nightlink is closed. Alerts about other people show while it&apos;s open.</span></div>
+                ) : (
+                  <div className="toggle-label"><strong>Push notifications</strong><span>Receive updates even when Nightlink is closed.</span></div>
+                )}
                 <Toggle id="notificationsEnabled" checked={settings.notificationsEnabled} onChange={handleNotificationsToggle} disabled={!notificationsSupported || notificationBusy} />
               </div>
               <div className="toggle-row">

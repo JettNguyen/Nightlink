@@ -94,10 +94,11 @@ const STOP_NOTICES = {
 /**
  * Keeps the screen on for the upload engine, and returns the call that lets it
  * sleep again. The live engine holds the screen on natively. Without this, auto
- * lock puts the phone to sleep while someone is still talking.
+ * lock puts the phone to sleep while someone is still talking. Both apps ask
+ * their own shell, since Android's web view has no screen wake lock.
  */
 const holdScreenAwake = () => {
-  if (isNativeSpeechPlatform()) {
+  if (Capacitor.isNativePlatform()) {
     NativeSpeech.keepAwake({ on: true }).catch(() => {});
     return () => { NativeSpeech.keepAwake({ on: false }).catch(() => {}); };
   }
