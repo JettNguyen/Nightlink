@@ -317,7 +317,7 @@ export default function AuthPage() {
             if (finished) return;
             await cleanup();
             setLoading(false);
-            setError('Google sign-in did not complete. Please check your internet connection and try again.');
+            setError("Google sign-in didn't finish. Try again, or sign in with your email.");
           }, 9000);
         });
 
