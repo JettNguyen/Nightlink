@@ -61,7 +61,9 @@ export default function VoiceInput({
     onTranscript(text);
   }, [onTranscript]);
 
-  const handleError = useCallback((message) => {
+  // Errors and the notes about a recording that stopped by itself both show
+  // as the page's toast.
+  const handleNotice = useCallback((message) => {
     onNotice?.(message);
   }, [onNotice]);
 
@@ -69,7 +71,8 @@ export default function VoiceInput({
     status, elapsedMs, interimText, mode, analyserRef, levelRef, start, stop, cancel,
   } = useVoiceCapture({
     onTranscript: handleTranscript,
-    onError: handleError,
+    onError: handleNotice,
+    onNotice: handleNotice,
   });
 
   const isRecording = status === 'recording';

@@ -80,6 +80,44 @@ const friendlyMicError = (error) => {
 };
 
 const MIC_DENIED = 'Microphone access was denied. Enable it for Nightlink in your settings.';
+const NO_SPEECH = 'No speech was detected. Try again a little closer to the mic.';
+
+// What to say when a recording ends without the user tapping stop. Their words
+// are already in the entry by then, so each one says how to add more.
+const STOP_NOTICES = {
+  limit: 'Recordings stop at one minute. Tap the mic to add more.',
+  background: 'Recording stopped when you left the app. Tap the mic to add more.',
+  interrupted: 'Recording stopped for a call or alert. Tap the mic to add more.',
+  ended: 'Recording stopped early. Tap the mic to add more.',
+};
+
+/**
+ * Keeps the screen on for the upload engine, and returns the call that lets it
+ * sleep again. The live engine holds the screen on natively. Without this, auto
+ * lock puts the phone to sleep while someone is still talking.
+ */
+const holdScreenAwake = () => {
+  if (isNativeSpeechPlatform()) {
+    NativeSpeech.keepAwake({ on: true }).catch(() => {});
+    return () => { NativeSpeech.keepAwake({ on: false }).catch(() => {}); };
+  }
+
+  let lock = null;
+  let released = false;
+  try {
+    const pending = navigator.wakeLock?.request?.('screen');
+    pending?.then((sentinel) => {
+      if (released) sentinel.release().catch(() => {});
+      else lock = sentinel;
+    }).catch(() => {});
+  } catch { /* not offered here */ }
+
+  return () => {
+    released = true;
+    lock?.release().catch(() => {});
+    lock = null;
+  };
+};
 
 /**
  * Records a voice note and returns the transcript.
@@ -98,7 +136,7 @@ const MIC_DENIED = 'Microphone access was denied. Enable it for Nightlink in you
  * `analyserRef` (upload) and `levelRef` (live) both expose live amplitude so a
  * visualiser can read it per frame without pushing state through React.
  */
-export default function useVoiceCapture({ onTranscript, onError } = {}) {
+export default function useVoiceCapture({ onTranscript, onError, onNotice } = {}) {
   const [status, setStatus] = useState('idle'); // idle | starting | recording | transcribing
   const [error, setError] = useState('');
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -119,18 +157,27 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
   const tickRef = useRef(null);
   const startedAtRef = useRef(0);
   const unmountedRef = useRef(false);
+  const releaseWakeRef = useRef(null);
+  // Why the current recording is ending, when the page is the one ending it.
+  const stopReasonRef = useRef('user');
 
   const modeRef = useRef('upload');
   const interimRef = useRef('');
   const listenersRef = useRef([]);
+  // True from the native start until the recording settles. The native side
+  // can answer twice, with its finalResult event and the stop() promise, and
+  // only the first one may put words in the entry.
+  const liveOpenRef = useRef(false);
   // `start` and `stop` reference each other through the auto-stop timer, so the
   // timer reads the current stop through a ref instead of closing over it.
   const stopRef = useRef(null);
 
   const onTranscriptRef = useRef(onTranscript);
   const onErrorRef = useRef(onError);
+  const onNoticeRef = useRef(onNotice);
   useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
+  useEffect(() => { onNoticeRef.current = onNotice; }, [onNotice]);
 
   const clearTimers = useCallback(() => {
     if (autoStopRef.current) { clearTimeout(autoStopRef.current); autoStopRef.current = null; }
@@ -139,6 +186,8 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
 
   const releaseAudio = useCallback(() => {
     clearTimers();
+    releaseWakeRef.current?.();
+    releaseWakeRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     analyserRef.current = null;
@@ -158,6 +207,7 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     cancelledRef.current = true;
     try { recorderRef.current?.stop(); } catch { /* already inactive */ }
     detachNativeListeners();
+    liveOpenRef.current = false;
     if (modeRef.current === 'live') NativeSpeech.cancel().catch(() => {});
     releaseAudio();
   }, [releaseAudio, detachNativeListeners]);
@@ -169,17 +219,30 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     onErrorRef.current?.(message);
   }, []);
 
+  const deliver = useCallback((text, reason) => {
+    onTranscriptRef.current?.(text);
+    const notice = STOP_NOTICES[reason];
+    if (notice) onNoticeRef.current?.(notice);
+  }, []);
+
   const beginTimers = useCallback(() => {
     startedAtRef.current = Date.now();
     tickRef.current = setInterval(() => {
       setElapsedMs(Date.now() - startedAtRef.current);
     }, 200);
-    autoStopRef.current = setTimeout(() => { stopRef.current?.(); }, MAX_RECORDING_MS);
+    autoStopRef.current = setTimeout(() => { stopRef.current?.('limit'); }, MAX_RECORDING_MS);
   }, []);
 
   // ── Live engine (iOS) ────────────────────────────────────────────────────
 
-  const settleLive = useCallback((text) => {
+  /**
+   * `reason` is the native one: `stopped` when the page asked, which then takes
+   * the page's own reason, or `background`, `interrupted` or `ended` when the
+   * phone ended the recording by itself.
+   */
+  const settleLive = useCallback((text, reason) => {
+    if (!liveOpenRef.current) return;
+    liveOpenRef.current = false;
     clearTimers();
     detachNativeListeners();
     interimRef.current = '';
@@ -187,10 +250,15 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     if (unmountedRef.current) return;
     setInterimText('');
     setStatus('idle');
+    const why = !reason || reason === 'stopped' ? stopReasonRef.current : reason;
     const trimmed = (text || '').trim();
-    if (!trimmed) { fail('No speech was detected. Try again a little closer to the mic.'); return; }
-    onTranscriptRef.current?.(trimmed);
-  }, [clearTimers, detachNativeListeners, fail]);
+    if (!trimmed) {
+      // Leaving the app before saying anything is not worth a message.
+      if (why !== 'background') fail(NO_SPEECH);
+      return;
+    }
+    deliver(trimmed, why);
+  }, [clearTimers, detachNativeListeners, fail, deliver]);
 
   /**
    * Returns true when the live engine took the recording, false when the caller
@@ -224,19 +292,29 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
         NativeSpeech.addListener('level', ({ level }) => {
           levelRef.current = typeof level === 'number' ? level : 0;
         }),
+        // Every ending comes through here, including a tapped stop, whose
+        // promise then finds the recording already settled with the same words.
+        NativeSpeech.addListener('finalResult', ({ text, reason }) => {
+          settleLive(text, reason);
+        }),
         NativeSpeech.addListener('error', ({ message }) => {
+          if (!liveOpenRef.current) return;
           // Never throw away words the user already said over a mid-recording
           // fault, so keep them and only surface the error when there is nothing.
-          if (interimRef.current.trim()) { settleLive(interimRef.current); return; }
+          if (interimRef.current.trim()) { settleLive(interimRef.current, 'ended'); return; }
+          liveOpenRef.current = false;
           clearTimers();
           detachNativeListeners();
+          levelRef.current = 0;
           setInterimText('');
-          fail(message || 'Dictation stopped unexpectedly.');
+          fail(message || 'Dictation stopped unexpectedly. Tap the mic to try again.');
         }),
       ]);
 
+      liveOpenRef.current = true;
       await NativeSpeech.start({ onDevice: true });
     } catch (err) {
+      liveOpenRef.current = false;
       detachNativeListeners();
       if (err?.code === 'permission' || err?.code === 'unavailable' || err?.code === 'busy') {
         return false;
@@ -245,6 +323,7 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     }
 
     if (cancelledRef.current || unmountedRef.current) {
+      liveOpenRef.current = false;
       detachNativeListeners();
       NativeSpeech.cancel().catch(() => {});
       return true;
@@ -257,18 +336,23 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     return true;
   }, [fail, settleLive, beginTimers, clearTimers, detachNativeListeners]);
 
-  const stopLive = useCallback(async () => {
+  const stopLive = useCallback(async (reason) => {
+    if (!liveOpenRef.current) return;
+    stopReasonRef.current = reason;
     clearTimers();
     setStatus('transcribing');
     let text = interimRef.current;
+    let nativeReason;
     try {
       const result = await NativeSpeech.stop();
       if (typeof result?.text === 'string') text = result.text;
+      nativeReason = result?.reason;
     } catch { /* keep whatever the last partial held */ }
-    settleLive(text);
+    settleLive(text, nativeReason);
   }, [clearTimers, settleLive]);
 
   const cancelLive = useCallback(() => {
+    liveOpenRef.current = false;
     clearTimers();
     detachNativeListeners();
     NativeSpeech.cancel().catch(() => {});
@@ -309,11 +393,11 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
       if (unmountedRef.current) return;
       setStatus('idle');
       if (!text) { fail('No speech was detected in that recording.'); return; }
-      onTranscriptRef.current?.(text);
+      deliver(text, stopReasonRef.current);
     } catch (err) {
       fail(err?.message || 'Could not transcribe that recording.');
     }
-  }, [fail]);
+  }, [fail, deliver]);
 
   const startUpload = useCallback(async () => {
     if (!isUploadCaptureSupported()) { fail('Voice input is not supported on this device.'); return; }
@@ -400,6 +484,7 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
       return;
     }
 
+    releaseWakeRef.current = holdScreenAwake();
     modeRef.current = 'upload';
     setMode('upload');
     setStatus('recording');
@@ -419,6 +504,7 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     levelRef.current = 0;
     setStatus('starting');
     cancelledRef.current = false;
+    stopReasonRef.current = 'user';
 
     if (isNativeSpeechPlatform()) {
       const handled = await startLive().catch(() => false);
@@ -429,8 +515,11 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     await startUpload();
   }, [status, fail, startLive, startUpload]);
 
-  const stop = useCallback(() => {
-    if (modeRef.current === 'live') { void stopLive(); return; }
+  // `reason` is `user` for a tap, `limit` for the one-minute cap, and
+  // `background` when the page finds a live recording the phone already ended.
+  const finish = useCallback((reason) => {
+    if (modeRef.current === 'live') { void stopLive(reason); return; }
+    stopReasonRef.current = reason;
     if (recorderRef.current?.state === 'recording') {
       try { recorderRef.current.stop(); return; } catch { /* fall through */ }
     }
@@ -439,7 +528,21 @@ export default function useVoiceCapture({ onTranscript, onError } = {}) {
     setStatus('idle');
   }, [releaseAudio, stopLive]);
 
-  useEffect(() => { stopRef.current = stop; }, [stop]);
+  const stop = useCallback(() => finish('user'), [finish]);
+
+  useEffect(() => { stopRef.current = finish; }, [finish]);
+
+  // iOS ends a live recording when the app leaves the screen, and its
+  // finalResult normally arrives as the page wakes. If it went missing, asking
+  // for the words here keeps the recording view from sitting on a dead meter.
+  useEffect(() => {
+    if (status !== 'recording' || mode !== 'live') return undefined;
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') stopRef.current?.('background');
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [status, mode]);
 
   const cancel = useCallback(() => {
     cancelledRef.current = true;
