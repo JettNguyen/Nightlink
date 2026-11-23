@@ -22,8 +22,8 @@ android {
         applicationId "dev.nightlink"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode ((versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]) * 100) + appBuild
-        versionName appBuild > 1 ? "${appVersion} (${appBuild})" : appVersion
+        versionCode((versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]) * 100 + appBuild)
+        versionName(appBuild > 1 ? "${appVersion} (${appBuild})" : appVersion)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
