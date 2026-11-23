@@ -74,11 +74,11 @@ const DEFAULT_STYLE_REQUIREMENT = STYLE_REQUIREMENT.balanced;
 // voice, with the assigned lens showing up as nothing but word choice.
 const buildOutputRules = (lengthRule, requirement) => `You are writing for NightLink, an 18+ dream journaling app. Hold the voice above from the first sentence to the last: a reading that could have come from any other reader on this app is a failed reading.
 
-Return ONLY minified JSON: {"title":"string","themes":"string","connections":[]}
+Return ONLY minified JSON: {"title":"string","themes":"string"}
 
 - "title": a poetic, evocative 2 to 4 word phrase that names this specific dream (never generic)
 - "themes": ${lengthRule}, written as one flowing paragraph of plain text. The app shows it as a single paragraph, so no markdown, no headings, no bullets, no line breaks. ${requirement}
-- "connections": [], unless a memory block below tells you otherwise
+- Read this dream only. Never say something is back, keeps happening, or has come up in your earlier dreams unless the dream itself says so or a block below lists it
 - Never open with "This dream may suggest" or a variant of it, and never walk the dream image by image handing each one a meaning. Work the details your lens actually cares about
 - Anchor what you say to something the dreamer described. A reading that would fit any dream is a failed reading
 - The dreamer reads this, so write to them as "you". Never call them "the dreamer" or write about them in the third person
@@ -378,7 +378,8 @@ const saveDreamMemory = async (uid, memory) => {
 // trusting the client's `isMemoryIndexed`, which the caller could set either way
 // to suppress indexing or pay for it twice. Scoped by owner so a borrowed dream
 // id can't touch someone else's row.
-const isDreamMemoryIndexed = async (uid, dreamId) => {
+// True or false for a dream of ours, null for one that is missing or not ours.
+const readMemoryIndexed = async (uid, dreamId) => {
   const admin = getSupabaseAdmin();
   const { data } = await admin
     .from('dreams')
@@ -386,9 +387,10 @@ const isDreamMemoryIndexed = async (uid, dreamId) => {
     .eq('id', dreamId)
     .eq('user_id', uid)
     .maybeSingle();
-  // Missing or not ours: treat as indexed so nothing is written.
-  return data ? !!data.memory_indexed : true;
+  return data ? !!data.memory_indexed : null;
 };
+// Missing or not ours: treat as indexed so nothing is written.
+const isDreamMemoryIndexed = async (uid, dreamId) => (await readMemoryIndexed(uid, dreamId)) ?? true;
 
 // Rewrites the memory file after each analysis. Lives here with the other
 // prompts rather than inside the function that sends it.
@@ -409,25 +411,28 @@ Use only the headings that have content (omit empty ones):
 ## Seen once
 
 The file has two parts and nothing appears in both:
-- "Seen once" is the log. One line for each thing that has turned up in exactly one dream, written as a bare noun phrase and nothing else: "a black Tesla", "a flooded stairwell", "your old high school". No meaning, no reading, no count
+- "Seen once" is the log. One line for each thing that has turned up in exactly one dream, written as a bare noun phrase of a few words that names the thing the way the dream had it, and nothing else. No meaning, no reading, no count
 - Every section above "Seen once" is for patterns, and a pattern is something that has turned up in two or more separate dreams. Every line there carries its count, and that count is never 1
 
 Working a new dream into the file:
+- Log what is new in this dream: one line in "Seen once" for each main thing it has that the file doesn't, its objects, places, people and feelings, usually two to five lines. Log only what this dream actually contains, never something it does not mention
 - Something you have no record of: add one line to "Seen once" and nothing anywhere else. Writing it above "Seen once" with a count of 1 is always wrong, however striking it was
-- Something already sitting under "Seen once": this is its second appearance. Take it out of "Seen once", put it in the section where it belongs as "2 times", and only now say what it may mean
-- Something already recorded as a pattern: raise its count and sharpen the reading
-- Moods, themes and narratives work the same way. One dream's dread is not an emotional pattern
+- Something already sitting under "Seen once" that the checked list says is in this dream: this is its second appearance. Take it out of "Seen once", put it in the section where it belongs as "2 times", and only now say what it may mean
+- Something already recorded as a pattern that the checked list says is in this dream: raise its count and sharpen the reading
+- Everything already in the file that the checked list does not name keeps the count it has. Copy it into the new file as it is
+- Keep each entry's name, the part before the colon, exactly as the file already has it, so later dreams can be matched against it
+- Moods, themes and narratives work the same way. One dream's feeling is not an emotional pattern
 - An entry above "Seen once" carrying a count of 1, or no count at all, came from an older version of this file. Move it down to "Seen once" and strip its reading
 - Keep "Seen once" to about 25 entries. When it overflows, drop the oldest
 
 Rules:
 - Keep total length under 900 words
 - Use concise note-style writing, not full prose sentences
-- Every entry above "Seen once" carries its count (e.g. "water: ~8 times")
-- Note the direction a pattern is moving, not just that it exists (e.g. "water: ~8 times; still and calm in early entries, turbulent recently")
-- Record pairings that keep co-occurring (e.g. "the house appears with the absent father in most entries")
+- Every entry above "Seen once" carries its count, written as "<name>: ~<count> times"
+- Note the direction a pattern is moving, not just that it exists, written as "<name>: ~<count> times; <how it was in early entries>, <how it is recently>"
+- Record pairings that keep co-occurring, written as "<one thing> appears with <another> in most entries"
 - Under "Shifts over time", record changes worth telling the dreamer about: a symbol that has inverted, an emotion that has cooled, a recurring figure that has stopped appearing
-- Under "Open threads", record what keeps arriving unresolved, such as a chase never resolved, a door never opened, or a conversation never finished
+- Under "Open threads", record what keeps arriving unresolved across dreams: something that keeps breaking off before it ends
 - Relative sequencing only ("early entries", "recently", "the last few"), never dates, months, or dream IDs
 - Merge new information into existing entries, never duplicate
 - Add new entries only when genuinely novel, and never duplicate an item between "Seen once" and a section above it
@@ -435,13 +440,13 @@ Rules:
 - When nearing the length limit, trim "Seen once" first, oldest entries going first
 - Never include raw dream text, only synthesized patterns and observations
 - The dreamer reads this file, so write it to them. Never refer to them in the third person and never call them "the user", "the dreamer", or by name
-- Every entry is already about them, so a possessive is redundant: write "Dad: represents a desire for emotional backing", not "User's dad: ...". Where a reference is genuinely unavoidable, use "you" or "your"
+- Every entry is already about them, so a possessive is redundant: write "<figure>: <what it may stand for>", not "User's <figure>: ...". Where a reference is genuinely unavoidable, use "you" or "your"
 - Apply that to entries already in the file: when merging, rewrite any third-person reference you find into this voice
 - Never speculate about diagnoses, medical conditions, or the dreamer's safety
 
 Last pass before you answer: read every line above "Seen once". Any of them that does not stand on two or more dreams belongs under "Seen once" instead, as a bare noun phrase.
 
-Return ONLY the updated memory file. No preamble or explanation.`;
+Return ONLY the whole updated memory file: every section and every entry, whether or not it changed. No preamble or explanation.`;
 
 // Sections where a line is a claim that something recurs, so a line there has
 // to prove it. "Shifts over time" and "Open threads" are prose notes with no
@@ -454,6 +459,7 @@ const COUNTED_SECTIONS = new Set([
   'Notable narratives',
 ]);
 const SEEN_ONCE = 'Seen once';
+const NOTE_SECTIONS = new Set(['Shifts over time', 'Open threads']);
 
 const entryCount = (line) => {
   const m = line.match(/~?\s*(\d+)\s*time/i);
@@ -485,36 +491,253 @@ const parseSections = (file) => {
   return sections;
 };
 
+// Word checks, used to hold the model to what a dream actually says. They are
+// deliberately crude: each one only has to tell a real match from an invented
+// one, and a model that has to get past a check on top of its instructions is
+// wrong far less often than one that only has the instructions.
+const stem = (word) => {
+  if (word.length > 4 && word.endsWith('ies')) return `${word.slice(0, -3)}y`;
+  if (word.length > 5 && word.endsWith('ing')) return word.slice(0, -3);
+  if (word.length > 4 && word.endsWith('ed')) return word.slice(0, -2);
+  if (/(?:ss|x|z|ch|sh)es$/.test(word)) return word.slice(0, -2);
+  if (word.length > 3 && word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+  return word;
+};
+const stemSet = (words) => new Set(words.split(' ').map(stem));
+
+// Words that say nothing about which thing a line is about.
+const FILLER = new Set((
+  'a an the and or but nor of to in on at by for with from into onto over under about after before '
+  + 'then than that this these those there here was were is are be been being am do did does had has have '
+  + 'i me my mine you your yours we our us they them their he him his she her hers it its as so if not no '
+  + 'up down out off away very just like some any all one thing things something someone somebody anything '
+  + 'everything place time times dream dreams dreamed dreamt feeling feelings felt sense kind sort way lot '
+  + 'back again still also really much many more most other same new old seen once'
+).split(' '));
+
+// A color or a size says what a thing looks like, not what it is: a black dog
+// is not a black Tesla.
+const MODIFIERS = stemSet(
+  'black white red blue green yellow purple pink orange brown gray grey silver gold golden dark bright light '
+  + 'big small little large huge tiny giant tall short long young strange weird empty broken scary creepy different'
+);
+
+// Different words for the same thing, so a match doesn't hinge on which one the
+// dream used. A word for a kind of thing is not here as a match for a particular
+// one: "car" does not stand in for a black Tesla.
+const SAME_THING = [
+  'mom mother mum mommy mama', 'dad father daddy papa', 'grandma grandmother granny nana',
+  'grandpa grandfather granddad', 'kid child children', 'partner boyfriend girlfriend husband wife spouse',
+  'boss manager supervisor', 'teacher professor', 'dog puppy', 'cat kitten', 'house home',
+  'school classroom', 'ocean sea', 'teeth tooth', 'fall fell', 'fly flew', 'die died dead death',
+  'phone cellphone', 'exam test', 'plane airplane', 'stair staircase stairwell',
+  'fear afraid scared terrified frightened dread panic', 'anxious anxiety nervous worried',
+  'sad sadness cry cried crying tears grief', 'angry anger furious rage',
+].map(stemSet);
+// The other direction only: a dream's lake is water, but its water is not a lake.
+const BROADER = {
+  water: stemSet('ocean sea lake river pool flood wave rain underwater'),
+  car: stemSet('tesla truck van suv jeep sedan'),
+};
+
+const wordsOf = (text) => String(text || '').toLowerCase()
+  // Accents come off first, so a word with an accented letter stays one word.
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/'s\b/g, '')
+  .replace(/'/g, '')
+  .split(/[^a-z0-9]+/)
+  .filter(Boolean);
+const contentStems = (text) => wordsOf(text).filter((w) => !FILLER.has(w)).map(stem);
+const sameWord = (a, b) => a === b
+  || (Math.min(a.length, b.length) >= 4 && (a.startsWith(b) || b.startsWith(a)))
+  || SAME_THING.some((group) => group.has(a) && group.has(b));
+const covers = (wanted, said) => sameWord(wanted, said) || !!BROADER[wanted]?.has(said);
+
+// Does `text` share a word with `name` that says what the thing is? A shared
+// color or size alone doesn't count, unless that is all the name has.
+const namesTheThing = (name, text) => {
+  const wanted = contentStems(name);
+  if (!wanted.length) return false;
+  const said = contentStems(text);
+  const hits = wanted.filter((w) => said.some((s) => covers(w, s)));
+  const things = wanted.filter((w) => !MODIFIERS.has(w));
+  return things.length ? hits.some((w) => !MODIFIERS.has(w)) : hits.length > 0;
+};
+
+// Does `text` have every word of `name` that says what the thing is? "a big black
+// dog" names a dog but not "your childhood dog", and that gap is where a model
+// matches the same kind of thing for the same thing. A note in parentheses, like
+// who someone is, isn't needed.
+const namesAllOfIt = (name, text) => {
+  const said = contentStems(text);
+  return contentStems(name.replace(/\(.*?\)/g, ' '))
+    .filter((w) => !MODIFIERS.has(w))
+    .every((w) => said.some((s) => covers(w, s)));
+};
+
+// An entry either names a particular one (whose it is, a time of life, a person)
+// or only describes a thing. "your childhood dog" is one dog; "a locked
+// greenhouse" is any greenhouse that happened to be locked, and a dream with an
+// open one has the greenhouse back, changed.
+const IDENTITY = /\b(?:your|my|his|her|their|our|childhood|first|former|ex)\b|'s\b/i;
+const namesParticularOne = (entry) => IDENTITY.test(entry.name)
+  || (entry.section === 'Recurring figures & people' && !/^(?:a|an|some)\s/i.test(entry.name));
+
+// The word a described thing stands on: the last one before any "with", "at",
+// "of" and the like. "a phone with no signal" is a phone, "a carnival at night" a
+// carnival, "a flooded stairwell" a stairwell.
+const HEAD_BREAK = /\s(?:with|without|of|in|on|at|from|near|under|behind|inside|outside|through|that|who|which|where|by|for|to|into|during)\s/i;
+const headWord = (name) => {
+  const words = contentStems(name.replace(/\(.*?\)/g, ' ').split(HEAD_BREAK)[0]).filter((w) => !MODIFIERS.has(w));
+  const nouns = words.filter((w) => !w.endsWith('ing'));
+  return (nouns.length ? nouns : words).pop() || null;
+};
+const namesTheHead = (name, text) => {
+  const head = headWord(name);
+  if (!head) return namesAllOfIt(name, text);
+  return contentStems(text).some((s) => covers(head, s));
+};
+
+// The word checks only mean something when the dream and the memory file are in
+// the same language, and the file is written in English.
+const ENGLISH_MARKERS = new Set('the a an and i was to of in my me it he she we they on at with but that then there were is had'.split(' '));
+const readsAsEnglish = (text) => {
+  const words = wordsOf(text);
+  if (words.length < 6) return true;
+  return words.filter((w) => ENGLISH_MARKERS.has(w)).length / words.length >= 0.15;
+};
+
+// Is `quote` the dream's own words? Copied text is found as written. A small
+// slip, a typo fixed or a word left out, still passes as long as every word that
+// names something is there, in order, close together. Invented text fails,
+// however close it sounds.
+const quoteFound = (quote, dreamText) => {
+  const raw = wordsOf(quote);
+  if (!raw.length || raw.length > 25 || raw.every((w) => FILLER.has(w))) return false;
+  const q = raw.map((w) => ({ stem: stem(w), filler: FILLER.has(w) }));
+  const d = wordsOf(dreamText).map(stem);
+  const need = Math.ceil(q.length * 0.8);
+  const reach = q.length + 3;
+  for (let start = 0; start < d.length; start += 1) {
+    const end = Math.min(d.length, start + reach);
+    let at = start;
+    let hits = 0;
+    let missedAThing = false;
+    for (const word of q) {
+      let found = -1;
+      for (let i = at; i < end; i += 1) {
+        if (d[i] === word.stem) { found = i; break; }
+      }
+      if (found === -1) {
+        if (!word.filler) { missedAThing = true; break; }
+        continue;
+      }
+      hits += 1;
+      at = found + 1;
+    }
+    if (!missedAThing && hits >= need) return true;
+  }
+  return false;
+};
+
 // What the file held before this rewrite, which is the only ground truth there
 // is for whether something has happened before. A count of null means the file
 // knew the thing but never said how often, which is what older files look like.
+//
+// Only counted entries and the log are keyed. A note under "Shifts over time"
+// like "water: calm early, rough recently" names the same thing as the water
+// pattern, carries no count, and would otherwise stand in for it.
 const indexMemory = (file) => {
-  const index = new Map();
+  const entries = new Map();
+  const notes = new Map();
   for (const section of parseSections(file)) {
+    if (NOTE_SECTIONS.has(section.heading)) {
+      notes.set(section.heading, section.lines.filter((line) => line.trim()).map((line) => line.trim()));
+      continue;
+    }
+    const seenOnce = section.heading === SEEN_ONCE;
+    if (!seenOnce && !COUNTED_SECTIONS.has(section.heading)) continue;
     for (const line of section.lines) {
       if (!line.trim()) continue;
-      const key = normalizePhrase(toBarePhrase(line));
-      if (!key) continue;
-      index.set(key, {
-        seenOnce: section.heading === SEEN_ONCE,
-        count: section.heading === SEEN_ONCE ? 1 : entryCount(line),
+      const phrase = toBarePhrase(line);
+      const key = normalizePhrase(phrase);
+      if (!key || (seenOnce && entries.has(key))) continue;
+      entries.set(key, {
+        seenOnce,
+        count: seenOnce ? 1 : entryCount(line),
+        section: section.heading,
+        line: line.trim(),
+        phrase,
       });
     }
   }
-  return index;
+  return { entries, notes };
+};
+
+// Where a thing from the log goes the moment it happens a second time, when the
+// rewrite didn't put it anywhere itself.
+const PEOPLE_WORDS = stemSet(
+  'mom mother dad father sister brother grandma grandmother grandpa grandfather aunt uncle cousin friend boss '
+  + 'manager coworker teacher partner boyfriend girlfriend husband wife ex kid child son daughter baby man woman '
+  + 'stranger person girl boy neighbor roommate'
+);
+const FEELING_WORDS = stemSet('fear dread panic anxiety anxious shame guilt grief sadness anger rage joy relief loneliness lonely embarrassment helpless');
+const sectionFor = (phrase) => {
+  const words = contentStems(phrase);
+  if (words.some((w) => PEOPLE_WORDS.has(w))) return 'Recurring figures & people';
+  if (words.some((w) => FEELING_WORDS.has(w))) return 'Emotional patterns';
+  return 'Recurring symbols';
+};
+
+// The line with its count set to `n`, whatever it said before, or with one
+// added where it said none.
+const withCount = (line, n) => (entryCount(line) === null
+  ? line.replace(/^(\s*[-•*]?\s*[^:\n]+?)(\s*:|$)/, `$1: ~${n} times$2`)
+  : line.replace(/~?\s*\d+\s*times?/i, `~${n} times`));
+
+// New things the rewrite logged that share no word with the dream or its
+// reading. Those were made up, most often from an example the model was shown.
+// When none of the new things match at all, the dream is most likely in another
+// language than the file, and nothing is dropped.
+const ungroundedPhrases = (phrases, groundText) => {
+  if (!groundText || !phrases.length || !readsAsEnglish(groundText)) return new Set();
+  const checked = phrases.map((phrase) => ({ key: normalizePhrase(phrase), ok: namesTheThing(phrase, groundText) }));
+  if (!checked.some((c) => c.ok)) return new Set();
+  return new Set(checked.filter((c) => !c.ok).map((c) => c.key));
 };
 
 // The model cannot count. It has this dream and the current file, no way to
 // check whether it has seen a parking garage before, and a rule saying nothing
 // above "Seen once" may say 1 time. So it writes "2 times" on things that have
-// happened once and promotes them on the spot. The previous file settles it
-// instead: something is a pattern here only if the file already knew it, and a
-// count can only go up by the one dream being merged in.
-const reconcileMemory = (updated, previous) => {
+// happened once and promotes them on the spot.
+//
+// Nor can it be trusted to keep the file. Asked to merge one dream in, it has
+// handed back only the log, dropped patterns it had seen three times, and left a
+// thing it was told had come back sitting in the log. So the model writes the
+// words and this keeps the books:
+// - Which things this dream has is settled by the match check that ran before
+//   the reading (`matchedKeys`). A pattern it found goes up by exactly one, a
+//   log entry it found becomes a pattern at exactly 2, and nothing else moves.
+//   Without a check (null), a count can rise by at most one and the previous
+//   file is the only proof that something happened before.
+// - A pattern the rewrite lost comes back as it was, and so does a section of
+//   notes that vanished whole.
+// - Everything new has to come from `groundText`, the dream and its reading.
+const reconcileMemory = (updated, previous, { matchedKeys = null, groundText = '' } = {}) => {
   if (!updated) return updated;
-  const before = indexMemory(previous);
+  const { entries: before, notes } = indexMemory(previous);
   const sections = parseSections(updated);
   const demoted = [];
+  const found = (key) => !matchedKeys || matchedKeys.has(key);
+  const sectionNamed = (heading) => {
+    let section = sections.find((s) => s.heading === heading);
+    if (!section) {
+      section = { heading, lines: [] };
+      sections.push(section);
+    }
+    return section;
+  };
 
   for (const section of sections) {
     if (!COUNTED_SECTIONS.has(section.heading)) continue;
@@ -522,7 +745,8 @@ const reconcileMemory = (updated, previous) => {
       const text = line.trim();
       if (!text) return false;
       const phrase = toBarePhrase(text);
-      const prior = before.get(normalizePhrase(phrase));
+      const key = normalizePhrase(phrase);
+      const prior = before.get(key);
       // Nothing in the file knew about this, so this dream is its first sighting
       // whatever count the model put on it. One sighting is not a pattern.
       //
@@ -534,34 +758,69 @@ const reconcileMemory = (updated, previous) => {
         if (phrase) demoted.push(phrase);
         return false;
       }
+      // Out of the log means it came back in this dream. The check says it
+      // didn't, so it goes back to the log.
+      if (prior.seenOnce && !found(key)) {
+        demoted.push(phrase);
+        return false;
+      }
       return true;
     });
-  }
-
-  return serializeMemory(sections, demoted, before);
-};
-
-const serializeMemory = (sections, demoted, before) => {
-  // A promotion out of "Seen once" is real and lands on a count of exactly 2.
-  // Anything else is capped at what it had plus this one dream, the most a
-  // single merge can honestly add. An entry the old file never counted stays
-  // uncounted unless the model committed to a number, and then only to 2.
-  for (const section of sections) {
-    if (!COUNTED_SECTIONS.has(section.heading)) continue;
     section.lines = section.lines.map((line) => {
       const prior = before.get(normalizePhrase(toBarePhrase(line)));
-      if (!prior) return line;
+      const held = prior.seenOnce ? 2 : prior.count;
+      if (matchedKeys) {
+        const key = normalizePhrase(toBarePhrase(line));
+        return withCount(line, prior.seenOnce ? 2 : held + (matchedKeys.has(key) ? 1 : 0));
+      }
       const stated = entryCount(line);
-      const held = prior.seenOnce ? 2 : (prior.count ?? 2);
+      if (stated === null) return withCount(line, held);
       const ceiling = prior.seenOnce ? 2 : held + 1;
-      // A rewrite that leaves the count off keeps the one the file already had,
-      // since there is nothing to say the thing turned up again this time.
-      if (stated === null) return line.replace(/^(\s*[-•*]\s*[^:\n]+?)(\s*:|$)/, `$1: ~${held} times$2`);
-      if (stated <= ceiling) return line;
-      return line.replace(/~?\s*\d+\s*times?/i, `~${ceiling} times`);
+      return stated <= ceiling ? line : withCount(line, ceiling);
     });
   }
 
+  const kept = new Set(sections.filter((s) => COUNTED_SECTIONS.has(s.heading))
+    .flatMap((s) => s.lines.map((line) => normalizePhrase(toBarePhrase(line)))));
+  for (const [key, prior] of before) {
+    if (kept.has(key)) continue;
+    if (!prior.seenOnce && prior.count !== null) {
+      // A pattern the rewrite lost.
+      sectionNamed(prior.section).lines.push(withCount(prior.line, prior.count + (matchedKeys?.has(key) ? 1 : 0)));
+    } else if (!prior.seenOnce) {
+      // An uncounted one from an older file goes to the log, as it would have.
+      demoted.push(prior.phrase);
+    } else if (matchedKeys?.has(key)) {
+      // Back for a second time, and the rewrite left it in the log.
+      sectionNamed(sectionFor(prior.phrase)).lines.push(`- ${prior.phrase.replace(/^(?:a|an)\s+/i, '')}: ~2 times`);
+    }
+  }
+  for (const [heading, lines] of notes) {
+    const now = sections.find((s) => s.heading === heading);
+    if (lines.length && !now?.lines.some((line) => line.trim())) sectionNamed(heading).lines.push(...lines);
+  }
+
+  // Everything new has to come from this dream.
+  const newPhrases = [
+    ...demoted.filter((phrase) => !before.has(normalizePhrase(phrase))),
+    ...(sections.find((s) => s.heading === SEEN_ONCE)?.lines || [])
+      .filter((line) => line.trim() && !before.has(normalizePhrase(toBarePhrase(line))))
+      .map(toBarePhrase),
+  ];
+  const invented = ungroundedPhrases(newPhrases, groundText);
+
+  return serializeMemory(sections, demoted, invented);
+};
+
+const SECTION_ORDER = [...COUNTED_SECTIONS, ...NOTE_SECTIONS, SEEN_ONCE];
+const sectionRank = (heading) => {
+  if (heading === null) return -1;
+  const at = SECTION_ORDER.indexOf(heading);
+  // A heading of the model's own goes just above the log.
+  return at === -1 ? SECTION_ORDER.length - 1.5 : at;
+};
+
+const serializeMemory = (sections, demoted, invented) => {
   const promoted = new Set(
     sections.filter((s) => COUNTED_SECTIONS.has(s.heading))
       .flatMap((s) => s.lines.map((line) => normalizePhrase(toBarePhrase(line))))
@@ -572,13 +831,20 @@ const serializeMemory = (sections, demoted, before) => {
     sections.push(seenOnce);
   }
   if (seenOnce) {
-    // Anything that just became a pattern leaves the log, and a demotion joins
-    // it as a bare phrase unless the log already has it.
-    seenOnce.lines = seenOnce.lines.filter((line) => line.trim() && !promoted.has(normalizePhrase(toBarePhrase(line))));
+    // Anything that just became a pattern leaves the log, and so does anything
+    // new this dream doesn't have. A demotion joins it as a bare phrase unless
+    // the log already has it, and a thing is logged once however it was worded.
+    const logged = new Set();
+    seenOnce.lines = seenOnce.lines.filter((line) => {
+      const key = normalizePhrase(toBarePhrase(line));
+      if (!line.trim() || promoted.has(key) || invented.has(key) || logged.has(key)) return false;
+      logged.add(key);
+      return true;
+    });
     for (const phrase of demoted) {
       const key = normalizePhrase(phrase);
-      if (promoted.has(key)) continue;
-      if (seenOnce.lines.some((line) => normalizePhrase(toBarePhrase(line)) === key)) continue;
+      if (promoted.has(key) || invented.has(key) || logged.has(key)) continue;
+      logged.add(key);
       seenOnce.lines.push(`- ${phrase}`);
     }
   }
@@ -587,16 +853,296 @@ const serializeMemory = (sections, demoted, before) => {
     // A heading the rewrite emptied, and the "- none" the model writes instead
     // of leaving a heading out, both go.
     .filter((section) => section.lines.some((line) => line.trim() && !/^[-•*]?\s*none\.?$/i.test(line.trim())))
+    .sort((a, b) => sectionRank(a.heading) - sectionRank(b.heading))
     .map((section) => (section.heading
       ? `## ${section.heading}\n${section.lines.filter((l) => l.trim() && !/^[-•*]?\s*none\.?$/i.test(l.trim())).join('\n')}`
       : section.lines.join('\n')))
     .join('\n\n');
 };
 
+// Matching a dream against the memory file.
+//
+// This used to be the reading's job: it got the whole file and was asked to list
+// what this dream shared with it. That is a creative call at a high temperature
+// holding a list of things from other dreams, and it named them whether or not
+// this dream had them: "the black Tesla is back" in a dream with no Tesla in it.
+// So matching is now its own call at temperature 0, every match has to quote this
+// dream, and the quote is checked against the dream before anything uses it. The
+// reading only ever sees the matches that held up.
+const MATCH_TIMEOUT_MS = 10_000;
+const MAX_CONNECTIONS = 3;
+const MATCH_PROMPT = `You compare one new dream with a list of things recorded from the same person's earlier dreams, and report only what is clearly in both.
+
+Return ONLY minified JSON: {"matches":[{"id":number,"quote":"string","note":"string"}]}
+
+An entry matches only when this new dream has the same thing: the same object, person, place, event or feeling the entry names.
+- Related is not the same. When an entry names something specific, the dream has to have that specific thing, not something of the same kind
+- An entry ending in [this dream says "..."] shares a word with the new dream. Look at each of those closely: it is often a match, but only when it is the same thing
+- "quote": the words from the new dream that show the thing, copied exactly as the new dream wrote them, one stretch of 2 to 15 words that names it, with no ellipsis. Quote the new dream, never the list. If you can't quote the new dream showing it, it is not a match
+- "note": under 15 words, written to the person as "you". Start with the thing's name, then say what is the same or what changed this time, set against how the entry describes the earlier dreams. "It is back" alone says nothing the list doesn't. Something marked "seen once before" is back for its second time: say it is back, and never call it a pattern, a habit, or long-running. If you give a number of times, use the one in the entry
+- No em dashes or en dashes
+- Most dreams share nothing, or one or two things, with earlier ones, and {"matches":[]} is a normal answer. A wrong match is worse than a missed one`;
+
+// The second look, for a particular one (someone's, from a time of life, a
+// person) that the quote names only in part. The matcher is asked to tell "the
+// same kind of thing" from "the same one" and doesn't reliably: it matched a
+// stray black dog to "your childhood dog". Asked on its own, with nothing else
+// to do, the model gets that question right. It is not asked about described
+// things ("a locked greenhouse"), where it holds every detail to the letter.
+const SAME_THING_PROMPT = `Each item pairs someone or something particular from a person's earlier dreams (theirs, from a time of their life, or a person they know) with words from their new dream. For each one, decide whether the new dream has that same one, or a different one of the same kind.
+
+Return ONLY minified JSON: {"answers":[{"id":number,"same":boolean}]}
+
+- "same" is true when the new dream shows it is that one, even if it looks or acts differently this time
+- "same" is false when it is a different one of the same kind. A stranger's house is not your grandmother's house, and a new coworker is not the friend from summer camp
+- When the dream doesn't settle which one it is, answer false`;
+
+// One JSON answer from the model at temperature 0. Throws on any failure, so a
+// caller decides what "couldn't check" means for it.
+const askForJson = async ({ system, user, apiKey, maxTokens, timeoutMs }) => {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(timeoutMs),
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      response_format: { type: 'json_object' },
+      max_tokens: maxTokens,
+      temperature: 0,
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
+  const data = await res.json();
+  const choice = data.choices?.[0];
+  if (choice?.finish_reason === 'length') throw new Error('The answer ran long and was cut off.');
+  return choice?.message?.content || '';
+};
+
+// Where a line is about a particular thing, a match has to name it.
+const CONCRETE_SECTIONS = new Set(['Recurring symbols', 'Recurring figures & people', SEEN_ONCE]);
+const MATCHABLE_SECTIONS = new Set([...COUNTED_SECTIONS, 'Shifts over time', 'Open threads', SEEN_ONCE]);
+const SECTION_LABEL = {
+  'Recurring symbols': 'recurring symbol',
+  'Recurring figures & people': 'recurring person',
+  'Emotional patterns': 'recurring feeling',
+  'Life themes (inferred)': 'recurring theme',
+  'Notable narratives': 'recurring storyline',
+  'Shifts over time': 'a change across your dreams',
+  'Open threads': 'left unresolved in earlier dreams',
+};
+
+// Every line of the file a dream could match. A counted line with no count came
+// from an older file and is treated as seen once, the way reconcileMemory does.
+const memoryEntries = (file) => {
+  const entries = [];
+  for (const section of parseSections(file)) {
+    if (!MATCHABLE_SECTIONS.has(section.heading)) continue;
+    for (const line of section.lines) {
+      const text = stripBullet(line);
+      if (!text) continue;
+      const counted = COUNTED_SECTIONS.has(section.heading);
+      const count = section.heading === SEEN_ONCE ? 1 : (counted ? (entryCount(text) ?? 1) : null);
+      entries.push({
+        id: entries.length + 1,
+        section: section.heading,
+        text,
+        name: text.split(':')[0].replace(/\*/g, '').trim(),
+        key: normalizePhrase(toBarePhrase(line)),
+        count,
+        once: count === 1,
+      });
+    }
+  }
+  return entries;
+};
+
+// What the entry's history is. A dream that is already in the file was counted
+// when it went in, so its counts include it.
+const describeEntry = (entry, alreadyIndexed) => {
+  if (entry.once) return 'seen once before';
+  const label = SECTION_LABEL[entry.section] || 'from earlier dreams';
+  if (entry.count === null) return label;
+  return alreadyIndexed
+    ? `${label}, in about ${entry.count} dreams counting this one`
+    : `${label}, in about ${entry.count} earlier dreams, so ${entry.count + 1} with this one`;
+};
+
+const LONG_RUNNING = /\b(?:keeps?|kept|always|often|usual(?:ly)?|habit|pattern|recurr\w*|long[-\s]running|again and again|every time|so many|many times)\b/i;
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+const fallbackNote = (entry, alreadyIndexed) => {
+  const name = capitalize(entry.name.replace(/^(?:a|an)\s+/i, 'the '));
+  if (entry.once) return `${name} is back, the second time it has shown up`;
+  if (entry.count) return `${name} again, in ${alreadyIndexed ? entry.count : entry.count + 1} dreams now`;
+  return `${name} comes up again`;
+};
+// The model's note, unless it overreaches: too long, calling a second sighting
+// a habit, or never saying what came back.
+const cleanNote = (note, entry, alreadyIndexed, checkWords) => {
+  // No closing period, so every line of the list reads the same.
+  const text = capitalize(stripDashes(typeof note === 'string' ? note.trim() : '').replace(/\.$/, ''));
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (!words || words > 20) return fallbackNote(entry, alreadyIndexed);
+  if (entry.once && LONG_RUNNING.test(text)) return fallbackNote(entry, alreadyIndexed);
+  // The list's own wording read back ("seen once before") says nothing.
+  if (/\bseen once\b|\bearlier dreams?\b/i.test(text)) return fallbackNote(entry, alreadyIndexed);
+  if (checkWords && !namesTheThing(entry.name, text)) return fallbackNote(entry, alreadyIndexed);
+  return text;
+};
+
+// Keeps the matches that hold up: an entry that exists, a quote that is really
+// in the dream, and, for a thing rather than a feeling, a quote that names it
+// rather than something else in the dream.
+//
+// A described thing ("a locked greenhouse") holds up when the quote names the
+// thing itself, whatever its details. A particular one ("your childhood dog")
+// holds up outright only when the quote has every word of it; when it names
+// only part ("dog"), the match comes back marked `unsure`, for the second look.
+// In a dream the word checks can't read, every thing goes to the second look.
+const verifyMatches = (raw, entries, dreamText, { alreadyIndexed = false } = {}) => {
+  let list = null;
+  try { list = JSON.parse(raw || '')?.matches; } catch { return []; }
+  if (!Array.isArray(list)) return [];
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const checkWords = readsAsEnglish(dreamText);
+  const kept = [];
+  for (const match of list) {
+    const entry = byId.get(Number(match?.id));
+    if (!entry || kept.some((k) => k.entry.id === entry.id || k.entry.key === entry.key)) continue;
+    const particular = CONCRETE_SECTIONS.has(entry.section);
+    let quote = typeof match.quote === 'string' ? match.quote.trim().replace(/^["']|["']$/g, '') : '';
+    let recovered = false;
+    if (!quoteFound(quote, dreamText)) {
+      quote = particular && checkWords ? quoteFromDream(entry.name, dreamText) : null;
+      if (!quote) continue;
+      recovered = true;
+    }
+    let unsure = particular && !checkWords;
+    if (checkWords && particular) {
+      if (namesParticularOne(entry)) {
+        if (!namesTheThing(entry.name, quote)) continue;
+        unsure = recovered || !namesAllOfIt(entry.name, quote);
+      } else if (!namesTheHead(entry.name, quote)) {
+        continue;
+      }
+    }
+    kept.push({ entry, quote, note: cleanNote(match.note, entry, alreadyIndexed, checkWords), unsure });
+    if (kept.length >= MAX_CONNECTIONS * 2) break;
+  }
+  return kept;
+};
+
+// The model sometimes quotes the list instead of the dream ("a locked greenhouse"
+// for a dream with an open one). When the dream does name the thing, its own
+// words around that name stand in, and the match goes to the second look. When
+// it doesn't, there is nothing to recover and the match was invented.
+const quoteFromDream = (name, dreamText) => {
+  // The thing itself first, so "locked" somewhere else in the dream isn't what
+  // stands in for "a locked greenhouse".
+  const head = headWord(name);
+  const rest = contentStems(name.replace(/\(.*?\)/g, ' ')).filter((w) => !MODIFIERS.has(w) && w !== head);
+  const sentences = dreamText.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim().split(/\s+/).filter(Boolean));
+  for (const wanted of [head, ...rest].filter(Boolean)) {
+    for (const words of sentences) {
+      const at = words.findIndex((word) => {
+        const [w] = wordsOf(word);
+        return w && !FILLER.has(w) && covers(wanted, stem(w));
+      });
+      if (at !== -1) return words.slice(Math.max(0, at - 6), at + 8).join(' ').replace(/[.!?,;:]+$/, '');
+    }
+  }
+  return null;
+};
+
+// The second look: which unsure matches are the same particular thing. A failed
+// call confirms none of them.
+const confirmSameThing = async (unsure, dreamText, apiKey) => {
+  if (!unsure.length) return new Set();
+  const items = unsure.map(({ entry, quote }) => `[${entry.id}] Recorded earlier: "${entry.name}". In the new dream: "${quote}"`).join('\n');
+  try {
+    const raw = await askForJson({
+      system: SAME_THING_PROMPT,
+      user: `New dream:\n"""${dreamText}"""\n\nItems:\n${items}`,
+      apiKey,
+      maxTokens: 200,
+      timeoutMs: MATCH_TIMEOUT_MS,
+    });
+    const answers = JSON.parse(raw)?.answers;
+    if (!Array.isArray(answers)) return new Set();
+    return new Set(answers.filter((a) => a?.same === true).map((a) => Number(a.id)));
+  } catch (e) {
+    console.error('The same-thing check failed; dropping the matches it was for:', e.message);
+    return new Set();
+  }
+};
+
+// The dream's own word for a thing the entry names, when it has one: "mother"
+// for "Mom". In a long list the matcher misses things, and a pointer to the word
+// is enough for it to look. Only a word that names all of a particular one
+// counts, so "dog" is no pointer to "your childhood dog".
+const dreamWordFor = (entry, dreamText) => {
+  if (!CONCRETE_SECTIONS.has(entry.section)) return null;
+  const particular = namesParticularOne(entry);
+  if (particular && !namesAllOfIt(entry.name, dreamText)) return null;
+  const wanted = particular
+    ? contentStems(entry.name.replace(/\(.*?\)/g, ' ')).filter((w) => !MODIFIERS.has(w))
+    : [headWord(entry.name)].filter(Boolean);
+  return wordsOf(dreamText).find((word) => !FILLER.has(word) && wanted.some((w) => covers(w, stem(word)))) || null;
+};
+
+// What this dream shares with the memory file, checked. Throws when the match
+// call fails, so the caller can tell "nothing matched" from "couldn't check".
+//
+// When the dream is already in the file, everything it added is in there too,
+// and would match itself. Its "Seen once" items are left out, since most of them
+// came from this very dream, and the counts are read as including it.
+const findMemoryMatches = async (dreamText, memory, { alreadyIndexed = false, apiKey }) => {
+  const entries = memoryEntries(memory).filter((entry) => !(alreadyIndexed && entry.once));
+  if (!entries.length) return [];
+  const hints = readsAsEnglish(dreamText);
+  const list = entries.map((entry) => {
+    const word = hints ? dreamWordFor(entry, dreamText) : null;
+    return `[${entry.id}] (${describeEntry(entry, alreadyIndexed)}) ${entry.text}${word ? ` [this dream says "${word}"]` : ''}`;
+  }).join('\n');
+  const raw = await askForJson({
+    system: MATCH_PROMPT,
+    user: `Recorded from earlier dreams:\n${list}\n\nNew dream:\n"""${dreamText}"""`,
+    apiKey,
+    maxTokens: 500,
+    timeoutMs: MATCH_TIMEOUT_MS,
+  });
+  const kept = verifyMatches(raw, entries, dreamText, { alreadyIndexed });
+  const confirmed = await confirmSameThing(kept.filter((m) => m.unsure), dreamText, apiKey);
+  return kept
+    .filter((m) => !m.unsure || confirmed.has(m.entry.id))
+    .slice(0, MAX_CONNECTIONS)
+    .map(({ entry, quote, note }) => ({ entry, quote, note }));
+};
+
+// The only history the reading is given. It never sees the rest of the file, so
+// it has nothing else to borrow from.
+const buildPatternBlock = (matches, alreadyIndexed) => {
+  if (!matches?.length) return null;
+  const lines = matches.map(({ entry, quote }) => `- ${entry.text} (${describeEntry(entry, alreadyIndexed)}). In this dream: "${quote}"`);
+  return `[What this dream shares with your earlier dreams. Each line was checked against your dream memory and found in this dream.]
+${lines.join('\n')}
+
+PATTERN DIRECTIVE:
+- These are the only links to earlier dreams that are known to be real. In "themes", bring in the one or two that matter most to this dream, and say what is the same or different this time.
+- Something seen once before is back for its second time. Say that plainly, and never call it a pattern, a habit, or long-running.
+- Mention no other earlier dream, symbol, person or feeling, and add no history the list doesn't give.`;
+};
+
 // Rewrites the memory file from the current one. Returns whether it persisted.
 // The caller must not mark the dream indexed unless it did, or the dream is lost
 // from the memory permanently.
-const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) => {
+//
+// `matched` is what the match check found of the file in this dream, as
+// { name, key } pairs, or null when the check didn't run or failed. Then it runs
+// again here, on the file as it is now. If it fails again, nothing counts as
+// matched: a repeat goes unseen this once, which is better than a count raised on
+// a guess.
+const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey, matched = null) => {
 
   // Re-read instead of using the copy fetched at the top of the request: this
   // rewrites the whole file, so building on a stale read would silently discard
@@ -607,12 +1153,30 @@ const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) =>
   try { currentMemory = await getDreamMemory(uid); }
   catch (e) { console.error('Dream memory read failed; leaving it as it is:', e.message); return false; }
 
+  let found = matched;
+  if (!found && currentMemory) {
+    try {
+      found = (await findMemoryMatches(dreamText, currentMemory, { apiKey }))
+        .map(({ entry }) => ({ name: entry.name, key: entry.key }));
+    } catch (e) {
+      console.error('Dream memory match check failed; counting nothing as matched:', e.message);
+      found = [];
+    }
+  }
+  found = found || [];
+
+  const checked = found.length
+    ? `Checked against this dream, these entries already in the file appear in it again: ${found.map((m) => m.name).join('; ')}. Only these may gain a count or move up out of "Seen once".`
+    : 'Checked against this dream: nothing already in the file appears in it again. No count goes up and nothing moves up out of "Seen once". Log what is new.';
+
   const userContent = [
     `Current memory:\n${currentMemory || '(empty, this is the first entry)'}`,
     `---`,
     `New dream title: ${aiTitle}`,
     `Dream content: ${dreamText.slice(0, 2000)}`,
     `AI analysis: ${aiInsights}`,
+    `---`,
+    checked,
   ].join('\n');
 
   try {
@@ -640,7 +1204,10 @@ const updateDreamMemory = async (uid, dreamText, aiTitle, aiInsights, apiKey) =>
       console.error('Dream memory update hit the token ceiling; keeping the previous file.');
       return false;
     }
-    const updatedMemory = reconcileMemory(choice?.message?.content?.trim(), currentMemory);
+    const updatedMemory = reconcileMemory(choice?.message?.content?.trim(), currentMemory, {
+      matchedKeys: new Set(found.map((m) => m.key)),
+      groundText: `${dreamText}\n${aiInsights || ''}`,
+    });
     if (!updatedMemory) return false;
     // A file that comes back less than half its old size is a failed rewrite,
     // not a consolidation. Trimming rare entries never costs that much.
@@ -662,19 +1229,8 @@ const buildSystemPrompt = (styleDelta, contextBlock, lengthRule, requirement) =>
     styleDelta || STYLE_DELTAS.balanced,
     buildOutputRules(lengthRule || DEFAULT_STYLE_LENGTH, requirement || DEFAULT_STYLE_REQUIREMENT),
   ];
-  // The connections rules live here rather than in the base prompt, because
-  // without a memory file there is nothing to connect and the whole block is
-  // just tokens that invite the model to invent a pattern.
-  if (contextBlock) {
-    parts.push(`${contextBlock}
-
-MEMORY DIRECTIVE: This dreamer has a recorded history. Use it honestly.
-- Fill "connections" only with things the memory file explicitly records that are also clearly present in this dream, each under 15 words. A contrast counts when both halves are real, for example "water recurs, but this is the first time it turns violent". A symbol this dream has that the memory file does not is not recurring. Return [] if nothing overlaps.
-- The file's "Seen once" list is things that have happened exactly once. One of those turning up in this dream is its second appearance, which is worth saying plainly ("the black Tesla is back"). Never call it a long-running pattern, and never cite a "Seen once" item that is not in this dream.
-- In "themes", mention a remembered pattern only where it genuinely shows up in this dream, for example "Water has come up in your dreams before; here it shifts from still to rushing..."
-- Reach for what the dreamer is least likely to have noticed: a symbol that has inverted since earlier entries, two elements that keep arriving together, an emotion missing where the memory says it usually sits.
-- Accuracy matters more than fullness. Fewer real connections are better than more invented ones.`);
-  }
+  // Only the checked matches (buildPatternBlock), never the memory file itself.
+  if (contextBlock) parts.push(contextBlock);
   return parts.join('\n\n');
 };
 
@@ -715,12 +1271,12 @@ const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 
 
 // Index this dream into the memory file unless it already has been. A
 // re-generation of an already-indexed dream must not count twice.
-const scheduleMemoryIndexing = ({ uid, tier, dreamId, text, title, themes, safetyFiltered, apiKey }) => {
+const scheduleMemoryIndexing = ({ uid, tier, dreamId, text, title, themes, safetyFiltered, apiKey, matched = null }) => {
   if (tier !== 'premium' || safetyFiltered || !dreamId || !apiKey) return;
 
   const indexing = (async () => {
     if (await isDreamMemoryIndexed(uid, dreamId)) return;
-    const stored = await updateDreamMemory(uid, text, title, themes, apiKey);
+    const stored = await updateDreamMemory(uid, text, title, themes, apiKey, matched);
     // Only claim the dream once the memory actually holds it. Marking it on a
     // failed update used to retire the dream from indexing forever.
     if (!stored) return;
@@ -819,7 +1375,7 @@ module.exports = async function handler(req, res) {
 
   const cacheKey = hash(text + effectivePrompt + normalizedStyle + uid);
   if (cache.has(cacheKey)) {
-    const hit = cache.get(cacheKey);
+    const { result: hit, matched } = cache.get(cacheKey);
     // A cached answer still has to index: if the first attempt's memory write
     // failed, retrying the same dream in the same style would otherwise short
     // circuit here and the dream would never reach the memory file.
@@ -832,6 +1388,7 @@ module.exports = async function handler(req, res) {
       themes: hit.themes,
       safetyFiltered: hit.safetyFiltered,
       apiKey: process.env.OPENAI_API_KEY,
+      matched,
     });
     return res.status(200).json({ ...hit, cached: true });
   }
@@ -862,17 +1419,27 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'AI not configured.' });
 
-  // Load dream memory for premium users (used as analysis context)
+  // Premium accounts: check this dream against the memory file first, and give
+  // the reading only the matches that held up. `matched` stays null when the
+  // check couldn't run, so the memory update knows to run it again.
   let contextBlock = null;
-  let currentMemory = null;
+  let matches = [];
+  let matched = null;
   if (quota.tier === 'premium') {
     try {
-      currentMemory = await getDreamMemory(uid);
-      if (currentMemory) {
-        contextBlock = `[Dream memory: this dreamer's recurring symbols, patterns, and themes]\n${currentMemory}`;
+      const memory = await getDreamMemory(uid);
+      if (memory) {
+        const alreadyIndexed = dreamId ? (await readMemoryIndexed(uid, dreamId)) === true : false;
+        matches = await findMemoryMatches(text, memory, { alreadyIndexed, apiKey });
+        contextBlock = buildPatternBlock(matches, alreadyIndexed);
       }
-    } catch (e) { console.error('Dream memory fetch failed:', e.message); }
+      matched = matches.map(({ entry }) => ({ name: entry.name, key: entry.key }));
+    } catch (e) {
+      console.error('Checking this dream against dream memory failed:', e.message);
+      matches = [];
+    }
   }
+  const connections = matches.map((m) => m.note).filter((note) => !containsTeenUnsafeText(note));
 
   const temperature = STYLE_TEMPERATURE[normalizedStyle] ?? 0.7;
   const lengthRule = STYLE_LENGTH[normalizedStyle] ?? DEFAULT_STYLE_LENGTH;
@@ -885,7 +1452,9 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({ error: e.message || 'AI failed.' });
   }
 
-  const { title, themes, connections } = parse(raw);
+  // The reading's own "connections", if it still writes any, are ignored: the
+  // list comes from the checked matches above.
+  const { title, themes } = parse(raw);
   if (!title || !themes) {
     refundQuota(uid, quota.usedCredit).catch(() => {});
     return res.status(502).json({ error: 'Incomplete AI response.' });
@@ -896,13 +1465,12 @@ module.exports = async function handler(req, res) {
   const safetyFiltered = safeTitle !== title || safeThemes !== themes;
 
   const result = { title: safeTitle, themes: safeThemes, connections, safetyFiltered };
-  cache.set(cacheKey, result);
+  cache.set(cacheKey, { result, matched });
 
-  scheduleMemoryIndexing({ uid, tier: quota.tier, dreamId, text, title: safeTitle, themes: safeThemes, safetyFiltered, apiKey });
+  scheduleMemoryIndexing({ uid, tier: quota.tier, dreamId, text, title: safeTitle, themes: safeThemes, safetyFiltered, apiKey, matched });
 
   res.status(200).json({
     ...result,
-    connections,
     tier: quota.tier,
     remainingFree: quota.remainingFree,
     creditBalance: quota.creditBalance,
@@ -911,4 +1479,18 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.deps = deps;
-module.exports.internals = { getUserTier, getDreamMemory, saveDreamMemory };
+module.exports.internals = {
+  getUserTier,
+  getDreamMemory,
+  saveDreamMemory,
+  reconcileMemory,
+  updateDreamMemory,
+  memoryEntries,
+  verifyMatches,
+  quoteFound,
+  namesTheThing,
+  buildSystemPrompt,
+  MEMORY_PROMPT,
+  MATCH_PROMPT,
+  SAME_THING_PROMPT,
+};
