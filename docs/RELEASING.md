@@ -121,11 +121,14 @@ visitors, Jett's site and profile) points at
 release needs no link changes.
 
 1. Set the version in the Xcode project as for iOS. `android/app/build.gradle` reads
-   `MARKETING_VERSION` from it, and the version code follows (1.4.1 is 10401).
+   `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` from it, and the version code follows
+   (1.4.1 (2) is 1040102; the first APK, 1.4.1, was 10401 from before builds counted). A second
+   build of a version shows as "1.4.1 (2)" on the phone.
 2. `./scripts/build-apk.sh` builds the web bundle, syncs it into `android/`, and builds and
    checks a signed APK. About two minutes, or five the first time while Gradle downloads.
 3. Publish it, named exactly `Nightlink.apk` and marked latest:
    `gh release create android-1.4.1 /path/to/Nightlink.apk --title "Nightlink 1.4.1 for Android" --latest`
+   (for a second build of a version: `android-1.4.1-2`, "Nightlink 1.4.1 (2) for Android")
 
 ### The key
 

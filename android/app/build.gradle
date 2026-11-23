@@ -1,9 +1,13 @@
 apply plugin: 'com.android.application'
 
-// One version for both apps: Android reads the iPhone app's from the Xcode
-// project, so setting it there for a release sets it here too. The version
-// code has to grow with every release, so 1.4.1 becomes 10401.
-def appVersion = (file('../../ios/App/Nightlink.xcodeproj/project.pbxproj').text =~ /MARKETING_VERSION = ([0-9.]+);/)[0][1]
+// One version for both apps: Android reads the iPhone app's version and build
+// number from the Xcode project, so setting them there for a release sets them
+// here too. The version code has to grow with every release, build numbers
+// included, so 1.4.1 (2) becomes 1040102. (Before 11/23/2026 it left the build
+// out: 1.4.1 was 10401. Every code from this one on is larger.)
+def xcodeProject = file('../../ios/App/Nightlink.xcodeproj/project.pbxproj').text
+def appVersion = (xcodeProject =~ /MARKETING_VERSION = ([0-9.]+);/)[0][1]
+def appBuild = (xcodeProject =~ /CURRENT_PROJECT_VERSION = ([0-9]+);/)[0][1] as int
 def versionParts = (appVersion.tokenize('.') + ['0', '0']).take(3).collect { it as int }
 
 // The release key and its password live outside the repo, and
@@ -18,8 +22,8 @@ android {
         applicationId "dev.nightlink"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]
-        versionName appVersion
+        versionCode ((versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]) * 100) + appBuild
+        versionName appBuild > 1 ? "${appVersion} (${appBuild})" : appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
