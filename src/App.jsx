@@ -16,7 +16,7 @@ import KeyboardDismiss from './components/KeyboardDismiss';
 import LoadingIndicator from './components/LoadingIndicator';
 import ErrorBoundary from './components/ErrorBoundary';
 import useActivityPreview from './hooks/useActivityPreview';
-import { pushActivityLocalNotification, syncDailyDreamReminder } from './utils/notificationHelpers';
+import { pushActivityLocalNotification, restoreDevicePush, syncDailyDreamReminder } from './utils/notificationHelpers';
 import { triggerMediumHaptic, triggerSuccessHaptic } from './utils/haptics';
 import { initIosTapFix } from './utils/iosTapFix';
 import { requestRefresh } from './hooks/useRefreshSignal';
@@ -318,6 +318,16 @@ function AppContent({ user, loading, ready }) {
     activity?.viewerProfile?.settings?.notifyDreamReminders,
     activity?.viewerProfile?.settings?.reminderHour,
   ]);
+
+  // Signing out takes this phone off the account's push list, so put it back
+  // once the account is signed in again with notifications on.
+  const pushOn = Boolean(activity?.viewerProfile?.settings?.notificationsEnabled);
+  useEffect(() => {
+    if (!user?.uid || !pushOn) return;
+    restoreDevicePush(user.uid).catch((error) => {
+      console.error('Turning push back on for this phone failed', error);
+    });
+  }, [user?.uid, pushOn]);
 
   useEffect(() => {
     const entries = activity?.inboxEntries || [];

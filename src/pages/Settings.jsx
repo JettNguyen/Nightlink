@@ -6,7 +6,7 @@ import { mapProfile } from '../utils/mappers';
 import { SettingsSkeleton } from '../components/SkeletonLoader';
 import { appUserPropType } from '../propTypes';
 import { Capacitor } from '@capacitor/core';
-import { areNotificationsSupported, disableNotifications, getNotificationPermission, getNotificationPermissionStatus, requestNotificationPermission } from '../utils/notificationHelpers';
+import { areNotificationsSupported, disableNotifications, forgetDeviceOnSignOut, getNotificationPermission, getNotificationPermissionStatus, requestNotificationPermission } from '../utils/notificationHelpers';
 import { triggerLightHaptic, triggerMediumHaptic, triggerSelectionHaptic, triggerSuccessHaptic, triggerErrorHaptic } from '../utils/haptics';
 import {
   IS_RC_SUPPORTED,
@@ -824,6 +824,10 @@ export default function Settings({ user }) {
         throw new Error(payload?.error || 'Could not delete account.');
       }
 
+      await Promise.race([
+        forgetDeviceOnSignOut(uid).catch(() => {}),
+        new Promise((resolve) => { setTimeout(resolve, 3000); }),
+      ]);
       await supabase.auth.signOut();
       window.location.assign('/login');
     } catch (error) {
@@ -1173,7 +1177,14 @@ export default function Settings({ user }) {
               <button
                 type="button"
                 className="primary-btn password-btn"
-                onClick={async () => { try { await supabase.auth.signOut(); } catch { /* ignore */ } }}
+                onClick={async () => {
+                  // Off this phone's push list first, but never let that hold up signing out.
+                  await Promise.race([
+                    forgetDeviceOnSignOut(uid).catch(() => {}),
+                    new Promise((resolve) => { setTimeout(resolve, 3000); }),
+                  ]);
+                  try { await supabase.auth.signOut(); } catch { /* ignore */ }
+                }}
               >
                 Sign out
               </button>

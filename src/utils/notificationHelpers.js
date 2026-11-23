@@ -189,6 +189,38 @@ export async function requestNotificationPermission(userId) {
 }
 
 /**
+ * Takes this phone off the account's push list and clears its daily reminder,
+ * before signing out, so whoever signs in next on it doesn't get this
+ * account's notices. The account's own settings stay as they are, and
+ * restoreDevicePush puts the phone back when this account signs in again.
+ */
+export async function forgetDeviceOnSignOut(userId) {
+  if (!isNative()) return;
+  const token = localStorage.getItem('nightlink_push_token');
+  localStorage.removeItem('nightlink_push_token');
+  await Promise.allSettled([
+    token && userId ? removeUserPushToken(userId, token) : null,
+    syncDailyDreamReminder(false),
+  ]);
+}
+
+/**
+ * Puts this phone back on the account's push list after signing in, when the
+ * account has notifications on and the phone already allows them. Never asks
+ * for permission, and does nothing while this phone is already on the list.
+ */
+export async function restoreDevicePush(userId) {
+  if (!hasNativePush() || !userId) return;
+  if (localStorage.getItem('nightlink_push_token')) return;
+  const permission = await PushNotifications.checkPermissions();
+  if (permission.receive !== 'granted') return;
+  const token = await registerNativePushToken();
+  if (!token) return;
+  localStorage.setItem('nightlink_push_token', token);
+  await upsertUserPushToken(userId, token);
+}
+
+/**
  * Disable notifications for the current device
  * @param {string} userId - The authenticated user's ID
  */
