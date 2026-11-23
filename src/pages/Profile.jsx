@@ -191,7 +191,9 @@ export default function Profile({ user }) {
   useEffect(() => {
     if (!targetUserId) return;
     let q = supabase.from('dreams').select('*').eq('user_id', targetUserId).order('created_at', { ascending: false });
-    if (!viewingOwnProfile) q = q.in('visibility', ['public', 'anonymous', 'followers', 'mutuals']);
+    // Anonymous dreams never show on a profile, the author's own included:
+    // posting one promises that "your name and profile are hidden."
+    if (!viewingOwnProfile) q = q.in('visibility', ['public', 'followers', 'mutuals']);
     q.then(({ data }) => {
       setDreams((data || []).map(mapDream));
       setDreamsLoading(false);
@@ -509,7 +511,7 @@ export default function Profile({ user }) {
     if (viewingOwnProfile) return dreams.filter((d) => d && d.visibility !== 'private' && d.visibility !== 'anonymous');
     // Hide all dreams if the profile owner is blocked.
     if (isBlockedTarget) return [];
-    return dreams.filter((d) => d && canViewerSeeDream({
+    return dreams.filter((d) => d && d.visibility !== 'anonymous' && canViewerSeeDream({
       dream: d,
       viewerId,
       ownerProfile: userData,

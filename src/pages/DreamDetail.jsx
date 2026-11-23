@@ -1011,9 +1011,15 @@ export default function DreamDetail({ user }) {
     void triggerSelectionHaptic();
     setUpdatingVisibility(true);
     try {
-      const { error } = await supabase.from('dreams').update({ visibility: value }).eq('id', dream.id);
+      // Going anonymous also clears the author's handle stored on the dream, the
+      // way a dream posted anonymously never has one.
+      const changes = { visibility: value };
+      if (value === 'anonymous') changes.author_username = null;
+      else if (dream.visibility === 'anonymous') changes.author_username = viewerProfile?.username || null;
+      const { error } = await supabase.from('dreams').update(changes).eq('id', dream.id);
       if (error) throw error;
-      const targetIds = new Set([
+      // Its notice would name the author, which is what going anonymous hides.
+      const targetIds = value === 'anonymous' || dream.visibility === 'anonymous' ? new Set() : new Set([
         ...(Array.isArray(taggedPeople) ? taggedPeople.map((entry) => entry?.userId).filter(Boolean) : []),
         ...comments.map((entry) => entry?.userId).filter(Boolean)
       ]);
@@ -1490,7 +1496,10 @@ export default function DreamDetail({ user }) {
         }
       }));
 
-      if (events.length) {
+      // A notice always shows who sent it, so the author of an anonymous dream
+      // sends none about it: one would tell the reader who wrote the dream.
+      const authorOfAnonymousDream = dream?.visibility === 'anonymous' && dream?.userId === viewerId;
+      if (events.length && !authorOfAnonymousDream) {
         try {
           await logActivityEvents(events);
         } catch (activityError) {
@@ -2011,7 +2020,14 @@ export default function DreamDetail({ user }) {
     const viewerHearted = Boolean(entry.heartUserIds?.[viewerId]);
     const heartCount = entry.heartCount || 0;
     const heartDisabled = heartingCommentIds.has(entry.id);
-    const commenter = userSummaries[entry.userId] || null;
+    // On an anonymous dream, the author's own comments carry no name, handle or
+    // photo, so replying doesn't undo what posting it anonymously promised.
+    const hideCommenter = dream?.visibility === 'anonymous' && entry.userId === dream?.userId;
+    const commenter = hideCommenter ? null : (userSummaries[entry.userId] || null);
+    // The name and handle come from the commenter's profile when it has loaded.
+    // What the comment row says is only a fallback, since the app writes it.
+    const commenterName = hideCommenter ? 'The dreamer' : (commenter?.displayName || entry.authorDisplayName || 'Dreamer');
+    const commenterHandle = hideCommenter ? '' : (commenter?.username || entry.authorUsername || '');
     return (
       <div className={`comment-card${depth ? ' comment-card-reply' : ''}`}>
         <div className="comment-meta">
@@ -2024,15 +2040,19 @@ export default function DreamDetail({ user }) {
               className="comment-avatar"
             />
             <div className="comment-meta-names">
-              <span className="comment-author">{entry.authorDisplayName || 'Dreamer'}</span>
-              {entry.authorUsername && <span className="comment-handle">@{entry.authorUsername}</span>}
+              <span className="comment-author">{commenterName}</span>
+              {commenterHandle && <span className="comment-handle">@{commenterHandle}</span>}
             </div>
           </div>
           <span className="comment-time">{relativeTime}</span>
         </div>
         {replyingTo && (
           <p className="comment-reply-context">
-            Replying to {replyingTo.authorUsername ? `@${replyingTo.authorUsername}` : replyingTo.authorDisplayName || 'this comment'}
+            Replying to {dream?.visibility === 'anonymous' && replyingTo.userId === dream?.userId
+              ? 'the dreamer'
+              : (userSummaries[replyingTo.userId]?.username || replyingTo.authorUsername)
+                ? `@${userSummaries[replyingTo.userId]?.username || replyingTo.authorUsername}`
+                : userSummaries[replyingTo.userId]?.displayName || replyingTo.authorDisplayName || 'this comment'}
           </p>
         )}
         <p className="comment-body">{entry.content || ''}</p>
