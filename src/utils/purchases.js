@@ -23,9 +23,11 @@ export const CREDITS_OFFERING_ID = 'ai_credits';
 /** How many AI credits one credit-pack purchase grants. */
 export const CREDITS_PER_PACK = 10;
 
-/** API key read from env; falls back to the provided test key. */
-export const RC_API_KEY =
-  import.meta.env.VITE_REVENUECAT_IOS_API_KEY || 'test_rGlzaAAgFfXRiyYnJQZivprjPEX';
+/**
+ * API key read from env. No fallback: a build made without it has no store,
+ * rather than shipping RevenueCat's test store, where nothing is paid for.
+ */
+export const RC_API_KEY = import.meta.env.VITE_REVENUECAT_IOS_API_KEY || '';
 
 /** True only on native iOS, the only platform where IAP is available. */
 export const IS_RC_SUPPORTED =
