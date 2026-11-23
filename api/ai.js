@@ -328,8 +328,7 @@ const checkAndIncrementQuotaFallback = async (uid, tier) => {
   };
 };
 
-// The plan's tier, or premium for the comp list, matched against the email
-// the caller signs in with (see billing.isComped).
+// The plan's tier, or premium for the comp list (see billing.isComped).
 const getUserTier = async (user) => {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin

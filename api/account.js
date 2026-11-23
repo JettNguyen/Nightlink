@@ -70,7 +70,7 @@ const syncPlan = async (admin, user, body) => {
   const comped = billing.isComped(user);
   if (comped !== (plan?.sources?.comp?.active === true)) {
     try {
-      plan = (await billing.setPlanSource(admin, uid, 'comp', { active: comped, from: 'PREMIUM_EMAILS' })) || plan;
+      plan = (await billing.setPlanSource(admin, uid, 'comp', { active: comped, from: 'comp list' })) || plan;
     } catch (error) {
       if (!billing.isMissingFunction(error)) throw error;
       if (comped && plan?.tier !== 'premium') {

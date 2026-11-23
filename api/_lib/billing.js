@@ -42,19 +42,25 @@ const grantCredits = (admin, { uid, amount = CREDIT_PACK_SIZE, key, source, purc
   p_purchased_at: purchasedAt || new Date().toISOString(),
 });
 
+const listOf = (value) => String(value || '')
+  .split(',')
+  .map((entry) => entry.trim().toLowerCase())
+  .filter(Boolean);
+
 /**
- * Whether someone is on PREMIUM_EMAILS, the comp list. Matched against the
- * email they sign in with, from their verified session, not profiles.email:
- * apps can write that column, so anyone could put a listed email there.
+ * Whether someone is on the comp list. PREMIUM_USER_IDS lists account ids,
+ * comma separated. A list of emails can be claimed: emails aren't confirmed on
+ * this project, so anyone could sign up with a listed address nobody has used
+ * yet and get Pro. So once PREMIUM_USER_IDS is set, PREMIUM_EMAILS is ignored.
+ * Until then the emails still count, matched against the email the caller
+ * signs in with, from their verified session, never profiles.email, which
+ * apps can write.
  */
-const isComped = (user, list = process.env.PREMIUM_EMAILS) => {
+const isComped = (user, { ids = process.env.PREMIUM_USER_IDS, emails = process.env.PREMIUM_EMAILS } = {}) => {
+  const idList = listOf(ids);
+  if (idList.length) return idList.includes(String(user?.id || '').toLowerCase());
   const email = String(user?.email || '').trim().toLowerCase();
-  if (!email) return false;
-  return String(list || '')
-    .split(',')
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email);
+  return Boolean(email) && listOf(emails).includes(email);
 };
 
 /** Notes a payment event. True the first time its key is seen. */
