@@ -201,7 +201,7 @@ const withFakes = (t, { memory = MEMORY, matchAnswer, sameAnswer = '{"answers":[
   t.mock.method(globalThis, 'fetch', async (_url, init) => {
     const body = JSON.parse(init.body);
     const system = body.messages[0].content;
-    state.prompts.push({ system, user: body.messages[1].content });
+    state.prompts.push({ system, user: body.messages[1].content, model: body.model });
     let content;
     if (system === MATCH_PROMPT) content = matchAnswer;
     else if (system === SAME_THING_PROMPT) content = sameAnswer;
@@ -250,6 +250,23 @@ test('a dream with the Tesla in it says so, and the reading is told', async (t) 
   const reading = state.prompts.find((p) => p.system !== MATCH_PROMPT);
   assert.match(reading.system, /a black Tesla \(seen once before\)\. In this dream: "A black Tesla pulled up outside my old apartment"/);
   assert.doesNotMatch(reading.system, /greenhouse/, 'only what matched');
+});
+
+test('each style is written by the model it was picked for, and the check stays on the small one', async (t) => {
+  const state = withFakes(t, { matchAnswer: answer([]) });
+  const readingModel = async (style) => {
+    state.prompts.length = 0;
+    const res = await analyze(`${NO_TESLA} Read as ${style}.`, { promptStyle: style });
+    assert.equal(res.statusCode, 200);
+    assert.equal(state.prompts.find((p) => p.system === MATCH_PROMPT).model, 'gpt-4o-mini');
+    return state.prompts.find((p) => p.system !== MATCH_PROMPT).model;
+  };
+  for (const style of ['balanced', 'coach', 'therapist', 'scientist', 'creative', 'director', 'astrology']) {
+    assert.equal(await readingModel(style), 'gpt-4.1-mini', style);
+  }
+  for (const style of ['comedian', 'mystical']) {
+    assert.equal(await readingModel(style), 'gpt-4o-mini', style);
+  }
 });
 
 test('a dog is only your childhood dog when a second look says it is the same one', async (t) => {

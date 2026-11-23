@@ -23,7 +23,19 @@ const MAX_LEN = 5000;
 // memory rewrite runs after the response and can take the rest of the budget.
 const ANALYSIS_TIMEOUT_MS = 25_000;
 const MEMORY_TIMEOUT_MS = 40_000;
+// The match check, its second look, and the memory rewrite. These are yes or no
+// and bookkeeping jobs, tested on this model.
 const MODEL = 'gpt-4o-mini';
+// The model that writes each style's reading. Compared on 11/23/2026 over 108
+// readings: gpt-4.1-mini did each style's one job every time where gpt-4o-mini
+// missed 6 of 48, and walked the dream image by image about half as often. Two
+// styles stay on gpt-4o-mini because the newer model was worse at them in both
+// rounds: as the comedian it explains why a dream is funny instead of telling a
+// joke, and as the mystic it stacks four to six archetypes into every reading.
+// Custom prompts go to gpt-4.1-mini, which follows written instructions better.
+const READING_MODEL = 'gpt-4.1-mini';
+const STYLES_ON_CHECK_MODEL = new Set(['comedian', 'mystical']);
+const readingModelFor = (style) => (STYLES_ON_CHECK_MODEL.has(style) ? MODEL : READING_MODEL);
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 const PROMPT_ID_ALIASES = { investigator: 'director' };
 const FREE_ALLOWED_PROMPT_STYLES = new Set(['balanced', 'coach', 'therapist']);
@@ -133,14 +145,20 @@ const STYLE_TEMPERATURE = {
 // How long each voice runs. Asking for a word count is what actually sets the
 // length; MAX_TOKENS is only a ceiling, kept well clear of the longest target so
 // a style is never cut off mid-JSON.
+//
+// The story and the film treatment ask for less than they want. gpt-4.1-mini
+// writes past the top of those two: asked for 150 to 200 words, the story came
+// back at 207 to 224 in 5 of 6 tries, and the treatment past 160 in 3 of 6. With
+// the lower ask the story landed in 150 to 200 in 8 of 9 tries and the treatment
+// in 120 to 160 in 6 of 6.
 const STYLE_LENGTH = {
   balanced:  '130 to 170 words',
   coach:     '140 to 180 words',
   therapist: '140 to 180 words',
   scientist: '150 to 200 words',
   mystical:  '140 to 180 words',
-  creative:  '150 to 200 words',
-  director:  '120 to 160 words',
+  creative:  '120 to 160 words',
+  director:  '110 to 145 words',
   comedian:  '100 to 140 words',
   astrology: '150 to 200 words',
 };
@@ -1234,7 +1252,7 @@ const buildSystemPrompt = (styleDelta, contextBlock, lengthRule, requirement) =>
   return parts.join('\n\n');
 };
 
-const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, lengthRule = DEFAULT_STYLE_LENGTH, requirement = DEFAULT_STYLE_REQUIREMENT) => {
+const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 0.7, lengthRule = DEFAULT_STYLE_LENGTH, requirement = DEFAULT_STYLE_REQUIREMENT, model = READING_MODEL) => {
   const sys = buildSystemPrompt(styleDelta, contextBlock, lengthRule, requirement);
   // The client has no timeout of its own, so a stalled call would leave the
   // generate button spinning for as long as the platform allows.
@@ -1243,7 +1261,7 @@ const callOpenAI = async (text, apiKey, styleDelta, contextBlock, temperature = 
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     signal: AbortSignal.timeout(ANALYSIS_TIMEOUT_MS),
     body: JSON.stringify({
-      model: MODEL,
+      model,
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: `Dream:\n"""${text}"""` }
@@ -1446,7 +1464,7 @@ module.exports = async function handler(req, res) {
   const requirement = STYLE_REQUIREMENT[normalizedStyle] ?? DEFAULT_STYLE_REQUIREMENT;
 
   let raw = '';
-  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule, requirement); }
+  try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule, requirement, readingModelFor(normalizedStyle)); }
   catch (e) {
     refundQuota(uid, quota.usedCredit).catch(() => {});
     return res.status(502).json({ error: e.message || 'AI failed.' });
