@@ -12,6 +12,12 @@ const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SERVICE_ROLE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_ROLE_KEY')!;
 
+// How long after its notice a push may still go out, and how many pushes one
+// person can send another within the window.
+const NOTICE_MAX_AGE_MS = 2 * 60_000;
+const PUSH_WINDOW_MS = 10 * 60_000;
+const MAX_PUSHES_PER_WINDOW = 20;
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -63,6 +69,31 @@ Deno.serve(async (req) => {
   if (!tokens.length) return json({ ok: true, skipped: 'no_tokens' });
   if (!settings.notificationsEnabled) return json({ ok: true, skipped: 'notifications_disabled' });
 
+  // Someone this person has blocked can't buzz their phone.
+  const blocked = Array.isArray(settings.blockedUserIds) ? settings.blockedUserIds : [];
+  if (blocked.includes(user.id)) return json({ ok: true, skipped: 'blocked' });
+
+  // A push only goes out for a notice the caller has just saved for this
+  // person: the app always saves the notice first. That keeps a push from
+  // saying anything the person's notices don't, and caps how often one person
+  // can buzz another's phone.
+  const { data: recent } = await admin
+    .from('activity')
+    .select('type, emoji, dream_title_snapshot, created_at')
+    .eq('actor_id', user.id)
+    .eq('target_user_id', targetUserId)
+    .gte('created_at', new Date(Date.now() - PUSH_WINDOW_MS).toISOString())
+    .order('created_at', { ascending: false })
+    .limit(MAX_PUSHES_PER_WINDOW + 1);
+  // The app can set a notice's created_at, so one dated in the future doesn't
+  // count: it would otherwise pass for "just saved" forever.
+  const noticeAge = (row: { created_at: string }) => Date.now() - new Date(row.created_at).getTime();
+  const notice = (recent ?? []).find((row) => row.type === payload.type
+    && noticeAge(row) > -60_000
+    && noticeAge(row) < NOTICE_MAX_AGE_MS);
+  if (!notice) return json({ ok: true, skipped: 'no_notice' });
+  if ((recent ?? []).length > MAX_PUSHES_PER_WINDOW) return json({ ok: true, skipped: 'too_many' });
+
   // Respect per-type opt-outs stored in settings.
   const typeOptOutMap: Record<string, string> = {
     follow:          'notifyActivityAlerts',
@@ -93,8 +124,8 @@ Deno.serve(async (req) => {
     actorId: user.id,
     actorDisplayName: sender?.display_name || sender?.username || 'Someone',
     actorUsername: sender?.username ?? null,
-    dreamTitleSnapshot: short(payload.dreamTitleSnapshot, 120),
-    emoji: short(payload.emoji, 16),
+    dreamTitleSnapshot: short(notice.dream_title_snapshot ?? payload.dreamTitleSnapshot, 120),
+    emoji: short(notice.emoji ?? payload.emoji, 16),
   };
 
   const { title, body } = getNotificationCopy(trusted);
@@ -109,7 +140,9 @@ Deno.serve(async (req) => {
     await admin.from('profiles').update({ fcm_tokens: cleanTokens }).eq('id', targetUserId);
   }
 
-  return json({ ok: true, results });
+  // Only how many went out. The results hold the person's device tokens,
+  // which must never go back to whoever sent the notice.
+  return json({ ok: true, sent: results.filter((r) => r.ok).length });
 });
 
 /** A string from the app cut to `max` characters, counting an emoji as one, or null. */
