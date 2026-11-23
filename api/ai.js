@@ -19,6 +19,8 @@ const deferWork = (promise) => {
 
 const cache = new Map();
 const MAX_LEN = 5000;
+// Same as MAX_PROMPT_LENGTH in src/pages/Settings.jsx.
+const MAX_CUSTOM_PROMPT = 400;
 // The analysis is what the user is waiting on, so it gets a tight ceiling. The
 // memory rewrite runs after the response and can take the rest of the budget.
 const ANALYSIS_TIMEOUT_MS = 25_000;
@@ -1369,7 +1371,8 @@ module.exports = async function handler(req, res) {
   try {
     tier = await getUserTier(user);
   } catch (e) {
-    return res.status(500).json({ error: e.message || 'Could not verify subscription tier.' });
+    console.error('Loading the plan failed:', e?.message || e);
+    return res.status(500).json({ error: 'We could not check your plan. Try again in a minute.' });
   }
 
   const normalizedStyle = normalizePromptStyle((promptStyle || '').trim() || 'balanced');
@@ -1381,9 +1384,14 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Check cache before quota (cached responses are free)
+  // Check cache before quota (cached responses are free). A custom prompt is
+  // held to the length the settings screen allows, so a hand-made request
+  // can't send a novel with every reading.
+  const ownPrompt = tier === 'premium' && typeof customPrompt === 'string'
+    ? customPrompt.trim().slice(0, MAX_CUSTOM_PROMPT)
+    : '';
   let effectivePrompt = normalizedStyle === 'custom'
-    ? ((tier === 'premium' ? customPrompt : null) || PROMPT_TEMPLATES.balanced)
+    ? (ownPrompt || PROMPT_TEMPLATES.balanced)
     : (PROMPT_TEMPLATES[normalizedStyle] || PROMPT_TEMPLATES.balanced);
 
   if (normalizedStyle === 'astrology' && dreamDate) {
@@ -1421,7 +1429,7 @@ module.exports = async function handler(req, res) {
     } catch (fallbackError) {
       const detail = fallbackError?.message || String(fallbackError);
       console.error('Quota fallback failed:', detail);
-      return res.status(500).json({ error: `Could not verify usage quota: ${detail}` });
+      return res.status(500).json({ error: 'We could not check how many readings you have left. Try again in a minute.' });
     }
   }
 
@@ -1467,7 +1475,8 @@ module.exports = async function handler(req, res) {
   try { raw = await callOpenAI(text, apiKey, effectivePrompt, contextBlock, temperature, lengthRule, requirement, readingModelFor(normalizedStyle)); }
   catch (e) {
     refundQuota(uid, quota.usedCredit).catch(() => {});
-    return res.status(502).json({ error: e.message || 'AI failed.' });
+    console.error('The reading failed:', e?.message || e);
+    return res.status(502).json({ error: 'The reading could not be written just now. Try again in a minute.' });
   }
 
   // The reading's own "connections", if it still writes any, are ignored: the

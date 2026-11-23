@@ -107,3 +107,41 @@ test('a database error asks to try again, and the password is never logged', asy
   assert.match(res.body.error, /Try again in a minute/);
   assert.equal(seen.logged.some((line) => line.includes(PASSWORD)), false);
 });
+
+const signInFrom = async (address, username, password) => {
+  const res = {
+    statusCode: 200,
+    body: undefined,
+    setHeader() {},
+    status(code) { this.statusCode = code; return this; },
+    json(payload) { this.body = payload; return this; },
+    end() { return this; },
+  };
+  await accountRoute({ method: 'POST', headers: { 'x-forwarded-for': `${address}, 10.0.0.1` }, body: { action: 'sign_in_with_username', username, password } }, res);
+  return res;
+};
+
+test('after eight wrong passwords for one username, even the right one waits', async (t) => {
+  fakes(t);
+  accountRoute.resetSignInLimits();
+  for (let i = 0; i < 8; i += 1) {
+    const res = await signInFrom(`198.51.100.${i}`, 'sam', 'wrong-password');
+    assert.equal(res.statusCode, 401);
+  }
+  const res = await signInFrom('198.51.100.99', 'sam', PASSWORD);
+  assert.equal(res.statusCode, 429);
+  assert.equal(res.body.code, 'too_many_tries');
+});
+
+test('one address gets thirty tries in fifteen minutes, whatever the usernames', async (t) => {
+  fakes(t);
+  accountRoute.resetSignInLimits();
+  for (let i = 0; i < 30; i += 1) {
+    const res = await signInFrom('203.0.113.7', `dana_${i}`, 'wrong-password');
+    assert.equal(res.statusCode, 401);
+  }
+  const res = await signInFrom('203.0.113.7', 'emily', 'any-password');
+  assert.equal(res.statusCode, 429);
+  const elsewhere = await signInFrom('203.0.113.8', 'emily', 'any-password');
+  assert.equal(elsewhere.statusCode, 401, 'another address is not held up');
+});

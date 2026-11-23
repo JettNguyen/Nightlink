@@ -104,11 +104,49 @@ const syncPlan = async (admin, user, body) => {
 // The password is never logged.
 const SIGN_IN_FAILED = 'We could not sign you in. Check your details and try again.';
 
-const signInWithUsername = async (body) => {
+// Every username sign in reaches Supabase from this server's address, so its
+// own per-address limit can't tell one guesser from everyone else. These caps
+// are counted here instead: failed tries per username, and all tries per
+// address. They live in memory, so each running copy of this function counts
+// on its own; enough to make guessing a password slow, not a hard wall.
+const SIGN_IN_WINDOW_MS = 15 * 60_000;
+const MAX_FAILS_PER_USERNAME = 8;
+const MAX_TRIES_PER_ADDRESS = 30;
+const failsByUsername = new Map();
+const triesByAddress = new Map();
+const TOO_MANY_TRIES = {
+  status: 429,
+  json: { error: 'Too many tries. Wait 15 minutes, or sign in with your email instead.', code: 'too_many_tries' },
+};
+
+const recentHits = (map, key, now) => (map.get(key) || []).filter((at) => now - at < SIGN_IN_WINDOW_MS);
+const addHit = (map, key, now) => {
+  map.set(key, [...recentHits(map, key, now), now]);
+  if (map.size > 2000) {
+    for (const [k, times] of map) if (!times.some((at) => now - at < SIGN_IN_WINDOW_MS)) map.delete(k);
+  }
+};
+const callerAddress = (req) => String(req?.headers?.['x-forwarded-for'] || '').split(',')[0].trim()
+  || req?.socket?.remoteAddress
+  || 'unknown';
+
+const signInWithUsername = async (body, address = 'unknown', now = Date.now()) => {
   const username = String(body?.username || '').trim().toLowerCase();
   const password = typeof body?.password === 'string' ? body.password : '';
   const refused = { status: 401, json: { error: SIGN_IN_FAILED, code: 'invalid_credentials' } };
   if (!/^[a-z0-9_]{3,20}$/.test(username) || !password) return refused;
+
+  if (recentHits(triesByAddress, address, now).length >= MAX_TRIES_PER_ADDRESS
+    || recentHits(failsByUsername, username, now).length >= MAX_FAILS_PER_USERNAME) {
+    return TOO_MANY_TRIES;
+  }
+  addHit(triesByAddress, address, now);
+  const result = await checkUsernamePassword(username, password, refused);
+  if (result.status === 401) addHit(failsByUsername, username, now);
+  return result;
+};
+
+const checkUsernamePassword = async (username, password, refused) => {
 
   const anon = deps.getSupabaseAnon();
   if (!anon) {
@@ -181,7 +219,7 @@ module.exports = async function handler(req, res) {
 
   if (action === 'sign_in_with_username') {
     try {
-      const { status, json } = await signInWithUsername(body);
+      const { status, json } = await signInWithUsername(body, callerAddress(req));
       return res.status(status).json(json);
     } catch (error) {
       console.error('sign_in_with_username failed:', error?.message || error);
@@ -244,7 +282,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('report_content failed', error);
-      return res.status(500).json({ error: error.message || 'Could not submit report.' });
+      return res.status(500).json({ error: 'We could not send your report. Try again in a minute.' });
     }
   }
 
@@ -328,8 +366,10 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('delete_account failed', error);
-    return res.status(500).json({ error: error.message || 'Failed to delete account.' });
+    return res.status(500).json({ error: 'We could not delete your account. Try again in a minute. If it keeps failing, write to support@nightlink.dev.' });
   }
 };
 
 module.exports.deps = deps;
+// For tests: forget every counted sign in try.
+module.exports.resetSignInLimits = () => { failsByUsername.clear(); triesByAddress.clear(); };
